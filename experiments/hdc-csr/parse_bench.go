@@ -24,6 +24,7 @@ type BenchReport struct {
 	QualityEvaluation       map[string]any    `json:"quality_evaluation"`
 	MultiPathEvaluation     map[string]any    `json:"multipath_evaluation"`
 	PairedE2EEvaluation     map[string]any    `json:"paired_e2e_evaluation,omitempty"`
+	LSHEvaluation           map[string]any    `json:"binary_lsh_evaluation,omitempty"`
 }
 
 func main() {
@@ -130,6 +131,22 @@ func main() {
 				metrics["e2e_semantic_ns"] = nsOp
 			case strings.Contains(name, "E2E_HDC"):
 				metrics["e2e_hdc_ns"] = nsOp
+			case strings.Contains(name, "VSA_FullScan_1000nodes_Matched"):
+				metrics["lsh_oracle_fullscan_ns"] = nsOp
+				if len(matches) >= 6 && matches[4] != "" {
+					bOp, _ := strconv.Atoi(matches[4])
+					allocsOp, _ := strconv.Atoi(matches[5])
+					metrics["lsh_oracle_fullscan_bytes_per_op"] = bOp
+					metrics["lsh_oracle_fullscan_allocs_per_op"] = allocsOp
+				}
+			case strings.Contains(name, "VSA_LSH_1000nodes_Matched"):
+				metrics["lsh_indexed_query_ns"] = nsOp
+				if len(matches) >= 6 && matches[4] != "" {
+					bOp, _ := strconv.Atoi(matches[4])
+					allocsOp, _ := strconv.Atoi(matches[5])
+					metrics["lsh_indexed_bytes_per_op"] = bOp
+					metrics["lsh_indexed_allocs_per_op"] = allocsOp
+				}
 			case strings.Contains(name, "IncrementalUpdate_1000Nodes_Paired"):
 				metrics["paired_incremental_cached_reverse_1000nodes_ms"] = nsOp / 1000000.0
 				if len(matches) >= 6 && matches[4] != "" {
@@ -150,7 +167,7 @@ func main() {
 		}
 	}
 
-	requiredBenchmarks := []string{"hamming_8k_ns", "bind_8k_ns", "rotl_8k_ns", "majority3_8k_ns", "csr_1000nodes_propagate_ms", "paired_full_rebuild_1000nodes_ms", "paired_incremental_cached_reverse_1000nodes_ms"}
+	requiredBenchmarks := []string{"hamming_8k_ns", "bind_8k_ns", "rotl_8k_ns", "majority3_8k_ns", "csr_1000nodes_propagate_ms", "paired_full_rebuild_1000nodes_ms", "paired_incremental_cached_reverse_1000nodes_ms", "lsh_oracle_fullscan_ns", "lsh_indexed_query_ns"}
 	for _, req := range requiredBenchmarks {
 		if _, ok := metrics[req]; !ok {
 			fmt.Printf("FALHA CRÍTICA NO CI: Métrica obrigatória '%s' ausente na saída do benchmark!\n", req)
@@ -161,6 +178,11 @@ func main() {
 	if full, ok := metrics["paired_full_rebuild_1000nodes_ms"].(float64); ok {
 		if inc, ok := metrics["paired_incremental_cached_reverse_1000nodes_ms"].(float64); ok && inc > 0 {
 			metrics["paired_incremental_speedup_x"] = full / inc
+		}
+	}
+	if full, ok := metrics["lsh_oracle_fullscan_ns"].(float64); ok {
+		if indexed, ok := metrics["lsh_indexed_query_ns"].(float64); ok && indexed > 0 {
+			metrics["lsh_query_speedup_x"] = full / indexed
 		}
 	}
 	metrics["allocs_per_op_critical_path"] = 0
@@ -185,6 +207,21 @@ func main() {
 		_ = json.Unmarshal(rawMultiBytes, &multiPathMetrics)
 	}
 
+	rawLSHBytes, err := os.ReadFile("experiments/hdc-csr/lsh_quality.json")
+	if err != nil {
+		fmt.Printf("FALHA CRÍTICA NO CI: lsh_quality.json ausente: %v\n", err)
+		os.Exit(1)
+	}
+	var lshMetrics map[string]any
+	if err := json.Unmarshal(rawLSHBytes, &lshMetrics); err != nil {
+		fmt.Printf("FALHA CRÍTICA NO CI: lsh_quality.json inválido: %v\n", err)
+		os.Exit(1)
+	}
+	if lshMetrics["schema"] != "mbvm-binary-lsh-v1" {
+		fmt.Printf("FALHA CRÍTICA NO CI: invalid LSH metric schema\n")
+		os.Exit(1)
+	}
+
 	var pairedMetrics map[string]any
 	rawPairedBytes, err := os.ReadFile(pairedFile)
 	if err == nil {
@@ -207,6 +244,7 @@ func main() {
 		QualityEvaluation:   qualityMetrics,
 		MultiPathEvaluation: multiPathMetrics,
 		PairedE2EEvaluation: pairedMetrics,
+		LSHEvaluation: lshMetrics,
 	}
 
 	outBytes, err := json.MarshalIndent(report, "", "  ")
