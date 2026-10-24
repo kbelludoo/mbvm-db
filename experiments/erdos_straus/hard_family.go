@@ -51,6 +51,7 @@ func HardClassParametricFamily(id string, p int64, hardResidue840 int64, combine
 		Conclusion:   fmt.Sprintf("Closed polynomial solution: x=(n+3)/4, y=(n(n+3)+%d)/12, z=n(n+3)[n(n+3)+%d]/%d", 4*p, 4*p, 48*p),
 		Modulus:      combinedMod,
 		Residues:     []int64{combinedRes},
+		Dependencies: []string{"RULE-MORDELL-DIVISOR", "RULE-MOD4-3", "RULE-MOD3-2"},
 		BibSource:    "Mordell (1967) divisor specialization with closed polynomial formulation via MBVM-DB",
 		ProofText:    proof,
 		Status:       StatusVerified,

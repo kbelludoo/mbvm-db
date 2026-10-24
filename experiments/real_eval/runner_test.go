@@ -29,9 +29,30 @@ func TestBenchmark30Generation(t *testing.T) {
 	}
 }
 
+func TestUnseenBenchmark20Generation(t *testing.T) {
+	problems, err := GenerateUnseenBenchmark20()
+	if err != nil {
+		t.Fatalf("failed to generate unseen benchmark: %v", err)
+	}
+	if len(problems) != 20 {
+		t.Fatalf("expected exactly 20 problems, got %d", len(problems))
+	}
+
+	counts := make(map[ProblemType]int)
+	for _, p := range problems {
+		counts[p.Type]++
+	}
+	t.Logf("Unseen-20 Counts: Construction=%d, Proof=%d, Refutation=%d, Obstruction=%d",
+		counts[ProblemConstruction], counts[ProblemProof], counts[ProblemRefutation], counts[ProblemObstruction])
+
+	if counts[ProblemConstruction] != 8 || counts[ProblemProof] != 4 || counts[ProblemRefutation] != 4 || counts[ProblemObstruction] != 4 {
+		t.Fatalf("unexpected distribution: %v", counts)
+	}
+}
+
 func TestRetrievalFourConditions(t *testing.T) {
 	kb := NewKnowledgeBase()
-	n := big.NewInt(193) // 193 = 1 mod 24
+	n := big.NewInt(8401) // 8401 = 1 mod 840, p=11
 
 	flat := kb.RetrieveFlat()
 	filtered := kb.RetrieveFiltered(n)
@@ -40,8 +61,9 @@ func TestRetrievalFourConditions(t *testing.T) {
 	if len(flat.Rules) <= len(filtered.Rules) {
 		t.Fatalf("expected flat dump to have more rules than filtered")
 	}
-	if len(csr.Rules) == 0 {
-		t.Fatalf("expected CSR retrieval to return active subgraph rules")
+	if len(csr.Rules) <= len(filtered.Rules) {
+		t.Fatalf("expected CSR retrieval to chain dependencies, got %d rules vs %d in filtered",
+			len(csr.Rules), len(filtered.Rules))
 	}
 
 	t.Logf("Rules count: Flat=%d (Tokens %d) | Filtered=%d (Tokens %d) | CSR=%d (Tokens %d)",
@@ -52,7 +74,7 @@ func TestRetrievalFourConditions(t *testing.T) {
 }
 
 func TestVerifierOracleNoKeywords(t *testing.T) {
-	// Construction check
+	// 1. Construction check
 	p1 := EvalProblem{
 		ID:   "TEST-01",
 		Type: ProblemConstruction,
@@ -65,7 +87,7 @@ func TestVerifierOracleNoKeywords(t *testing.T) {
 	}
 	t.Logf("PASS: Construction verified exact via math/big: %s", msg)
 
-	// Refutation check: p=2, n=25
+	// 2. Refutation check: p=2, n=25
 	p17 := EvalProblem{
 		ID:   "B30-17",
 		Type: ProblemRefutation,
@@ -77,13 +99,24 @@ func TestVerifierOracleNoKeywords(t *testing.T) {
 	}
 	t.Logf("PASS: Refutation verified via mathematical counterexample: %s", msgRef)
 
-	// Keyword-only response without mathematical verification MUST FAIL
-	fakeResponse := "This statement is impossible and refuted."
-	successFake, _ := VerifyResponse(p17, fakeResponse)
-	if successFake {
-		t.Fatalf("keyword-only fake response must NOT be accepted as a valid proof!")
+	// 3. Keyword-only or trivial strings MUST FAIL (addressing Zyon's audit)
+	trivialCases := []struct {
+		problem EvalProblem
+		trivial string
+	}{
+		{EvalProblem{ID: "B30-16", Type: ProblemProof}, "840"},
+		{EvalProblem{ID: "B30-19", Type: ProblemRefutation}, "33"},
+		{EvalProblem{ID: "B30-29", Type: ProblemObstruction}, "2/11"},
+		{EvalProblem{ID: "B30-17", Type: ProblemRefutation}, "p=2, n=25, not an integer"},
 	}
-	t.Logf("PASS: Keyword-only response correctly rejected by verifier oracle")
+
+	for _, tc := range trivialCases {
+		ok, reason := VerifyResponse(tc.problem, tc.trivial)
+		if ok {
+			t.Fatalf("Problem %s accepted trivial string %q! Oracle must reject without proof steps.", tc.problem.ID, tc.trivial)
+		}
+		t.Logf("PASS: Oracle correctly rejected trivial response %q for %s: %s", tc.trivial, tc.problem.ID, reason)
+	}
 }
 
 func TestRunnerSingleIntegrationWiring(t *testing.T) {

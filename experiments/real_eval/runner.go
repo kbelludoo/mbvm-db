@@ -4,9 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math/big"
 	"math/rand"
 	"os"
-	"regexp"
 	"strings"
 	"time"
 
@@ -15,17 +15,14 @@ import (
 
 // Runner manages live execution across all conditions with real Gemini API calls.
 type Runner struct {
-	Client        *GeminiClient
-	KB            *KnowledgeBase
-	ReportPath    string
-	RNG           *rand.Rand
+	Client     *GeminiClient
+	KB         *KnowledgeBase
+	ReportPath string
+	RNG        *rand.Rand
 }
 
 // NewRunner initializes the runner with client, knowledge base, and CSR structures.
 func NewRunner(client *GeminiClient, reportPath string) *Runner {
-	if reportPath == "" {
-		reportPath = "experiments/real_eval/live_benchmark_results.json"
-	}
 	return &Runner{
 		Client:     client,
 		KB:         NewKnowledgeBase(),
@@ -34,28 +31,28 @@ func NewRunner(client *GeminiClient, reportPath string) *Runner {
 	}
 }
 
-// RunSingleIntegrationTest executes a single test problem to verify API wiring before consuming full quota.
+// RunSingleIntegrationTest tests end-to-end integration with a single problem.
 func (r *Runner) RunSingleIntegrationTest(ctx context.Context) (*TrialResult, error) {
 	if r.Client == nil {
-		return nil, fmt.Errorf("client cannot be nil: %w", ErrMissingAPIKey)
+		return nil, fmt.Errorf("client cannot be nil: missing Gemini API key")
 	}
 
 	testProb := EvalProblem{
 		ID:     "INTEGRATION-01",
 		Type:   ProblemConstruction,
+		N:      big.NewInt(5),
 		Prompt: "Find positive integers x, y, z satisfying 4/5 = 1/x + 1/y + 1/z. State: x = <val>, y = <val>, z = <val>.",
 	}
 
-	retrieval := r.KB.RetrieveMBVMCSR(nil)
+	retrieval := r.KB.RetrieveMBVMCSR(testProb.N)
 	sysPrompt := "You are a mathematical theorem prover. State: x = <val>, y = <val>, z = <val>."
 	userPrompt := fmt.Sprintf("%s\n\nContext:\n%s", testProb.Prompt, formatRules(retrieval.Rules))
 
 	start := time.Now()
 	resp, err := r.Client.GenerateContent(ctx, sysPrompt, userPrompt)
 	latency := time.Since(start)
-
 	if err != nil {
-		return nil, fmt.Errorf("single integration test call failed: %w", err)
+		return nil, fmt.Errorf("single test Gemini API call failed: %w", err)
 	}
 
 	var ansText string
@@ -63,36 +60,30 @@ func (r *Runner) RunSingleIntegrationTest(ctx context.Context) (*TrialResult, er
 		ansText = resp.Candidates[0].Content.Parts[0].Text
 	}
 
-	success, details := verifyConstruction(testProb, ansText)
+	success, details := VerifyResponse(testProb, ansText)
 
-	trial := &TrialResult{
+	result := &TrialResult{
 		ProblemID:            testProb.ID,
 		Condition:            ConditionMBVMCSR,
 		PromptTokensReal:     resp.UsageMetadata.PromptTokenCount,
 		CompletionTokensReal: resp.UsageMetadata.CandidatesTokenCount,
 		TotalTokensReal:      resp.UsageMetadata.TotalTokenCount,
-		ReasoningTokensReal:  resp.UsageMetadata.CandidatesTokenDetails.ReasoningTokenCount,
+		ReasoningTokensReal:  resp.UsageMetadata.EffectiveReasoningTokens(),
 		Latency:              latency,
 		Success:              success,
 		VerificationStatus:   details,
+		ModelVersion:         resp.ModelVersion,
 		RetrievalPath:        retrieval.Path,
 		RulesRetrieved:       retrieval.RuleIDs,
-		ModelVersion:         resp.ModelVersion,
-		FullResponse:         ansText,
 	}
 
-	return trial, nil
+	return result, nil
 }
 
-// RunFullBenchmark executes the 30-problem suite across the 4 conditions with randomized ordering.
-func (r *Runner) RunFullBenchmark(ctx context.Context) ([]TrialResult, []BenchmarkSummary, error) {
-	problems, err := GenerateBenchmark30()
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to generate 30 problems: %w", err)
-	}
-
+// RunBenchmarkWithProblems executes any slice of problems across the 4 conditions.
+func (r *Runner) RunBenchmarkWithProblems(ctx context.Context, problems []EvalProblem) ([]TrialResult, []BenchmarkSummary, error) {
 	allConditions := []ConditionType{
-		ConditionDirectBaseline,
+		ConditionDirect,
 		ConditionFlatRAG,
 		ConditionFilteredRAG,
 		ConditionMBVMCSR,
@@ -114,10 +105,10 @@ func (r *Runner) RunFullBenchmark(ctx context.Context) ([]TrialResult, []Benchma
 			latency := time.Since(start)
 
 			trial := TrialResult{
-				ProblemID:     prob.ID,
-				Condition:     cond,
-				Latency:       latency,
-				RetrievalPath: ret.Path,
+				ProblemID:      prob.ID,
+				Condition:      cond,
+				Latency:        latency,
+				RetrievalPath:  ret.Path,
 				RulesRetrieved: ret.RuleIDs,
 			}
 
@@ -131,96 +122,125 @@ func (r *Runner) RunFullBenchmark(ctx context.Context) ([]TrialResult, []Benchma
 			trial.PromptTokensReal = resp.UsageMetadata.PromptTokenCount
 			trial.CompletionTokensReal = resp.UsageMetadata.CandidatesTokenCount
 			trial.TotalTokensReal = resp.UsageMetadata.TotalTokenCount
-			trial.ReasoningTokensReal = resp.UsageMetadata.CandidatesTokenDetails.ReasoningTokenCount
+			trial.ReasoningTokensReal = resp.UsageMetadata.EffectiveReasoningTokens()
 			trial.ModelVersion = resp.ModelVersion
 
 			var ansText string
 			if len(resp.Candidates) > 0 && len(resp.Candidates[0].Content.Parts) > 0 {
 				ansText = resp.Candidates[0].Content.Parts[0].Text
 			}
-			trial.FullResponse = ansText
 
-			// Strict mathematical verification (no keyword matching)
-			success, status := VerifyResponse(prob, ansText)
+			success, details := VerifyResponse(prob, ansText)
 			trial.Success = success
-			trial.VerificationStatus = status
-
-			x, y, z := extractXYZ(ansText)
-			trial.ExtractedX = x
-			trial.ExtractedY = y
-			trial.ExtractedZ = z
+			trial.VerificationStatus = details
 
 			results = append(results, trial)
 		}
 	}
 
-	// Compute summaries
 	summaries := computeSummaries(results)
 
-	// Persist report and explicitly check error
-	payload := map[string]any{
-		"results":   results,
-		"summaries": summaries,
-		"timestamp": time.Now().Format(time.RFC3339),
-	}
-	raw, err := json.MarshalIndent(payload, "", "  ")
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to marshal benchmark results: %w", err)
-	}
-
-	if err := os.WriteFile(r.ReportPath, raw, 0644); err != nil {
-		return nil, nil, fmt.Errorf("failed to write benchmark results file to %s: %w", r.ReportPath, err)
+	if r.ReportPath != "" {
+		payload := struct {
+			Summaries []BenchmarkSummary `json:"summaries"`
+			Results   []TrialResult      `json:"results"`
+		}{
+			Summaries: summaries,
+			Results:   results,
+		}
+		data, err := json.MarshalIndent(payload, "", "  ")
+		if err == nil {
+			_ = os.WriteFile(r.ReportPath, data, 0644)
+		}
 	}
 
 	return results, summaries, nil
 }
 
+// RunFullBenchmark executes all 30 development benchmark problems across 4 conditions.
+func (r *Runner) RunFullBenchmark(ctx context.Context) ([]TrialResult, []BenchmarkSummary, error) {
+	problems, err := GenerateBenchmark30()
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to generate 30-problem benchmark: %w", err)
+	}
+	return r.RunBenchmarkWithProblems(ctx, problems)
+}
+
+// RunUnseenBenchmark executes the 20 unexposed multi-lemma benchmark problems across 4 conditions.
+func (r *Runner) RunUnseenBenchmark(ctx context.Context) ([]TrialResult, []BenchmarkSummary, error) {
+	problems, err := GenerateUnseenBenchmark20()
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to generate 20-problem unseen benchmark: %w", err)
+	}
+	return r.RunBenchmarkWithProblems(ctx, problems)
+}
+
+// RunPilotBenchmark executes a 4-problem pilot (1 per type) across 4 conditions (16 trials).
+func (r *Runner) RunPilotBenchmark(ctx context.Context) ([]TrialResult, []BenchmarkSummary, error) {
+	unseen, err := GenerateUnseenBenchmark20()
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to generate pilot problems: %w", err)
+	}
+	// Select 1 Construction, 1 Proof, 1 Refutation, 1 Obstruction
+	pilotProbs := []EvalProblem{
+		unseen[1],  // U20-02: Construction on prime 26881 (1 mod 840)
+		unseen[10], // U20-11: Algebraic proof for 3k+2
+		unseen[14], // U20-15: Refutation of uniqueness
+		unseen[18], // U20-19: Modular obstruction 1 mod 24 vs -3 mod 3
+	}
+	return r.RunBenchmarkWithProblems(ctx, pilotProbs)
+}
+
 func (r *Runner) buildPrompt(cond ConditionType, prob EvalProblem) (string, string, RetrievalResult) {
-	sysBase := "You are an expert mathematical researcher. Provide a complete, rigorous proof or exact numbers."
+	sysPrompt := "You are an expert mathematician and theorem prover. Always justify your steps rigorously. For constructions, state x = <val>, y = <val>, z = <val>."
+	var ret RetrievalResult
 
 	switch cond {
-	case ConditionDirectBaseline:
-		return sysBase, prob.Prompt, RetrievalResult{Path: "Direct(NoMemory)"}
+	case ConditionDirect:
+		return sysPrompt, prob.Prompt, ret
 
 	case ConditionFlatRAG:
-		ret := r.KB.RetrieveFlat()
-		user := fmt.Sprintf("%s\n\nReference Rules (Unfiltered Full Knowledge Base):\n%s", prob.Prompt, formatRules(ret.Rules))
-		return sysBase, user, ret
+		ret = r.KB.RetrieveFlat()
+		userPrompt := fmt.Sprintf("%s\n\nReference Theorems:\n%s", prob.Prompt, formatRules(ret.Rules))
+		return sysPrompt, userPrompt, ret
 
 	case ConditionFilteredRAG:
-		ret := r.KB.RetrieveFiltered(prob.N)
-		user := fmt.Sprintf("%s\n\nReference Rules (Conventional Inverted Index Matched):\n%s", prob.Prompt, formatRules(ret.Rules))
-		return sysBase, user, ret
+		ret = r.KB.RetrieveFiltered(prob.N)
+		userPrompt := fmt.Sprintf("%s\n\nRelevant Theorem:\n%s", prob.Prompt, formatRules(ret.Rules))
+		return sysPrompt, userPrompt, ret
 
 	case ConditionMBVMCSR:
-		ret := r.KB.RetrieveMBVMCSR(prob.N)
-		user := fmt.Sprintf("%s\n\nMBVM-DB Smart Sliced Active Subgraph:\n%s", prob.Prompt, formatRules(ret.Rules))
-		return sysBase, user, ret
+		ret = r.KB.RetrieveMBVMCSR(prob.N)
+		userPrompt := fmt.Sprintf("%s\n\nMBVM-DB Smart Sliced Lemma Graph:\n%s", prob.Prompt, formatRules(ret.Rules))
+		return sysPrompt, userPrompt, ret
 
 	default:
-		return sysBase, prob.Prompt, RetrievalResult{}
+		return sysPrompt, prob.Prompt, ret
 	}
 }
 
 func formatRules(rules []*erdosstraus.Rule) string {
+	if len(rules) == 0 {
+		return "None."
+	}
 	var sb strings.Builder
-	for _, r := range rules {
-		sb.WriteString(fmt.Sprintf("- [%s] %s: Hypotheses=%v, Conclusion=%s\n  Proof=%s\n",
-			r.ID, r.Name, r.Hypotheses, r.Conclusion, r.ProofText))
+	for i, r := range rules {
+		sb.WriteString(fmt.Sprintf("[%d] %s (%s):\n    Premise: %s\n    Conclusion: %s\n",
+			i+1, r.ID, r.BibSource, strings.Join(r.Hypotheses, "; "), r.Conclusion))
 	}
 	return sb.String()
 }
 
 func computeSummaries(results []TrialResult) []BenchmarkSummary {
 	type accum struct {
-		total, solved int
+		total, solved                int
 		promptTok, compTok, totalTok int
-		latency time.Duration
+		latency                      time.Duration
 	}
 	acc := make(map[ConditionType]*accum)
 	for _, res := range results {
-		a, ok := acc[res.Condition]
-		if !ok {
+		a, exists := acc[res.Condition]
+		if !exists {
 			a = &accum{}
 			acc[res.Condition] = a
 		}
@@ -251,26 +271,4 @@ func computeSummaries(results []TrialResult) []BenchmarkSummary {
 		})
 	}
 	return summaries
-}
-
-func extractXYZ(text string) (string, string, string) {
-	reX := regexp.MustCompile(`(?i)x\s*=\s*(\d+)`)
-	reY := regexp.MustCompile(`(?i)y\s*=\s*(\d+)`)
-	reZ := regexp.MustCompile(`(?i)z\s*=\s*(\d+)`)
-
-	mX := reX.FindStringSubmatch(text)
-	mY := reY.FindStringSubmatch(text)
-	mZ := reZ.FindStringSubmatch(text)
-
-	var x, y, z string
-	if len(mX) > 1 {
-		x = mX[1]
-	}
-	if len(mY) > 1 {
-		y = mY[1]
-	}
-	if len(mZ) > 1 {
-		z = mZ[1]
-	}
-	return x, y, z
 }

@@ -17,13 +17,13 @@ const (
 
 // EvalProblem defines a calibrated, unexposed test item in the 30-problem suite.
 type EvalProblem struct {
-	ID          string      `json:"id"`
-	Type        ProblemType `json:"type"`
-	Prompt      string      `json:"prompt"`
-	N           *big.Int    `json:"n,omitempty"`
-	Modulus     int64       `json:"modulus,omitempty"`
-	Residue     int64       `json:"residue,omitempty"`
-	VerifyFunc  func(respText string) (bool, string, error) `json:"-"`
+	ID         string                                      `json:"id"`
+	Type       ProblemType                                 `json:"type"`
+	Prompt     string                                      `json:"prompt"`
+	N          *big.Int                                    `json:"n,omitempty"`
+	Modulus    int64                                       `json:"modulus,omitempty"`
+	Residue    int64                                       `json:"residue,omitempty"`
+	VerifyFunc func(respText string) (bool, string, error) `json:"-"`
 }
 
 // GenerateBenchmark30 constructs the 30 calibrated problems balanced across 4 types.
@@ -191,5 +191,68 @@ func validateBenchmarkDefinitions(problems []EvalProblem) error {
 			}
 		}
 	}
+
+	// 1. Rigorous certification of declared primes in construction set via Miller-Rabin
+	declaredPrimes := []int64{193, 2521, 3361, 7561, 10009, 15121}
+	for _, pr := range declaredPrimes {
+		bPr := big.NewInt(pr)
+		if !bPr.ProbablyPrime(20) {
+			return fmt.Errorf("declared prime %d failed Miller-Rabin primality certification", pr)
+		}
+	}
+
+	// 2. Certification of composite factorization and residue
+	if 71*71 != 5041 {
+		return fmt.Errorf("5041 != 71^2")
+	}
+	if 7*13*19 != 1729 {
+		return fmt.Errorf("1729 != 7*13*19")
+	}
+	if 15121%840 != 1 {
+		return fmt.Errorf("15121 is not congruent to 1 mod 840: got %d", 15121%840)
+	}
+
+	// 3. Exact arithmetic certification of refutation counterexamples
+	// B30-17: p=2, n=25 must yield non-integer z
+	p17 := int64(2)
+	n17 := int64(25)
+	num17 := n17 * (n17 + 3) * (n17*(n17+3) + 4*p17)
+	den17 := 48 * p17
+	if num17%den17 == 0 {
+		return fmt.Errorf("B30-17 counterexample invalid: %d is divisible by %d", num17, den17)
+	}
+
+	// B30-19: q=3 must yield n != 1 mod 24
+	q19 := int64(3)
+	n19 := 4*q19*q19 - 3
+	if n19%24 == 1 {
+		return fmt.Errorf("B30-19 counterexample invalid: 4(3^2)-3 = %d is 1 mod 24", n19)
+	}
+
+	// B30-20: n=13 must yield non-integer z for t=nx, z=t(t+5)/15
+	n20 := int64(13)
+	x20 := (n20 + 3) / 4
+	t20 := n20 * x20
+	if (t20*(t20+5))%15 == 0 {
+		return fmt.Errorf("B30-20 counterexample invalid: %d is divisible by 15", t20*(t20+5))
+	}
+
+	// B30-21: p=7, n=25 must yield non-integer y for y=(n(n+3)+4p)/12
+	p21 := int64(7)
+	n21 := int64(25)
+	if (n21*(n21+3)+4*p21)%12 == 0 {
+		return fmt.Errorf("B30-21 counterexample invalid: numerator divisible by 12")
+	}
+
+	// 4. Certification of Chinese Remainder Theorem progressions
+	// B30-27: 3649 mod 9240
+	if 3649%840 != 289 || 3649%11 != (11-3)%11 {
+		return fmt.Errorf("B30-27 progression 3649 mod 9240 fails modular constraints")
+	}
+	// B30-28: 13801 mod 14280
+	if 13801%840 != 361 || 13801%17 != (17-3)%17 {
+		return fmt.Errorf("B30-28 progression 13801 mod 14280 fails modular constraints")
+	}
+
 	return nil
 }
