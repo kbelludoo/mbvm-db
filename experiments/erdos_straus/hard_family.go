@@ -15,8 +15,12 @@ var (
 // x(n) = (n + 3)/4
 // y(n) = (n(n+3) + 4p) / 12
 // z(n) = n(n+3)(n(n+3) + 4p) / (48p)
-// for any prime p = 2 mod 3 and n = -3 mod (4p) with n = 1 mod 3.
+// for any odd integer p = 2 mod 3 (p >= 5) and n = -3 mod (4p) with n = 1 mod 3.
 func HardClassParametricFamily(id string, p int64, hardResidue840 int64, combinedMod int64, combinedRes int64) *Rule {
+	if p%2 == 0 || p%3 != 2 || p < 5 {
+		panic(fmt.Sprintf("HardClassParametricFamily requires odd integer p = 2 mod 3 (got p=%d)", p))
+	}
+
 	proof := fmt.Sprintf(
 		"Closed Rational Identity in Q(n):\n"+
 			"Let x = (n+3)/4. Then 4/n - 1/x = 3/(nx).\n"+
@@ -24,11 +28,13 @@ func HardClassParametricFamily(id string, p int64, hardResidue840 int64, combine
 			"y(n) = (n(n+3) + 4p) / 12\n"+
 			"z(n) = n(n+3)[n(n+3) + 4p] / (48p)\n"+
 			"Identically, 1/x + 1/y + 1/z = 4/n.\n"+
-			"Integrality Certificate:\n"+
+			"Integrality Certificate (requiring odd p = 2 mod 3):\n"+
 			"For n = %d mod %d (which projects to %d mod 840 in the hard class):\n"+
 			"1. n = 1 mod 4 => 4 | (n+3) => x is integer.\n"+
 			"2. n = 1 mod 3 and p = 2 mod 3 => n(n+3) + 4p = 1(1) + 4(2) = 9 = 0 mod 3, and 4 | (n(n+3)+4p) => y is integer.\n"+
-			"3. p | (n+3) => p^2 | n(n+3)[n(n+3)+4p], and 48 | numerator => z is integer.\n"+
+			"3. p is odd and n = 1 mod 4: let n+3 = 4m. Then n(n+3)[n(n+3)+4p] = 16mn(mn+p). "+
+			"Since p is odd, exactly one of mn or mn+p is even, making 16mn(mn+p) divisible by 32. "+
+			"Together with 3 | [n(n+3)+4p] and p | (n+3) => p^2 | numerator, 48p divides the numerator, ensuring z is integer.\n"+
 			"Crucially, n = 1 mod 24, so this family is strictly disjoint from all elementary classes (n even, n=3 mod 4, n=2 mod 3, n=5 mod 8).",
 		combinedRes, combinedMod, hardResidue840)
 
