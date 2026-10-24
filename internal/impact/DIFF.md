@@ -29,6 +29,30 @@ of regular-file contents per version, reject symlinks and unsafe paths,
 and are discarded when analysis completes. This allocates temporary
 disk space; it is not a zero-disk-allocation operation.
 
+### Windows Git archive I/O (post-326fb0f)
+
+The Git archive reader no longer mixes an application-owned
+`StdoutPipe` with `cmd.Wait`. It now uses `exec.CommandContext` and
+`cmd.Run` to write a bounded TAR stream to a **temporary regular file**,
+then parses that archive after the process has finished. Both the
+on-disk archive and the extracted regular contents are restricted to
+256 MiB per revision; the command is cancelled after two minutes.
+
+This avoids unbounded RAM buffering while preventing the specific
+pipe-consumption/Wait synchronization problem on Windows. The
+temporary TAR is removed even after a failed run.
+
+The cross-platform regression test commits a TAR payload larger than
+an ordinary anonymous pipe buffer. A dedicated Windows GitHub Actions
+workflow (`.github/workflows/impact_windows.yml`) runs these tests on
+`windows-latest`. The fix should not be marked Windows-validated until
+that workflow passes, and a single passing runner does not cover
+every installed Git for Windows version.
+
+The emitted schema is **`mbvm-version-impact-v1`**, not
+`mbvm-impact-diff-v1`.
+
+
 ## Evidence contract
 
 The JSON schema is `mbvm-version-impact-v1`, with before/after
