@@ -5,6 +5,8 @@ import (
  "go/ast"
  "go/parser"
  "go/token"
+ "go/types"
+ "runtime"
  "math/big"
  "sort"
  "strconv"
@@ -18,8 +20,16 @@ import (
 // Unsupported input is rejected explicitly.
 func ASTCanonicalIntFunction(src string) (string,error) {
  if len(src)>4096{return "",fmt.Errorf("snippet exceeds 4096 bytes")}
- f,err:=parser.ParseFile(token.NewFileSet(),"candidate.go","package semanticlab\n"+src,0)
+ fset:=token.NewFileSet()
+ f,err:=parser.ParseFile(fset,"candidate.go","package semanticlab\n"+src,0)
  if err!=nil{return "",err}
+ // A parsed Go snippet is not necessarily a valid typed Go program.
+ // Check against the current target architecture before certifying any
+ // polynomial identity (especially constant-to-int conversion overflow).
+ cfg:=types.Config{Sizes:types.SizesFor("gc",runtime.GOARCH)}
+ if _,err=cfg.Check("semanticlab",fset,[]*ast.File{f},nil);err!=nil{
+  return "",fmt.Errorf("Go typecheck failed: %w",err)
+ }
  if len(f.Decls)!=1{return "",fmt.Errorf("expected a single function")}
  fn,ok:=f.Decls[0].(*ast.FuncDecl)
  if !ok||fn.Recv!=nil||fn.Body==nil||fn.Type.TypeParams!=nil{return "",fmt.Errorf("only free functions supported")}
