@@ -3,29 +3,31 @@
   "module": "experiments/hdc-csr",
   "commit_sha": "local-manual",
   "baseline_reference_commit": "116ec92",
-  "generated_at_utc": "2026-10-24T04:07:56Z",
+  "generated_at_utc": "2026-10-24T04:14:26Z",
   "environment": {
-    "compiler": "go version (not set)",
-    "cpu": "GitHub Actions Virtual CPU",
+    "compiler": "go version (local)",
+    "cpu": "Host CPU",
     "execution_mode": "Single-Core (-cpu 1, GOMAXPROCS=1)",
     "os": "linux/amd64"
   },
   "metrics": {
     "allocs_per_op_critical_path": 0,
-    "bind_8k_ns": 75.93,
+    "bind_8k_ns": 75.57,
     "bytes_per_op_critical_path": 0,
     "csr_1000nodes_allocs_per_op": 3,
     "csr_1000nodes_bytes_per_op": 1025104,
-    "csr_1000nodes_propagate_ms": 4.198012,
-    "hamming_8k_ns": 105.5,
-    "majority3_8k_ns": 337.7,
+    "csr_1000nodes_propagate_ms": 4.214152,
+    "hamming_8k_ns": 103.8,
+    "majority3_8k_ns": 339.3,
     "memory_per_node_bytes": 1024,
-    "rotl_8k_ns": 472.5
+    "rotl_8k_ns": 475.2
   },
   "quality_evaluation": {
     "experiment_a_pure_semantic_recall10": 0,
     "experiment_b_hdc_1hop_unbinding_recall10": 50,
-    "experiment_c_hdc_2hop_composite_recall10": 50,
-    "status": "CI Verified via GitHub Actions runner"
+    "experiment_c_hdc_2hop_composite_recall10": 100,
+    "hop2_target_distance_bits": 0,
+    "hop2_target_recovered_rank": 1,
+    "status": "PASSED"
   }
 }

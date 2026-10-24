@@ -25,48 +25,50 @@ type BenchReport struct {
 }
 
 func main() {
-	benchFile := "bench_output.txt"
+	benchFile := "experiments/hdc-csr/bench_output.txt"
+	qualityFile := "experiments/hdc-csr/quality_output.json"
+	outPath := "experiments/hdc-csr/web/official_benchmarks.json"
+
 	if len(os.Args) > 1 {
 		benchFile = os.Args[1]
+	}
+	if len(os.Args) > 2 {
+		qualityFile = os.Args[2]
 	}
 
 	commitSHA := os.Getenv("GITHUB_SHA")
 	if commitSHA == "" {
 		commitSHA = "local-manual"
 	}
-
 	goVersion := os.Getenv("GO_VERSION")
 	if goVersion == "" {
-		goVersion = "go version (not set)"
+		goVersion = "go version (local)"
 	}
-
 	cpuModel := os.Getenv("CPU_MODEL")
 	if cpuModel == "" {
-		cpuModel = "GitHub Actions Virtual CPU"
+		cpuModel = "Host CPU"
 	}
-
 	osName := os.Getenv("RUNNER_OS")
 	if osName == "" {
 		osName = "linux/amd64"
 	}
 
-	rawBytes, err := os.ReadFile(benchFile)
+	// 1. Processa Benchmarks
+	rawBenchBytes, err := os.ReadFile(benchFile)
 	if err != nil {
-		fmt.Printf("Erro ao abrir %s: %v\n", benchFile, err)
+		fmt.Printf("FALHA CRÍTICA NO CI: Arquivo de benchmark %s não encontrado: %v\n", benchFile, err)
 		os.Exit(1)
 	}
 
-	// Remove null bytes se for UTF-16LE do PowerShell
-	cleanedContent := string(rawBytes)
-	if strings.Contains(cleanedContent, "\x00") {
-		cleanedContent = strings.ReplaceAll(cleanedContent, "\x00", "")
+	cleanedBench := string(rawBenchBytes)
+	if strings.Contains(cleanedBench, "\x00") {
+		cleanedBench = strings.ReplaceAll(cleanedBench, "\x00", "")
 	}
 
 	metrics := make(map[string]any)
-
 	reBench := regexp.MustCompile(`(Benchmark\w+)(?:-\d+)?\s+(\d+)\s+([\d\.]+)\s+ns/op(?:\s+(\d+)\s+B/op\s+(\d+)\s+allocs/op)?`)
 
-	scanner := bufio.NewScanner(strings.NewReader(cleanedContent))
+	scanner := bufio.NewScanner(strings.NewReader(cleanedBench))
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
 		matches := reBench.FindStringSubmatch(line)
@@ -95,9 +97,37 @@ func main() {
 		}
 	}
 
+	// Validação obrigatória: exige que todos os benchmarks essenciais tenham sido executados
+	requiredBenchmarks := []string{"hamming_8k_ns", "bind_8k_ns", "rotl_8k_ns", "majority3_8k_ns", "csr_1000nodes_propagate_ms"}
+	for _, req := range requiredBenchmarks {
+		if _, ok := metrics[req]; !ok {
+			fmt.Printf("FALHA CRÍTICA NO CI: Métrica obrigatória '%s' ausente na saída do benchmark!\n", req)
+			os.Exit(1)
+		}
+	}
+
 	metrics["allocs_per_op_critical_path"] = 0
 	metrics["bytes_per_op_critical_path"] = 0
 	metrics["memory_per_node_bytes"] = 1024
+
+	// 2. Processa Métricas Científicas de Qualidade (Recall@10)
+	rawQualityBytes, err := os.ReadFile(qualityFile)
+	if err != nil {
+		fmt.Printf("FALHA CRÍTICA NO CI: Arquivo de qualidade %s não encontrado! TestGeneralizationAndRecallAt10 não foi executado ou falhou: %v\n", qualityFile, err)
+		os.Exit(1)
+	}
+
+	qualityMetrics := make(map[string]any)
+	if err := json.Unmarshal(rawQualityBytes, &qualityMetrics); err != nil {
+		fmt.Printf("FALHA CRÍTICA NO CI: Erro decodificando %s: %v\n", qualityFile, err)
+		os.Exit(1)
+	}
+
+	// Validação obrigatória: exige que o 2-Hop tenha alcançado 100% de Recall@10
+	if rec2Hop, ok := qualityMetrics["experiment_c_hdc_2hop_composite_recall10"].(float64); !ok || rec2Hop < 100.0 {
+		fmt.Printf("FALHA CRÍTICA NO CI: Recall@10 do 2-Hop insuficiente: %.2f%% (esperado 100%%)\n", rec2Hop)
+		os.Exit(1)
+	}
 
 	report := BenchReport{
 		Project:                 "MBVM-DB",
@@ -111,16 +141,10 @@ func main() {
 			"compiler":       goVersion,
 			"execution_mode": "Single-Core (-cpu 1, GOMAXPROCS=1)",
 		},
-		Metrics: metrics,
-		QualityEvaluation: map[string]any{
-			"experiment_a_pure_semantic_recall10":      0.0,
-			"experiment_b_hdc_1hop_unbinding_recall10": 50.0,
-			"experiment_c_hdc_2hop_composite_recall10": 50.0,
-			"status":                                   "CI Verified via GitHub Actions runner",
-		},
+		Metrics:           metrics,
+		QualityEvaluation: qualityMetrics,
 	}
 
-	outPath := "experiments/hdc-csr/web/official_benchmarks.json"
 	outBytes, err := json.MarshalIndent(report, "", "  ")
 	if err != nil {
 		fmt.Printf("Erro serializando JSON: %v\n", err)
@@ -132,5 +156,5 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Printf("official_benchmarks.json gerado com sucesso a partir de %s\n", benchFile)
+	fmt.Printf("SUCESSO: official_benchmarks.json consolidado com benchmarks reais e qualidade 2-Hop verificada!\n")
 }

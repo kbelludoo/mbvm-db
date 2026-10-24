@@ -139,9 +139,12 @@ func (s *HDCSystem) PropagateHop1(graph *ExpCSRGraph, original []Hypervector) *C
 	return mem
 }
 
-// PropagateHop2 executa 2 camadas de passagem de mensagens HDC:
-// A segunda camada agrega mensagens combinando o vetor original com a representação de 1-hop:
-// h_{intermediate} = Bind(h_u, c_u^{(1)})
+// PropagateHop2 executa 2 camadas de passagem de mensagens HDC através da álgebra
+// de Composição de Caminhos Canônica em HDC (Path Vector Symbolic Architecture):
+// Para cada caminho v -> u -> w (com w != v para evitar backtracking imediato):
+// A mensagem de 2 saltos compõe as relações e rotações:
+// m_{w -> v}^{(2)} = ROTL(h_w, shift1 + shift2) ⊕ ROTL(Role2, shift1) ⊕ Role1
+// Se houver múltiplos caminhos de 2 saltos, agrega-os via Majority, preservando a identidade.
 func (s *HDCSystem) PropagateHop2(graph *ExpCSRGraph, hop1 *ContextualMemory) *ContextualMemory {
 	total := graph.TotalNodes
 	mem := &ContextualMemory{
@@ -153,29 +156,50 @@ func (s *HDCSystem) PropagateHop2(graph *ExpCSRGraph, hop1 *ContextualMemory) *C
 	msgBuf := make([]Hypervector, 0, 16)
 
 	for v := 0; v < total; v++ {
-		start := graph.Offsets[v]
-		end := graph.Offsets[v+1]
-		degree := int(end - start)
+		startV := graph.Offsets[v]
+		endV := graph.Offsets[v+1]
 
-		if degree == 0 {
+		if startV == endV {
 			mem.HasContext[v] = false
 			continue
 		}
 
 		msgBuf = msgBuf[:0]
-		for e := start; e < end; e++ {
-			u := graph.Edges[e]
-			rel := graph.Relations[e]
-			relCfg := s.RelConfigs[rel]
 
-			// Representação enriquecida do vizinho no hop 1 (se tiver contexto, une via Bind)
-			uRep := hop1.Original[u]
-			if hop1.HasContext[u] {
-				uRep = Bind(hop1.Original[u], hop1.Contextual[u])
+		// Percorre os vizinhos imediatos u de v
+		for eV := startV; eV < endV; eV++ {
+			u := graph.Edges[eV]
+			rel1 := graph.Relations[eV]
+			cfg1 := s.RelConfigs[rel1]
+
+			// Percorre os vizinhos w de u (saltos de grau 2)
+			startU := graph.Offsets[u]
+			endU := graph.Offsets[u+1]
+
+			for eU := startU; eU < endU; eU++ {
+				w := graph.Edges[eU]
+				if int(w) == v {
+					continue // Evita backtracking imediato v -> u -> v
+				}
+				rel2 := graph.Relations[eU]
+				cfg2 := s.RelConfigs[rel2]
+
+				// Composição canônica de caminho de 2 saltos:
+				// Composição do papel da relação: Role_{v->u->w} = ROTL(Role2, shift1) ⊕ Role1
+				// Rotação acumulada: shiftTotal = shift1 + shift2
+				roleComposite := Bind(RotL8K(cfg2.RoleVector, cfg1.Shift), cfg1.RoleVector)
+				shiftComposite := cfg1.Shift + cfg2.Shift
+
+				msg2Hop := Bind(RotL8K(hop1.Original[w], shiftComposite), roleComposite)
+				msgBuf = append(msgBuf, msg2Hop)
 			}
+		}
 
-			msg := Bind(RotL8K(uRep, relCfg.Shift), relCfg.RoleVector)
-			msgBuf = append(msgBuf, msg)
+		if len(msgBuf) == 0 {
+			// Se não tem nós a 2 saltos, preserva o contexto de hop1
+			mem.Contextual[v] = hop1.Contextual[v]
+			mem.HasContext[v] = hop1.HasContext[v]
+			continue
 		}
 
 		ctxVec, ok := Majority(msgBuf, s.TieBreaker)

@@ -39,7 +39,7 @@ jobs:
           CPU_NAME=$(lscpu | grep 'Model name' | head -n1 | cut -d: -f2 | xargs || echo "Runner CPU")
           echo "CPU_MODEL=$CPU_NAME" >> $GITHUB_ENV
 
-      - name: Run Single-Core HDC Tests
+      - name: Run Single-Core HDC Tests & Scientific Quality Evaluation
         run: |
           cd experiments/hdc-csr
           go test -v -cpu 1
@@ -49,9 +49,9 @@ jobs:
           cd experiments/hdc-csr
           go test -bench=Benchmark -benchmem -cpu 1 -benchtime=2s | tee bench_output.txt
 
-      - name: Generate Automated CI Benchmarks JSON
+      - name: Generate Automated CI Benchmarks & Quality JSON
         run: |
-          go run experiments/hdc-csr/parse_bench.go experiments/hdc-csr/bench_output.txt
+          go run experiments/hdc-csr/parse_bench.go experiments/hdc-csr/bench_output.txt experiments/hdc-csr/quality_output.json
 
       - name: Build WebAssembly Module
         run: |
