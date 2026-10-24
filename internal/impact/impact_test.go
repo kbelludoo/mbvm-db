@@ -107,3 +107,32 @@ func TestCachedCSRTraversalDoesNotAllocate(t *testing.T){
  })
  if allocs!=0{t.Fatalf("cached reverse CSR should allocate 0, got %v",allocs)}
 }
+
+func BenchmarkImpactCachedReverseCSR(b *testing.B){
+ g,err:=Load("../../pkg/mbvmdb");if err!=nil{b.Fatal(err)}
+ id,err:=g.Select("(*StringPool).Intern");if err!=nil{b.Fatal(err)}
+ scratch:=NewScratch(len(g.Symbols))
+ b.ReportAllocs()
+ b.ResetTimer()
+ for i:=0;i<b.N;i++{
+  if _,err:=g.VisitCallers(id,scratch,nil);err!=nil{b.Fatal(err)}
+ }
+}
+func BenchmarkImpactMutationAndTypecheck(b *testing.B){
+ g,err:=Load("../../pkg/mbvmdb");if err!=nil{b.Fatal(err)}
+ id,err:=g.Select("(*StringPool).Intern");if err!=nil{b.Fatal(err)}
+ b.ReportAllocs()
+ b.ResetTimer()
+ for i:=0;i<b.N;i++{
+  report,err:=g.SimulateAddIntParameter(id)
+  if err!=nil||report.MutatedPackageTypechecked{b.Fatal(err)}
+ }
+}
+func BenchmarkImpactFullLoadQuery(b *testing.B){
+ b.ReportAllocs()
+ b.ResetTimer()
+ for i:=0;i<b.N;i++{
+  report,err:=Analyze("../../pkg/mbvmdb","(*StringPool).Intern",false)
+  if err!=nil||len(report.DirectCallers)!=4{b.Fatal(err)}
+ }
+}
