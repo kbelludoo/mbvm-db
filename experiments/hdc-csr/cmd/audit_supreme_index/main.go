@@ -8,6 +8,7 @@ import (
 	"flag"
 	"fmt"
 	"math/bits"
+	"math"
 	"os"
 	"sort"
 	"strings"
@@ -38,7 +39,9 @@ type IndexAudit struct {
 	MeanNearestNonSelfHamming float64 `json:"mean_nearest_nonself_hamming"`
 	MinNearestNonSelfHamming int `json:"min_nearest_nonself_hamming"`
 	MaxNearestNonSelfHamming int `json:"max_nearest_nonself_hamming"`
-	MeanRandomPairHamming float64 `json:"mean_random_pair_hamming"`
+	MeanFixedOffsetPairHamming float64 `json:"mean_fixed_offset_pair_hamming"`
+	MeanAllDistinctPairHamming float64 `json:"mean_all_distinct_pair_hamming_exact"`
+	MeanMarginalBitEntropy float64 `json:"mean_marginal_bit_entropy_bits"`
 	BitOrder string `json:"bit_order"`
 	ProjectionWeightsEmbedded bool `json:"projection_weights_embedded"`
 	Limitations []string `json:"limitations"`
@@ -54,7 +57,7 @@ func hamming(a,b []byte) int {
 
 func inspect(data []byte, maxVectors, querySamples int)(IndexAudit,error) {
 	var report IndexAudit
-	report.Schema="mbvm-index-audit-v1"
+	report.Schema="mbvm-index-audit-v2"
 	if len(data)<18 {
 		return report,fmt.Errorf("file is shorter than minimum 18-byte header")
 	}
@@ -96,6 +99,8 @@ func inspect(data []byte, maxVectors, querySamples int)(IndexAudit,error) {
 		"Hamming distances and duplicate counts are geometric diagnostics, not evidence of code equivalence.",
 		"The v1/v2 header does not specify whether numpy.packbits used big or little bit ordering.",
 		"Go heap allocation, resident memory, and disk file size are different quantities.",
+		"Fixed-offset pair sampling is NOT random pair sampling and depends on node order.",
+		"Marginal per-bit entropy is not joint entropy: correlated vector bits can reduce information capacity.",
 	}
 	N:=int(report.VectorCount)
 	vec:=func(i int) []byte {
@@ -121,6 +126,21 @@ func inspect(data []byte, maxVectors, querySamples int)(IndexAudit,error) {
 		if count==0 || count==report.VectorCount{report.ConstantBitPositions++}
 	}
 	report.MeanBitOneFraction=float64(totalOnes)/float64(N*bitsPerVector)
+	// Compute the population mean distance across ALL unordered distinct
+	// vector pairs exactly, from column counts. For bit j with k ones:
+	// P(bit differs in uniform distinct pair) = 2*k*(N-k)/(N*(N-1)).
+	// No pair subsampling and no O(N^2) distance loop are required.
+	for _,count:=range ones {
+		p:=float64(count)/float64(N)
+		if p>0 && p<1 {
+			report.MeanMarginalBitEntropy -= p*math.Log2(p)+(1-p)*math.Log2(1-p)
+		}
+		if N>1 {
+			report.MeanAllDistinctPairHamming +=
+				2*float64(count)*float64(N-int(count))/(float64(N)*float64(N-1))
+		}
+	}
+	report.MeanMarginalBitEntropy /= float64(bitsPerVector)
 	if N<2{return report,nil}
 	if querySamples<1 {return report,fmt.Errorf("queries must be >=1")}
 	if querySamples>N {querySamples=N}
@@ -142,8 +162,8 @@ func inspect(data []byte, maxVectors, querySamples int)(IndexAudit,error) {
 	report.MinNearestNonSelfHamming=nearest[0]
 	report.MaxNearestNonSelfHamming=nearest[len(nearest)-1]
 	report.MeanNearestNonSelfHamming=sum/float64(len(nearest))
-	// Same deterministic size as the number of queries, but different
-	// query/reference pairs to expose typical distances, not just neighbors.
+	// Legacy deterministic FIXED-OFFSET pairs, preserved for comparison
+	// with the original v1 tool. This does NOT sample random pairs.
 	randomSum:=0
 	for i:=0;i<querySamples;i++ {
 		left:=(i*N)/querySamples
@@ -151,7 +171,7 @@ func inspect(data []byte, maxVectors, querySamples int)(IndexAudit,error) {
 		if right==left{right=(right+1)%N}
 		randomSum+=hamming(vec(left),vec(right))
 	}
-	report.MeanRandomPairHamming=float64(randomSum)/float64(querySamples)
+	report.MeanFixedOffsetPairHamming=float64(randomSum)/float64(querySamples)
 	return report,nil
 }
 
