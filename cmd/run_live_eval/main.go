@@ -11,16 +11,18 @@ import (
 
 func main() {
 	singleFlag := flag.Bool("single", false, "Run single integration test before full benchmark")
+	ablationFlag := flag.Bool("ablation", false, "Run 4-group controlled ablation on hard prime N=26881")
+	trialsFlag := flag.Int("trials", 2, "Number of trials per condition in ablation")
 	pilotFlag := flag.Bool("pilot", false, "Run 4-problem pilot across 4 conditions (16 trials)")
 	unseenFlag := flag.Bool("unseen", false, "Run 20-problem unexposed multi-lemma benchmark (80 trials)")
 	fullFlag := flag.Bool("full", false, "Run 30-problem calibration benchmark across 4 conditions (120 trials)")
-	modelFlag := flag.String("model", "gemini-2.5-flash", "Gemini model to evaluate")
+	modelFlag := flag.String("model", "gemini-3.5-flash", "Gemini model to evaluate")
 	keyFlag := flag.String("api-key", "", "Google GenAI / Gemini API key")
 	reportFlag := flag.String("report", "experiments/real_eval/live_benchmark_results.json", "Report output JSON path")
 	flag.Parse()
 
 	// Default to single if no action specified
-	if !*singleFlag && !*pilotFlag && !*unseenFlag && !*fullFlag {
+	if !*singleFlag && !*ablationFlag && !*pilotFlag && !*unseenFlag && !*fullFlag {
 		*singleFlag = true
 	}
 
@@ -57,6 +59,32 @@ func main() {
 		fmt.Printf("   • Latência: %v\n", result.Latency)
 		fmt.Printf("   • Caminho CSR: %s\n", result.RetrievalPath)
 		fmt.Printf("   • Resposta do Modelo:\n%s\n", result.ResponseText)
+		return
+	}
+
+	if *ablationFlag {
+		ablationOut := *reportFlag
+		if ablationOut == "experiments/real_eval/live_benchmark_results.json" {
+			ablationOut = "experiments/real_eval/ablation_26881_results.json"
+		}
+		fmt.Printf("🔬 [MBVM-DB] Executando Estudo de Ablação Controlada em N=26881 (%d ensaios/condição, Modelo: %s)...\n", *trialsFlag, *modelFlag)
+		_, summaries, err := runner.RunAblation26881(ctx, *trialsFlag, ablationOut)
+		if err != nil {
+			fmt.Printf("❌ Falha no estudo de ablação: %v\n", err)
+			os.Exit(1)
+		}
+
+		fmt.Printf("\n✅ Estudo de Ablação Concluído! Relatório gravado em: %s\n\n", ablationOut)
+		fmt.Println("=== Resumo Comparativo das 4 Condições de Ablação (N=26881) ===")
+		for _, s := range summaries {
+			fmt.Printf("[%s]\n", s.Condition)
+			fmt.Printf("  • Acurácia: %d/%d (%.1f%%)\n", s.SolvedCount, s.TrialsCount, s.Accuracy*100)
+			fmt.Printf("  • Tokens Médios de Prompt: %.1f\n", s.AvgPromptTokens)
+			fmt.Printf("  • Tokens Médios de Resposta: %.1f\n", s.AvgCompleteTokens)
+			fmt.Printf("  • Tokens Médios de Raciocínio: %.1f\n", s.AvgReasoningTok)
+			fmt.Printf("  • Tokens Médios Totais: %.1f\n", s.AvgTotalTokens)
+			fmt.Printf("  • Latência Média: %.1f ms\n\n", s.AvgLatencyMs)
+		}
 		return
 	}
 

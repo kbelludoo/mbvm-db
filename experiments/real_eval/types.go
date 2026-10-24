@@ -13,6 +13,12 @@ const (
 	ConditionFlatRAG        ConditionType = "Condition 2: Flat RAG (Unfiltered Dump)"
 	ConditionFilteredRAG    ConditionType = "Condition 3: Filtered Inverted Index (Conventional Relevant)"
 	ConditionMBVMCSR        ConditionType = "Condition 4: MBVM-DB CSR Subgraph (Smart Slicing)"
+
+	// Ablation conditions for isolating recipe prompt vs. CSR graph topology:
+	ConditionAblationDirect        ConditionType = "Group A: Gemini Direct Baseline"
+	ConditionAblationFormulaOnly   ConditionType = "Group B: Conventional Filtered Index (Formula Only)"
+	ConditionAblationFormulaRecipe ConditionType = "Group C: Conventional Filtered Index + Instantiation Recipe"
+	ConditionAblationCSRRecipe     ConditionType = "Group D: MBVM-DB CSR Subgraph + Instantiation Recipe"
 )
 
 // GeminiUsageMetadata captures the exact token counts reported by the Gemini API.

@@ -186,7 +186,6 @@ func (r *Runner) RunPilotBenchmark(ctx context.Context) ([]TrialResult, []Benchm
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to generate pilot problems: %w", err)
 	}
-	// Select 1 Construction, 1 Proof, 1 Refutation, 1 Obstruction
 	pilotProbs := []EvalProblem{
 		unseen[1],  // U20-02: Construction on prime 26881 (1 mod 840)
 		unseen[10], // U20-11: Algebraic proof for 3k+2
@@ -216,7 +215,7 @@ func (r *Runner) buildPrompt(cond ConditionType, prob EvalProblem) (string, stri
 
 	case ConditionMBVMCSR:
 		ret = r.KB.RetrieveMBVMCSR(prob.N)
-		userPrompt := fmt.Sprintf("%s\n\nMBVM-DB Smart Sliced Lemma Graph:\n%s", prob.Prompt, formatCSRRules(ret.Rules, prob.N))
+		userPrompt := fmt.Sprintf("%s\n\nMBVM-DB Smart Sliced Lemma Graph:\n%s", prob.Prompt, formatRules(ret.Rules))
 		return sysPrompt, userPrompt, ret
 
 	default:
@@ -234,26 +233,6 @@ func formatRules(rules []*erdosstraus.Rule) string {
 			i+1, r.ID, r.BibSource, strings.Join(r.Hypotheses, "; "), r.Conclusion))
 	}
 	return sb.String()
-}
-
-func formatCSRRules(rules []*erdosstraus.Rule, n *big.Int) string {
-	base := formatRules(rules)
-	if n == nil || len(rules) == 0 {
-		return base
-	}
-
-	// Add the Topological Execution Recipe if a rule in the active graph covers n
-	for _, r := range rules {
-		if r.Covers(n) {
-			var sb strings.Builder
-			sb.WriteString(base)
-			sb.WriteString(fmt.Sprintf("\nTopological Instantiation Recipe for n = %s:\n", n.String()))
-			sb.WriteString(fmt.Sprintf("  • Active Root Lemma: %s (%s)\n", r.ID, r.BibSource))
-			sb.WriteString(fmt.Sprintf("  • Substitution Formula: %s\n", r.Conclusion))
-			return sb.String()
-		}
-	}
-	return base
 }
 
 func computeSummaries(results []TrialResult) []BenchmarkSummary {

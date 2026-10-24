@@ -4,6 +4,7 @@ import (
 	"context"
 	"math/big"
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -21,18 +22,19 @@ func TestBenchmark30Generation(t *testing.T) {
 		counts[p.Type]++
 	}
 
+	if counts[ProblemConstruction] != 8 || counts[ProblemProof] != 8 ||
+		counts[ProblemRefutation] != 7 || counts[ProblemObstruction] != 7 {
+		t.Fatalf("unexpected problem type distribution: %+v", counts)
+	}
+
 	t.Logf("Benchmark-30 Balanced Counts: Construction=%d, Proof=%d, Refutation=%d, Obstruction=%d",
 		counts[ProblemConstruction], counts[ProblemProof], counts[ProblemRefutation], counts[ProblemObstruction])
-
-	if counts[ProblemConstruction] != 8 || counts[ProblemProof] != 8 || counts[ProblemRefutation] != 7 || counts[ProblemObstruction] != 7 {
-		t.Fatalf("expected 8/8/7/7 distribution, got %v", counts)
-	}
 }
 
 func TestUnseenBenchmark20Generation(t *testing.T) {
 	problems, err := GenerateUnseenBenchmark20()
 	if err != nil {
-		t.Fatalf("failed to generate unseen benchmark: %v", err)
+		t.Fatalf("failed to generate 20 unseen problems: %v", err)
 	}
 	if len(problems) != 20 {
 		t.Fatalf("expected exactly 20 problems, got %d", len(problems))
@@ -42,60 +44,69 @@ func TestUnseenBenchmark20Generation(t *testing.T) {
 	for _, p := range problems {
 		counts[p.Type]++
 	}
+
+	if counts[ProblemConstruction] != 8 || counts[ProblemProof] != 4 ||
+		counts[ProblemRefutation] != 4 || counts[ProblemObstruction] != 4 {
+		t.Fatalf("unexpected problem type distribution in unseen: %+v", counts)
+	}
+
 	t.Logf("Unseen-20 Counts: Construction=%d, Proof=%d, Refutation=%d, Obstruction=%d",
 		counts[ProblemConstruction], counts[ProblemProof], counts[ProblemRefutation], counts[ProblemObstruction])
-
-	if counts[ProblemConstruction] != 8 || counts[ProblemProof] != 4 || counts[ProblemRefutation] != 4 || counts[ProblemObstruction] != 4 {
-		t.Fatalf("unexpected distribution: %v", counts)
-	}
 }
 
 func TestRetrievalFourConditions(t *testing.T) {
 	kb := NewKnowledgeBase()
-	n := big.NewInt(8401) // 8401 = 1 mod 840, p=11
+	n26881 := big.NewInt(26881) // 1 mod 840, 8401 mod 9240 (covered by RULE-HARD-840-RES1-P11)
 
 	flat := kb.RetrieveFlat()
-	filtered := kb.RetrieveFiltered(n)
-	csr := kb.RetrieveMBVMCSR(n)
-
-	if len(flat.Rules) <= len(filtered.Rules) {
-		t.Fatalf("expected flat dump to have more rules than filtered")
+	if len(flat.Rules) != 16 {
+		t.Fatalf("expected 16 rules in flat RAG, got %d", len(flat.Rules))
 	}
-	if len(csr.Rules) <= len(filtered.Rules) {
-		t.Fatalf("expected CSR retrieval to chain dependencies, got %d rules vs %d in filtered",
-			len(csr.Rules), len(filtered.Rules))
+
+	filtered := kb.RetrieveFiltered(n26881)
+	if len(filtered.Rules) != 1 {
+		t.Fatalf("expected exactly 1 matching rule in filtered index, got %d", len(filtered.Rules))
+	}
+	if filtered.Rules[0].ID != "RULE-HARD-840-RES1-P11" {
+		t.Fatalf("expected RULE-HARD-840-RES1-P11, got %s", filtered.Rules[0].ID)
+	}
+
+	csr := kb.RetrieveMBVMCSR(n26881)
+	if len(csr.Rules) < 2 {
+		t.Fatalf("expected CSR to retrieve root rule + dependencies, got %d rules", len(csr.Rules))
+	}
+	if csr.Rules[0].ID != "RULE-HARD-840-RES1-P11" {
+		t.Fatalf("expected root of CSR to be RULE-HARD-840-RES1-P11, got %s", csr.Rules[0].ID)
 	}
 
 	t.Logf("Rules count: Flat=%d (Tokens %d) | Filtered=%d (Tokens %d) | CSR=%d (Tokens %d)",
-		len(flat.Rules), flat.TokenWeight,
-		len(filtered.Rules), filtered.TokenWeight,
-		len(csr.Rules), csr.TokenWeight)
+		len(flat.Rules), flat.TokenWeight, len(filtered.Rules), filtered.TokenWeight, len(csr.Rules), csr.TokenWeight)
 	t.Logf("CSR Path: %s", csr.Path)
 }
 
 func TestVerifierOracleNoKeywords(t *testing.T) {
-	// 1. Construction check
-	p1 := EvalProblem{
-		ID:   "TEST-01",
+	// 1. Valid Construction for N=73: 4/73 = 1/20 + 1/219 + 1/4380
+	sol73Text := "Here is the exact solution:\nx = 20\ny = 219\nz = 4380\nThis completes the proof."
+	prob73 := EvalProblem{
+		ID:   "B30-01",
 		Type: ProblemConstruction,
 		N:    big.NewInt(73),
 	}
-	validAns := "Here is the verified solution: x = 20, y = 219, z = 4380."
-	success, msg := VerifyResponse(p1, validAns)
-	if !success {
-		t.Fatalf("expected valid construction to pass: %s", msg)
+	okConst, msgConst := VerifyResponse(prob73, sol73Text)
+	if !okConst {
+		t.Fatalf("failed to verify valid solution for N=73: %s", msgConst)
 	}
-	t.Logf("PASS: Construction verified exact via math/big: %s", msg)
+	t.Logf("PASS: Construction verified exact via math/big: %s", msgConst)
 
-	// 2. Refutation check: p=2, n=25
-	p17 := EvalProblem{
+	// 2. Mathematical Refutation for B30-17: p=2, n=25 => z = 10325/2 (non-integer)
+	ref17Text := "For p = 2 and n = 25, substituting into the formula gives z = 10325/2, which is not an integer."
+	prob17 := EvalProblem{
 		ID:   "B30-17",
 		Type: ProblemRefutation,
 	}
-	validRefutation := "Refutation: choose p = 2 and n = 25. Then x = 7, y = 59, but z = 10325/2 which is not an integer."
-	successRef, msgRef := VerifyResponse(p17, validRefutation)
-	if !successRef {
-		t.Fatalf("expected valid refutation to pass: %s", msgRef)
+	okRef, msgRef := VerifyResponse(prob17, ref17Text)
+	if !okRef {
+		t.Fatalf("failed to verify valid refutation for B30-17: %s", msgRef)
 	}
 	t.Logf("PASS: Refutation verified via mathematical counterexample: %s", msgRef)
 
@@ -119,9 +130,83 @@ func TestVerifierOracleNoKeywords(t *testing.T) {
 	}
 }
 
+func TestAblationPromptIsolation(t *testing.T) {
+	runner := NewRunner(nil, "")
+	prob := EvalProblem{
+		ID:     "U20-02-ABLATION",
+		Type:   ProblemConstruction,
+		N:      big.NewInt(26881),
+		Prompt: "Find positive integers x, y, z satisfying 4/26881 = 1/x + 1/y + 1/z. State: x = <val>, y = <val>, z = <val>.",
+	}
+
+	_, promptA, retA := runner.buildAblationPrompt(ConditionAblationDirect, prob)
+	_, promptB, retB := runner.buildAblationPrompt(ConditionAblationFormulaOnly, prob)
+	_, promptC, retC := runner.buildAblationPrompt(ConditionAblationFormulaRecipe, prob)
+	_, promptD, retD := runner.buildAblationPrompt(ConditionAblationCSRRecipe, prob)
+
+	if len(retA.Rules) != 0 {
+		t.Fatalf("Group A must not retrieve rules")
+	}
+	if !strings.Contains(promptA, "26881") {
+		t.Fatalf("Group A prompt should mention 26881")
+	}
+	if len(retB.Rules) != 1 {
+		t.Fatalf("Group B expected 1 rule, got %d", len(retB.Rules))
+	}
+	if strings.Contains(promptB, "Topological Instantiation Recipe") {
+		t.Fatalf("Group B (Formula Only) must not contain recipe!")
+	}
+	if !strings.Contains(promptC, "Topological Instantiation Recipe") {
+		t.Fatalf("Group C must contain recipe!")
+	}
+	if len(retC.Rules) != 1 {
+		t.Fatalf("Group C expected 1 rule (filtered), got %d", len(retC.Rules))
+	}
+	if !strings.Contains(promptD, "Topological Instantiation Recipe") {
+		t.Fatalf("Group D must contain recipe!")
+	}
+	if len(retD.Rules) <= 1 {
+		t.Fatalf("Group D expected CSR subgraph (multiple rules), got %d", len(retD.Rules))
+	}
+	t.Logf("PASS: Ablation prompt isolation verified across all 4 groups")
+}
+
+func TestVerifierOracleRigorousRefutation(t *testing.T) {
+	// U20-15: Non-uniqueness for prime n=3
+	prob15 := EvalProblem{ID: "U20-15", Type: ProblemRefutation}
+	bad15 := "Prime n=3 has multiple distinct solutions like distinct two three solutions."
+	ok, _ := VerifyResponse(prob15, bad15)
+	if ok {
+		t.Fatalf("U20-15 should reject keyword-only response!")
+	}
+
+	good15 := "For prime n=3, 4/3 can be written as (1, 4, 12) and also (1, 6, 6). Hence non-unique."
+	ok, details := VerifyResponse(prob15, good15)
+	if !ok {
+		t.Fatalf("U20-15 should accept 2 distinct verified triples! Reason: %s", details)
+	}
+	t.Logf("PASS: U20-15 verified with math/big distinct triples: %s", details)
+
+	// U20-16: Refute n=1 mod 12 with counterexample
+	prob16 := EvalProblem{ID: "U20-16", Type: ProblemRefutation}
+	bad16 := "n=25 is 1 mod 12, with x=7. This is a counterexample mod 3."
+	ok, reason := VerifyResponse(prob16, bad16)
+	if ok {
+		t.Fatalf("U20-16 must reject false counterexample n=25!")
+	}
+	t.Logf("PASS: U20-16 correctly rejected false counterexample n=25: %s", reason)
+
+	good16 := "Counterexample n=49 gives x=13. t = 49*13 = 637 = 7^2 * 13. All prime factors 7 and 13 are 1 mod 3, so all divisors are 1 mod 3. Target is -t mod 3 = 2 mod 3, so no divisor can satisfy this."
+	ok, details16 := VerifyResponse(prob16, good16)
+	if !ok {
+		t.Fatalf("U20-16 should accept certified counterexample n=49! Reason: %s", details16)
+	}
+	t.Logf("PASS: U20-16 accepted certified counterexample n=49: %s", details16)
+}
+
 func TestRunnerSingleIntegrationWiring(t *testing.T) {
 	if os.Getenv("GEMINI_API_KEY") == "" && os.Getenv("GOOGLE_API_KEY") == "" {
-		client, err := NewGeminiClient("gemini-2.5-flash")
+		client, err := NewGeminiClient("gemini-3.5-flash")
 		if err == nil {
 			t.Fatalf("expected error when API key is missing")
 		}
@@ -134,7 +219,7 @@ func TestRunnerSingleIntegrationWiring(t *testing.T) {
 		return
 	}
 
-	client, err := NewGeminiClient("gemini-2.5-flash")
+	client, err := NewGeminiClient("gemini-3.5-flash")
 	if err != nil {
 		t.Fatalf("failed to initialize client with key: %v", err)
 	}
