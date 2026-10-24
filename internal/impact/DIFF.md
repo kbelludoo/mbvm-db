@@ -1,0 +1,93 @@
+# MBVM-DB impact-diff: compare two REAL Go package versions
+
+Version 1 of the stage-2 comparison is built on the production
+`internal/impact` typed call graph. It supports:
+
+- **Two existing directories**, such as two separate Git checkouts.
+- **Two local Git commit/tag/branch refs** within one repository, read
+  by `git archive` into bounded temporary snapshots, without changing
+  the checkout, index, stash, branches, or tracked source files.
+
+## Usage
+
+```sh
+# Two directory snapshots (same Go package/import path):
+go run ./cmd/mbvm-db impact-diff \
+  -old ../old-checkout/pkg/mbvmdb \
+  -new ./pkg/mbvmdb -json
+
+# Two local revisions of the SAME Git repository:
+go run ./cmd/mbvm-db impact-diff \
+  -repo . -old-ref HEAD~1 -new-ref HEAD \
+  -package pkg/mbvmdb -json
+```
+
+The refs must already exist locally; this command does not fetch
+remotes. Go Module imports must resolve in each snapshot, which may
+require module cache access. Git snapshots are limited to 256 MiB
+of regular-file contents per version, reject symlinks and unsafe paths,
+and are discarded when analysis completes. This allocates temporary
+disk space; it is not a zero-disk-allocation operation.
+
+## Evidence contract
+
+The JSON schema is `mbvm-version-impact-v1`, with before/after
+SHA-256 hashes, healthy old/new package snapshots, unchanged original
+file verification, and sorted changes:
+
+- `added` or `removed`: declaration appeared/disappeared.
+- `signature_changed`: a typed function parameter/result contract
+  changed. Names of parameters are ignored in the contract fingerprint.
+- `body_changed`: a formatted body changed without a typed callable
+  signature change. It does **not** mean different runtime behavior.
+- Unchanged function declarations are omitted from the change list.
+
+Each changed/removed symbol includes *old* direct and transitive
+caller candidates from the typed local CSR.
+
+For supported `signature_changed` cases, the checker constructs a
+controlled **HYBRID**: old package source and consumers with the new
+function/method signature transplanted into the old AST. The Go type
+checker then checks whether those **old same-package consumers** still
+typecheck. This is an actual Go type-checking observation for that
+hybrid, **not a build of a mixed full repository**. A consumer
+confirmed by a diagnostic appears under
+`old_consumer_compatibility.broken_old_direct_callers`.
+
+A compatibility result with `supported=false` is **unknown**.
+In particular, generic function signatures, or cases in which the
+transplanted declaration/body produces errors, must not be reported
+as confirmed caller breakages. Diagnostics from other locations may
+also be unrelated to the changed declaration, so the tool reports
+only direct callers with errors as observed candidate breakages
+under this hybrid.
+
+## Limits to preserve scientific accuracy
+
+- Both snapshots must independently pass `go/types`, have identical
+  package import paths and be valid for the selected GOOS/GOARCH and
+  build tags. If either snapshot fails to typecheck, comparison fails.
+- Only statically resolved local direct calls are linked.
+  Function values, interface dispatch, reflection, cross-package
+  consumers and alternate build configurations are not covered.
+- A removed symbol currently records old callers but does not perform
+  a removal-based compiler validation.
+- No AST canonical equivalence or runtime test is implied by
+  formatted source differences.
+- Hybrid errors at the target declaration or outside attributed
+  function bodies cause a conservative inconclusive outcome.
+- Go Modules export-cache resolution (`go list`) and Git archive
+  extraction cost are INCLUDED in the end-to-end command, so nanosecond
+  CSR traversal microbenchmarks cannot be used as CLI latency numbers.
+
+## Tests
+
+```sh
+CGO_ENABLED=0 go test -count=1 -v ./internal/impact ./cmd/mbvm-db
+```
+
+The tests exercise two independently well-typed snapshots with a
+breaking signature change and adjusted new callers, verified old
+caller diagnostic, added and removed functions, body-only changes,
+method name collisions, formatting-only changes, and two actual
+committed Git revisions with an unchanged dirty worktree.
