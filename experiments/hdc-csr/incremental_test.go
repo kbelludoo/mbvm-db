@@ -3,98 +3,133 @@ package hdccsr
 import (
 	"math/rand"
 	"testing"
-	"time"
 )
 
-func TestIncremental2HopByteForByteExactness(t *testing.T) {
-	const totalNodes = 100
-	rng := rand.New(rand.NewSource(12345))
+// TestIncrementalTerminalLeafFallback testa especificamente o contra-exemplo do Zyon:
+// Nó A chama B, e B é folha terminal (não chama ninguém).
+// Ao mutar B, A deve receber o fallback de 1-hop idêntico à reconstrução completa.
+func TestIncrementalTerminalLeafFallback(t *testing.T) {
+	const totalNodes = 5
+	rng := rand.New(rand.NewSource(101))
 
 	orig := make([]Hypervector, totalNodes)
 	for i := 0; i < totalNodes; i++ {
 		orig[i] = GenerateRandomHypervector(rng)
 	}
 
-	// Constrói grafo com topologia não-trivial (3 arestas por nó)
+	// Topologia: 0 -> 1 (onde 1 é nó folha sem saídas), 2 -> 3 -> 4
 	adj := make([][]AdjEdge, totalNodes)
-	for i := 0; i < totalNodes; i++ {
-		for k := 1; k <= 3; k++ {
-			target := uint16((i*7 + k*13) % totalNodes)
-			if int(target) != i {
-				adj[i] = append(adj[i], AdjEdge{Target: target, Rel: RelCall})
-			}
-		}
-	}
+	adj[0] = []AdjEdge{{Target: 1, Rel: RelCall}}
+	adj[2] = []AdjEdge{{Target: 3, Rel: RelCall}}
+	adj[3] = []AdjEdge{{Target: 4, Rel: RelCall}}
 
 	graph := BuildCSRFromAdj(totalNodes, adj)
-	hdc := NewHDCSystem(999)
+	revGraph := BuildRevCSR(graph)
+	hdc := NewHDCSystem(123)
 
-	// 1. Constrói a memória de 2-hop inicial completa
 	hop1Init := hdc.PropagateHop1(graph, orig)
 	memInit := hdc.PropagateHop2(graph, hop1Init)
 
-	// Escolhe um nó para sofrer mutação (ex: Nó 42)
-	mutatedNode := uint16(42)
-	newVec := GenerateRandomHypervector(rand.New(rand.NewSource(8888)))
+	// Muta o nó folha 1
+	mutatedNode := uint16(1)
+	newVec := GenerateRandomHypervector(rand.New(rand.NewSource(202)))
 
-	// 2. Caminho A: Reconstrução Completa do Zero com o nó mutado
-	origMutatedFull := make([]Hypervector, totalNodes)
-	copy(origMutatedFull, orig)
-	origMutatedFull[mutatedNode] = newVec
+	// Reconstrução total
+	origFull := make([]Hypervector, totalNodes)
+	copy(origFull, orig)
+	origFull[mutatedNode] = newVec
+	memFull := hdc.PropagateHop2(graph, hdc.PropagateHop1(graph, origFull))
 
-	hop1Full := hdc.PropagateHop1(graph, origMutatedFull)
-	memRebuiltFull := hdc.PropagateHop2(graph, hop1Full)
-
-	// 3. Caminho B: Atualização Incremental (afeta apenas o cone de dependência reversa)
-	origMutatedInc := make([]Hypervector, totalNodes)
-	copy(origMutatedInc, orig)
-
-	contextualInc := make([]Hypervector, totalNodes)
-	copy(contextualInc, memInit.Contextual)
-
-	hasContextInc := make([]bool, totalNodes)
-	copy(hasContextInc, memInit.HasContext)
+	// Atualização incremental
+	origInc := make([]Hypervector, totalNodes)
+	copy(origInc, orig)
+	ctxInc := make([]Hypervector, totalNodes)
+	copy(ctxInc, memInit.Contextual)
+	hasCtxInc := make([]bool, totalNodes)
+	copy(hasCtxInc, memInit.HasContext)
 
 	memInc := &ContextualMemory{
-		Original:   origMutatedInc,
-		Contextual: contextualInc,
-		HasContext: hasContextInc,
+		Original:   origInc,
+		Contextual: ctxInc,
+		HasContext: hasCtxInc,
 	}
 
-	t0 := time.Now()
-	_, affected := hdc.UpdateNodeIncremental2Hop(graph, memInc, mutatedNode, newVec)
-	durInc := time.Since(t0)
+	hdc.UpdateNodeIncremental2Hop(graph, revGraph, memInc, mutatedNode, newVec)
 
-	t.Logf("Nó mutado: %d | Cone afetado: %d nós de %d total", mutatedNode, len(affected.AllAffected), totalNodes)
-	t.Logf("Tempo de atualização incremental: %v", durInc)
-
-	// 4. VERIFICAÇÃO RIGOROSA BYTE-A-BYTE:
-	// Toda a memória contextual deve ser 100% IDÊNTICA entre a reconstrução total e a incremental!
-	mismatches := 0
-	for i := 0; i < totalNodes; i++ {
-		if memInc.HasContext[i] != memRebuiltFull.HasContext[i] {
-			t.Errorf("Discrepância em HasContext para o nó %d: Inc=%v, Full=%v", i, memInc.HasContext[i], memRebuiltFull.HasContext[i])
-			mismatches++
-		}
-		if memInc.Contextual[i] != memRebuiltFull.Contextual[i] {
-			diffBits := HammingDistance(memInc.Contextual[i], memRebuiltFull.Contextual[i])
-			t.Errorf("Discrepância em Contextual para o nó %d: %d bits diferentes", i, diffBits)
-			mismatches++
-		}
+	// Validação de A (nó 0):
+	if memInc.HasContext[0] != memFull.HasContext[0] {
+		t.Fatalf("HasContext do nó 0 divergiu: Inc=%v, Full=%v", memInc.HasContext[0], memFull.HasContext[0])
+	}
+	if memInc.Contextual[0] != memFull.Contextual[0] {
+		diff := HammingDistance(memInc.Contextual[0], memFull.Contextual[0])
+		t.Fatalf("FALHA: Nó 0 com vizinho terminal divergiu por %d bits!", diff)
 	}
 
-	if mismatches > 0 {
-		t.Fatalf("FALHA DE CORRETUDE: %d nós divergiram entre a atualização incremental e a reconstrução total!", mismatches)
-	}
-
-	t.Logf("SUCESSO ABSOLUTO: Atualização incremental é 100%% idêntica byte-a-byte à reconstrução total!")
+	t.Logf("PASS: Fallback de 1-hop em nós com vizinhos terminais validado com 0 bits de discrepância.")
 }
 
-// Benchmark de Atualização Incremental vs Reconstrução Total em 1.000 nós
-func BenchmarkIncrementalUpdate_1000Nodes(b *testing.B) {
+// TestIncrementalMultiGraphFuzz testa a equivalência estrita em 20 grafos aleatórios com ciclos e nós desconexos.
+func TestIncrementalMultiGraphFuzz(t *testing.T) {
+	for seed := int64(1); seed <= 20; seed++ {
+		const totalNodes = 60
+		rng := rand.New(rand.NewSource(seed))
+
+		orig := make([]Hypervector, totalNodes)
+		for i := 0; i < totalNodes; i++ {
+			orig[i] = GenerateRandomHypervector(rng)
+		}
+
+		// Gera grafo com ciclos, folhas e nós de alto grau
+		adj := make([][]AdjEdge, totalNodes)
+		for i := 0; i < totalNodes; i++ {
+			deg := rng.Intn(5) // Grau de 0 a 4
+			for d := 0; d < deg; d++ {
+				tgt := uint16(rng.Intn(totalNodes))
+				if int(tgt) != i {
+					adj[i] = append(adj[i], AdjEdge{Target: tgt, Rel: RelCall})
+				}
+			}
+		}
+
+		graph := BuildCSRFromAdj(totalNodes, adj)
+		revGraph := BuildRevCSR(graph)
+		hdc := NewHDCSystem(seed * 7)
+
+		hop1 := hdc.PropagateHop1(graph, orig)
+		memInc := hdc.PropagateHop2(graph, hop1)
+
+		// Aplica 3 mutações consecutivas
+		for m := 0; m < 3; m++ {
+			mutNode := uint16(rng.Intn(totalNodes))
+			newVec := GenerateRandomHypervector(rng)
+
+			// Atualização incremental
+			hdc.UpdateNodeIncremental2Hop(graph, revGraph, memInc, mutNode, newVec)
+
+			// Reconstrução total independente
+			origFull := make([]Hypervector, totalNodes)
+			copy(origFull, memInc.Original)
+			memFull := hdc.PropagateHop2(graph, hdc.PropagateHop1(graph, origFull))
+
+			// Compara byte-a-byte todos os nós
+			for node := 0; node < totalNodes; node++ {
+				if memInc.HasContext[node] != memFull.HasContext[node] {
+					t.Fatalf("[Seed %d, Mut %d] HasContext divergiu no nó %d", seed, m, node)
+				}
+				if memInc.Contextual[node] != memFull.Contextual[node] {
+					diff := HammingDistance(memInc.Contextual[node], memFull.Contextual[node])
+					t.Fatalf("[Seed %d, Mut %d] Contextual divergiu no nó %d: %d bits diferentes", seed, m, node, diff)
+				}
+			}
+		}
+	}
+	t.Logf("PASS: Fuzz testing de atualização incremental em 20 grafos aleatórios com 3 mutações consecutivas: 100%% idêntico!")
+}
+
+// Benchmarks rigorosamente pareados sobre o mesmo grafo de 1.000 nós
+func BenchmarkPropagateHop2_1000Nodes_SameGraph(b *testing.B) {
 	const totalNodes = 1000
 	rng := rand.New(rand.NewSource(42))
-
 	orig := make([]Hypervector, totalNodes)
 	for i := 0; i < totalNodes; i++ {
 		orig[i] = GenerateRandomHypervector(rng)
@@ -103,23 +138,50 @@ func BenchmarkIncrementalUpdate_1000Nodes(b *testing.B) {
 	adj := make([][]AdjEdge, totalNodes)
 	for i := 0; i < totalNodes; i++ {
 		for k := 0; k < 3; k++ {
-			target := uint16((i + k + 1) % totalNodes)
-			adj[i] = append(adj[i], AdjEdge{Target: target, Rel: RelCall})
+			tgt := uint16((i + k + 1) % totalNodes)
+			adj[i] = append(adj[i], AdjEdge{Target: tgt, Rel: RelCall})
 		}
 	}
-
 	graph := BuildCSRFromAdj(totalNodes, adj)
 	hdc := NewHDCSystem(42)
-	hop1 := hdc.PropagateHop1(graph, orig)
-	mem := hdc.PropagateHop2(graph, hop1)
-
-	newVec := GenerateRandomHypervector(rng)
-	mutatedNode := uint16(500)
 
 	b.ResetTimer()
 	b.ReportAllocs()
 
 	for i := 0; i < b.N; i++ {
-		_, _ = hdc.UpdateNodeIncremental2Hop(graph, mem, mutatedNode, newVec)
+		hop1 := hdc.PropagateHop1(graph, orig)
+		_ = hdc.PropagateHop2(graph, hop1)
+	}
+}
+
+func BenchmarkIncrementalUpdate_1000Nodes_SameGraph(b *testing.B) {
+	const totalNodes = 1000
+	rng := rand.New(rand.NewSource(42))
+	orig := make([]Hypervector, totalNodes)
+	for i := 0; i < totalNodes; i++ {
+		orig[i] = GenerateRandomHypervector(rng)
+	}
+
+	adj := make([][]AdjEdge, totalNodes)
+	for i := 0; i < totalNodes; i++ {
+		for k := 0; k < 3; k++ {
+			tgt := uint16((i + k + 1) % totalNodes)
+			adj[i] = append(adj[i], AdjEdge{Target: tgt, Rel: RelCall})
+		}
+	}
+	graph := BuildCSRFromAdj(totalNodes, adj)
+	revGraph := BuildRevCSR(graph)
+	hdc := NewHDCSystem(42)
+	hop1 := hdc.PropagateHop1(graph, orig)
+	mem := hdc.PropagateHop2(graph, hop1)
+
+	newVec := GenerateRandomHypervector(rng)
+	mutNode := uint16(500)
+
+	b.ResetTimer()
+	b.ReportAllocs()
+
+	for i := 0; i < b.N; i++ {
+		_, _ = hdc.UpdateNodeIncremental2Hop(graph, revGraph, mem, mutNode, newVec)
 	}
 }

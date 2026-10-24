@@ -1,5 +1,51 @@
 package hdccsr
 
+// ExpRevCSRGraph armazena as arestas reversas (predecessores) para busca de dependências em O(1).
+type ExpRevCSRGraph struct {
+	TotalNodes int
+	RevOffsets []uint32
+	RevEdges   []uint16
+}
+
+// BuildRevCSR constrói o índice CSR reverso a partir do CSR direto.
+func BuildRevCSR(graph *ExpCSRGraph) *ExpRevCSRGraph {
+	total := graph.TotalNodes
+	inDegrees := make([]uint32, total)
+
+	for _, tgt := range graph.Edges {
+		inDegrees[tgt]++
+	}
+
+	revOffsets := make([]uint32, total+1)
+	current := uint32(0)
+	for i := 0; i < total; i++ {
+		revOffsets[i] = current
+		current += inDegrees[i]
+	}
+	revOffsets[total] = current
+
+	revEdges := make([]uint16, len(graph.Edges))
+	fillPos := make([]uint32, total)
+	copy(fillPos, revOffsets[:total])
+
+	for u := 0; u < total; u++ {
+		start := graph.Offsets[u]
+		end := graph.Offsets[u+1]
+		for e := start; e < end; e++ {
+			tgt := graph.Edges[e]
+			pos := fillPos[tgt]
+			revEdges[pos] = uint16(u)
+			fillPos[tgt]++
+		}
+	}
+
+	return &ExpRevCSRGraph{
+		TotalNodes: total,
+		RevOffsets: revOffsets,
+		RevEdges:   revEdges,
+	}
+}
+
 // InvalidationSet mantém o conjunto de nós afetados pela mutação de um nó.
 type InvalidationSet struct {
 	Hop1Affected []uint16 // Nós que chamam diretamente o nó alterado (u -> v)
@@ -7,52 +53,37 @@ type InvalidationSet struct {
 	AllAffected  map[uint16]bool
 }
 
-// FindAffectedCone2Hop identifica todos os nós cuja memória de 2 saltos depende do mutatedNode.
-// Para isso, navega as arestas reversas (quem tem aresta apontando para mutatedNode).
-func FindAffectedCone2Hop(graph *ExpCSRGraph, mutatedNode uint16) InvalidationSet {
-	// 1. Encontra predecessores de 1-hop (u -> mutatedNode)
-	// Como graph armazena arestas de saída, construímos a lista reversa ou varremos:
-	total := graph.TotalNodes
-	hop1Set := make(map[uint16]bool)
-
-	for u := 0; u < total; u++ {
-		start := graph.Offsets[u]
-		end := graph.Offsets[u+1]
-		for e := start; e < end; e++ {
-			if graph.Edges[e] == mutatedNode {
-				hop1Set[uint16(u)] = true
-				break
-			}
-		}
-	}
-
-	// 2. Encontra predecessores de 2-hop (w -> u)
-	hop2Set := make(map[uint16]bool)
-	for w := 0; w < total; w++ {
-		start := graph.Offsets[w]
-		end := graph.Offsets[w+1]
-		for e := start; e < end; e++ {
-			target := graph.Edges[e]
-			if hop1Set[target] {
-				hop2Set[uint16(w)] = true
-				break
-			}
-		}
-	}
-
+// FindAffectedCone2HopFast localiza o cone de dependência reversa em tempo ótimo via CSR reverso.
+// Complexidade: O(grau_reverso_1 + grau_reverso_2), sem varredura global do grafo.
+func FindAffectedCone2HopFast(revGraph *ExpRevCSRGraph, mutatedNode uint16) InvalidationSet {
 	all := make(map[uint16]bool)
 	all[mutatedNode] = true
 
-	hop1List := make([]uint16, 0, len(hop1Set))
-	for u := range hop1Set {
-		hop1List = append(hop1List, u)
-		all[u] = true
+	// 1. Predecessores de 1-hop (quem chama mutatedNode)
+	startM := revGraph.RevOffsets[mutatedNode]
+	endM := revGraph.RevOffsets[mutatedNode+1]
+	hop1List := make([]uint16, 0, endM-startM)
+
+	for e := startM; e < endM; e++ {
+		u := revGraph.RevEdges[e]
+		if !all[u] {
+			all[u] = true
+			hop1List = append(hop1List, u)
+		}
 	}
 
-	hop2List := make([]uint16, 0, len(hop2Set))
-	for w := range hop2Set {
-		hop2List = append(hop2List, w)
-		all[w] = true
+	// 2. Predecessores de 2-hop (quem chama os nós de hop1)
+	hop2List := make([]uint16, 0, len(hop1List)*4)
+	for _, u := range hop1List {
+		startU := revGraph.RevOffsets[u]
+		endU := revGraph.RevOffsets[u+1]
+		for e := startU; e < endU; e++ {
+			w := revGraph.RevEdges[e]
+			if !all[w] {
+				all[w] = true
+				hop2List = append(hop2List, w)
+			}
+		}
 	}
 
 	return InvalidationSet{
@@ -62,7 +93,30 @@ func FindAffectedCone2Hop(graph *ExpCSRGraph, mutatedNode uint16) InvalidationSe
 	}
 }
 
-// RecomputeNodeHop2 recalcula o vetor contextual de 2-hop de um único nó v no CSR.
+// RecomputeNodeHop1 recalcula o vetor contextual de 1-hop para o nó v.
+func (s *HDCSystem) RecomputeNodeHop1(graph *ExpCSRGraph, orig []Hypervector, v int) (Hypervector, bool) {
+	start := graph.Offsets[v]
+	end := graph.Offsets[v+1]
+	degree := int(end - start)
+	if degree == 0 {
+		return Hypervector{}, false
+	}
+
+	msgBuf := make([]Hypervector, 0, degree)
+	for e := start; e < end; e++ {
+		u := graph.Edges[e]
+		rel := graph.Relations[e]
+		relCfg := s.RelConfigs[rel]
+		msg := Bind(RotL8K(orig[u], relCfg.Shift), relCfg.RoleVector)
+		msgBuf = append(msgBuf, msg)
+	}
+
+	return Majority(msgBuf, s.TieBreaker)
+}
+
+// RecomputeNodeHop2 recalcula o vetor contextual de 2-hop para o nó v.
+// Se não houver caminhos de 2 saltos (ex: todos os vizinhos são folhas),
+// aplica rigorosamente o mesmo fallback da reconstrução completa: preserva o contexto de 1-hop!
 func (s *HDCSystem) RecomputeNodeHop2(graph *ExpCSRGraph, orig []Hypervector, v int) (Hypervector, bool) {
 	startV := graph.Offsets[v]
 	endV := graph.Offsets[v+1]
@@ -84,7 +138,7 @@ func (s *HDCSystem) RecomputeNodeHop2(graph *ExpCSRGraph, orig []Hypervector, v 
 		for eU := startU; eU < endU; eU++ {
 			w := graph.Edges[eU]
 			if int(w) == v {
-				continue // Evita backtracking imediato v -> u -> v
+				continue // Evita backtracking v -> u -> v
 			}
 			rel2 := graph.Relations[eU]
 			cfg2 := s.RelConfigs[rel2]
@@ -98,38 +152,40 @@ func (s *HDCSystem) RecomputeNodeHop2(graph *ExpCSRGraph, orig []Hypervector, v 
 	}
 
 	if len(msgBuf) == 0 {
-		return Hypervector{}, false
+		// FALLBACK CANÔNICO IDÊNTICO À RECONSTRUÇÃO COMPLETA:
+		// Quando não há caminhos de 2 saltos, preserva o contexto de 1-hop recalculado!
+		return s.RecomputeNodeHop1(graph, orig, v)
 	}
 
 	return Majority(msgBuf, s.TieBreaker)
 }
 
 // UpdateNodeIncremental2Hop atualiza a memória de 2-hop após a mutação do vetor original de um nó.
-// Atualiza estritamente os nós que dependem do nó alterado, preservando todos os demais.
 func (s *HDCSystem) UpdateNodeIncremental2Hop(
 	graph *ExpCSRGraph,
+	revGraph *ExpRevCSRGraph,
 	currentMem *ContextualMemory,
 	mutatedNode uint16,
 	newVec Hypervector,
 ) (*ContextualMemory, InvalidationSet) {
-	// Identifica o cone afetado
-	affected := FindAffectedCone2Hop(graph, mutatedNode)
+	affected := FindAffectedCone2HopFast(revGraph, mutatedNode)
 
 	// Atualiza o vetor original do nó mutado
 	currentMem.Original[mutatedNode] = newVec
 
-	// Recalcula o contexto de 2-hop para o nó mutado (se tiver caminhos de saída)
+	// Recalcula o contexto de 2-hop para o próprio nó mutado
 	ctxSelf, okSelf := s.RecomputeNodeHop2(graph, currentMem.Original, int(mutatedNode))
 	currentMem.Contextual[mutatedNode] = ctxSelf
 	currentMem.HasContext[mutatedNode] = okSelf
 
-	// Recalcula o contexto apenas para os predecessores afetados (Hop1 e Hop2)
+	// Recalcula o contexto para os nós de 1-hop afetados
 	for _, u := range affected.Hop1Affected {
 		ctx, ok := s.RecomputeNodeHop2(graph, currentMem.Original, int(u))
 		currentMem.Contextual[u] = ctx
 		currentMem.HasContext[u] = ok
 	}
 
+	// Recalcula o contexto para os nós de 2-hop afetados
 	for _, w := range affected.Hop2Affected {
 		if w == mutatedNode {
 			continue
