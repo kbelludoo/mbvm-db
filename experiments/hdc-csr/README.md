@@ -66,3 +66,51 @@ BenchmarkPropagateHop1_1000Nodes           296 ops      4.07 ms/op   1.02 MB/op 
 3. **Avaliação de Recall@10**:
    - Experimento A (Semântica Pura): **0.00%** de Recall@10 em relações estruturais.
    - Experimento B (HDC 1-Hop com Unbinding): **50.00%** de Recall@10 (recupera perfeitamente o nó chamado sem falsa identificação entre 300 candidatos).
+
+
+## 4. Avaliação multicaminho estocástica (fase experimental)
+
+O teste `TestMultiPath50Seeds` executa **50 sementes reproduzíveis** em grafos sintéticos de
+160 nós com graus de saída 3–5, ciclos bidirecionais, relações distintas e quatro classes
+semânticas artificiais. Os hipervetores de cada classe derivam de protótipos pseudoaleatórios
+com ruído; **não usam os embeddings reais treinados pelo Kaggle**.
+
+Para cada consulta, a relevância é a interseção de:
+- Destinos atingíveis no CSR por `RelCall -> RelCall` em exatamente dois saltos;
+- Nós da classe semântica exigida pela consulta.
+
+Medimos `Recall@10` e `MRR` para:
+1. **CSR exato + semântica**: percorre o grafo e ranqueia apenas destinos obtidos por CSR.
+2. **Semântica isolada**: pesquisa todo o conjunto sem consultar CSR.
+3. **HDC híbrido**: desassocia uma memória 2-Hop previamente calculada e
+   combina distância de Hamming contextual com afinidade semântica, pesquisando
+   todos os candidatos.
+
+O caso HDC compara a **capacidade associativa após a superposição**,
+não a descoberta de relações ausentes do grafo original.
+
+### Interpretação de complexidade
+
+- Teste Hamming de **um candidato** com vetores de tamanho fixo: custo constante
+  em relação a `N` (128 palavras uint64).
+- **Varredura global** de `N` candidatos: `O(N * 128)`. Não é busca global O(1).
+- Travessia CSR local de 2 saltos: proporcional aos graus dos nós alcançados,
+  não necessariamente a `|V| + |E|` do grafo completo.
+- Construção `PropagateHop2`: pré-processamento potencialmente custoso que deve
+  ser separado da latência por consulta e da memória residente.
+
+### Novos benchmarks
+
+- `BenchmarkPropagateHop2_1000Nodes`: construção da memória contextual 2-Hop;
+- `BenchmarkCSR2HopSemantics_1000Nodes`: travessia 2-Hop e filtro semântico;
+- `BenchmarkHDC2HopMembership_1000Nodes`: teste de um candidato contra memória HDC;
+- `BenchmarkHDC2HopFullScan_1000Nodes`: pesquisa HDC em todos os 1.000 candidatos.
+
+Os resultados das 50 sementes são gerados em `multipath_quality.json` e
+consolidados pelo CI no `official_benchmarks.json`, sob `multipath_evaluation`.
+A avaliação **não exige** que HDC vença o CSR; números baixos ou perdas por
+`Majority` devem aparecer nos resultados, não ser escondidos por asserções.
+
+O benchmark do CI usa `-cpu 1` mas não garante núcleo físico exclusivo em
+runners compartilhados. Resultados de CPUs diferentes não devem ser usados
+para alegar ganhos de otimização.
