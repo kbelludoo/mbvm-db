@@ -9,9 +9,9 @@ import (
 func TestV4TextReconstructionAndTokens(t *testing.T){
  src:=v4ExportText(0)
  if !strings.Contains(src,"Sync & Goroutines [Symbol #0]:")||
-    !strings.Contains(src,"Tags: concurrency.")|| // keyword correction: V4 ends in comma keywords rather than domain
+    !strings.Contains(src,"dependências para concurrency. Tags:")||
     !strings.Contains(src,"mutex,atomic,channels") {
-  t.Logf("actual V4 text: %s",src)
+  t.Fatalf("reconstructed V4 text mismatch: %s",src)
  }
  // Verify the canonicalizer strips only numeric IDs and keeps domain cues.
  a:=v4TokenSet(v4ExportText(0))
