@@ -135,3 +135,38 @@ func TestExtractGitArchivePAXMetadata(t *testing.T){
   t.Log("verified that Git PAX headers were metadata only and source was extracted")
  }
 }
+
+func TestExtractArchiveDeterministicPAXAndRejectLinks(t *testing.T){
+ // Go archive/tar.Writer emits a real POSIX global metadata header,
+ // independent of Git for Windows version, locale or archive settings.
+ const body="package fixture\nfunc Example(){}\n"
+ var archive bytes.Buffer
+ tw:=tar.NewWriter(&archive)
+ if err:=tw.WriteHeader(&tar.Header{
+  Name:"pax_global_header",Typeflag:tar.TypeXGlobalHeader,
+  PAXRecords:map[string]string{"comment":"metadata-only"},
+ });err!=nil{t.Fatal(err)}
+ if err:=tw.WriteHeader(&tar.Header{
+  Name:"pkg/example.go",Typeflag:tar.TypeReg,Mode:0600,Size:int64(len(body)),
+ });err!=nil{t.Fatal(err)}
+ if _,err:=tw.Write([]byte(body));err!=nil{t.Fatal(err)}
+ if err:=tw.Close();err!=nil{t.Fatal(err)}
+ dest:=t.TempDir()
+ if err:=extractArchiveEntries(bytes.NewReader(archive.Bytes()),dest);err!=nil{t.Fatal(err)}
+ got,err:=os.ReadFile(filepath.Join(dest,"pkg","example.go"))
+ if err!=nil||string(got)!=body{t.Fatalf("PAX extraction: got=%q err=%v",got,err)}
+ if _,err:=os.Stat(filepath.Join(dest,"pax_global_header"));!os.IsNotExist(err){
+  t.Fatalf("PAX metadata was materialized: %v",err)
+ }
+ // Global metadata must not broaden the extraction policy: symbolic
+ // links remain categorically disallowed, including archive escapes.
+ archive.Reset()
+ tw=tar.NewWriter(&archive)
+ if err:=tw.WriteHeader(&tar.Header{
+  Name:"bad",Typeflag:tar.TypeSymlink,Linkname:"../../outside",Mode:0777,
+ });err!=nil{t.Fatal(err)}
+ if err:=tw.Close();err!=nil{t.Fatal(err)}
+ if err:=extractArchiveEntries(bytes.NewReader(archive.Bytes()),t.TempDir());err==nil{
+  t.Fatal("unsafe TAR symlink accepted after PAX support")
+ }
+}
