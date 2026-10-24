@@ -1,51 +1,51 @@
 {
   "project": "MBVM-DB",
   "module": "experiments/hdc-csr",
-  "commit_sha": "5dca620222c7f23333ed9ef6740b182b13ede52a",
+  "commit_sha": "6a630736c8d294c3bd6fa57f81954a6d62579292",
   "baseline_reference_commit": "116ec92",
-  "generated_at_utc": "2026-10-24T15:20:59Z",
+  "generated_at_utc": "2026-10-24T15:22:27Z",
   "environment": {
     "compiler": "go version go1.27.3 linux/amd64",
-    "cpu": "INTEL(R) XEON(R) PLATINUM 8573C",
+    "cpu": "AMD EPYC 9V45 96-Core Processor",
     "execution_mode": "Single-Core (-cpu 1, GOMAXPROCS=1)",
     "os": "Linux"
   },
   "metrics": {
     "allocs_per_op_critical_path": 0,
-    "bind_8k_ns": 58.4,
+    "bind_8k_ns": 39.54,
     "bytes_per_op_critical_path": 0,
     "csr_1000nodes_allocs_per_op": 3,
     "csr_1000nodes_bytes_per_op": 1025104,
     "csr_1000nodes_hop2_allocs_per_op": 607,
     "csr_1000nodes_hop2_bytes_per_op": 1086816,
-    "csr_1000nodes_propagate_hop2_ms": 183.106336,
-    "csr_1000nodes_propagate_ms": 2.568707,
-    "csr_hybrid_query_1000nodes_ns": 1845,
-    "e2e_csr_ns": 1584,
-    "e2e_hdc_ns": 466117,
-    "e2e_semantic_ns": 244885,
-    "hamming_8k_ns": 95.36,
-    "hdc_membership_query_1000nodes_ns": 596.8,
-    "incremental_update_1000nodes_ms": 1.002187,
+    "csr_1000nodes_propagate_hop2_ms": 141.928812,
+    "csr_1000nodes_propagate_ms": 1.766244,
+    "csr_hybrid_query_1000nodes_ns": 1293,
+    "e2e_csr_ns": 1103,
+    "e2e_hdc_ns": 298120,
+    "e2e_semantic_ns": 166447,
+    "hamming_8k_ns": 49.03,
+    "hdc_membership_query_1000nodes_ns": 378.4,
+    "incremental_update_1000nodes_ms": 0.803735,
     "incremental_update_allocs_per_op": 9,
     "incremental_update_bytes_per_op": 14528,
     "lsh_indexed_allocs_per_op": 48,
-    "lsh_indexed_bytes_per_op": 49202,
-    "lsh_indexed_query_ns": 503128,
+    "lsh_indexed_bytes_per_op": 49208,
+    "lsh_indexed_query_ns": 379326,
     "lsh_oracle_fullscan_allocs_per_op": 4,
     "lsh_oracle_fullscan_bytes_per_op": 16472,
-    "lsh_oracle_fullscan_ns": 350758,
-    "lsh_query_speedup_x": 0.6971546008172871,
-    "majority3_8k_ns": 163.6,
+    "lsh_oracle_fullscan_ns": 250101,
+    "lsh_query_speedup_x": 0.659329969472169,
+    "majority3_8k_ns": 119.7,
     "memory_per_node_bytes": 1024,
-    "paired_full_rebuild_1000nodes_ms": 223.278771,
+    "paired_full_rebuild_1000nodes_ms": 180.537024,
     "paired_full_rebuild_allocs_per_op": 610,
     "paired_full_rebuild_bytes_per_op": 2111920,
     "paired_incremental_allocs_per_op": 81,
     "paired_incremental_bytes_per_op": 855200,
-    "paired_incremental_cached_reverse_1000nodes_ms": 9.144145,
-    "paired_incremental_speedup_x": 24.41767611952785,
-    "rotl_8k_ns": 298
+    "paired_incremental_cached_reverse_1000nodes_ms": 7.669268,
+    "paired_incremental_speedup_x": 23.54032014528636,
+    "rotl_8k_ns": 216
   },
   "quality_evaluation": {
     "experiment_a_pure_semantic_recall10": 0,
@@ -73,14 +73,14 @@
       {
         "avg_false_positives": 1,
         "avg_returned_results": 6,
-        "estimated_qps": 543304.0492450792,
-        "mean_latency_us": 1.8405899999999995,
+        "estimated_qps": 706309.4624278684,
+        "mean_latency_us": 1.4158099999999996,
         "mrr": 0.865,
         "name": "CSR_Local_Semantic",
         "normalized_precision_at_k": 1,
-        "p50_latency_us": 1.641,
-        "p95_latency_us": 2.515,
-        "p99_latency_us": 8.653,
+        "p50_latency_us": 1.472,
+        "p95_latency_us": 2.133,
+        "p99_latency_us": 3.736,
         "precision_at_10": 0.5,
         "precision_of_returned": 0.833333333333333,
         "recall_at_10": 1
@@ -88,14 +88,14 @@
       {
         "avg_false_positives": 9.96,
         "avg_returned_results": 10,
-        "estimated_qps": 4121.803412647136,
-        "mean_latency_us": 242.61225,
+        "estimated_qps": 5919.75394661116,
+        "mean_latency_us": 168.92594,
         "mrr": 0.008083333333333333,
         "name": "Pure_Semantic_Scan",
         "normalized_precision_at_k": 0.008,
-        "p50_latency_us": 237.469,
-        "p95_latency_us": 277.418,
-        "p99_latency_us": 323.865,
+        "p50_latency_us": 165.389,
+        "p95_latency_us": 186.851,
+        "p99_latency_us": 198.178,
         "precision_at_10": 0.004,
         "precision_of_returned": 0.004,
         "recall_at_10": 0.008
@@ -103,14 +103,14 @@
       {
         "avg_false_positives": 7.97,
         "avg_returned_results": 10,
-        "estimated_qps": 2023.501308426299,
-        "mean_latency_us": 494.1929099999999,
+        "estimated_qps": 3170.6044887452567,
+        "mean_latency_us": 315.3972700000001,
         "mrr": 0.29083333333333317,
         "name": "HDC_Hybrid_ContextSimilarity",
         "normalized_precision_at_k": 0.40599999999999925,
-        "p50_latency_us": 487.692,
-        "p95_latency_us": 529.817,
-        "p99_latency_us": 738.954,
+        "p50_latency_us": 311.359,
+        "p95_latency_us": 343.277,
+        "p99_latency_us": 375.746,
         "precision_at_10": 0.20299999999999963,
         "precision_of_returned": 0.20299999999999963,
         "recall_at_10": 0.40599999999999925
@@ -118,14 +118,14 @@
       {
         "avg_false_positives": 5,
         "avg_returned_results": 10,
-        "estimated_qps": 2879.9827661831278,
-        "mean_latency_us": 347.2242999999999,
+        "estimated_qps": 3946.675208324267,
+        "mean_latency_us": 253.37782999999985,
         "mrr": 1,
         "name": "HDC_Canonical_VSA_Unbinding",
         "normalized_precision_at_k": 1,
-        "p50_latency_us": 343.41,
-        "p95_latency_us": 369.722,
-        "p99_latency_us": 554.302,
+        "p50_latency_us": 248.114,
+        "p95_latency_us": 270.648,
+        "p99_latency_us": 298.479,
         "precision_at_10": 0.5,
         "precision_of_returned": 0.5,
         "recall_at_10": 1
@@ -492,5 +492,294 @@
       }
     ],
     "source": "synthetic 4-class multipath fixture seed 8080; not Kaggle neural embeddings"
+  },
+  "algebra_composition_evaluation": {
+    "atomic_training_range": "[-10,10], 21 numbers x 4 operations x 2 singleton positions",
+    "composition_training_labels": 0,
+    "interpretation": "Toy affine function composition; HDC memorizes task programs, not arithmetic. Compare HDC against nearest-key exact map. No Kaggle neural embeddings or general reasoning claim.",
+    "ood_range": "[11,30], 20 numbers x 16 two-operation programs",
+    "program_count": 16,
+    "results": [
+      {
+        "hdc_program_recovered": 16,
+        "learned_affine_with_explicit_composition": {
+          "accuracy": 1,
+          "correct": 320,
+          "mean_absolute_error": 3.8613556796462826e-14,
+          "total": 320
+        },
+        "learned_affine_with_hdc_program_memory": {
+          "accuracy": 1,
+          "correct": 320,
+          "mean_absolute_error": 3.8613556796462826e-14,
+          "total": 320
+        },
+        "learned_affine_with_nearest_key_map": {
+          "accuracy": 1,
+          "correct": 320,
+          "mean_absolute_error": 3.8613556796462826e-14,
+          "total": 320
+        },
+        "nearest_key_program_recovered": 16,
+        "neural_mlp_direct": {
+          "accuracy": 0.03125,
+          "correct": 10,
+          "mean_absolute_error": 24.50127313050459,
+          "total": 320
+        },
+        "noise_rate": 0,
+        "queries": 320,
+        "seed": 2026
+      },
+      {
+        "hdc_program_recovered": 16,
+        "learned_affine_with_explicit_composition": {
+          "accuracy": 1,
+          "correct": 320,
+          "mean_absolute_error": 3.8613556796462826e-14,
+          "total": 320
+        },
+        "learned_affine_with_hdc_program_memory": {
+          "accuracy": 1,
+          "correct": 320,
+          "mean_absolute_error": 3.8613556796462826e-14,
+          "total": 320
+        },
+        "learned_affine_with_nearest_key_map": {
+          "accuracy": 1,
+          "correct": 320,
+          "mean_absolute_error": 3.8613556796462826e-14,
+          "total": 320
+        },
+        "nearest_key_program_recovered": 16,
+        "neural_mlp_direct": {
+          "accuracy": 0.03125,
+          "correct": 10,
+          "mean_absolute_error": 24.50127313050459,
+          "total": 320
+        },
+        "noise_rate": 0.2,
+        "queries": 320,
+        "seed": 2026
+      },
+      {
+        "hdc_program_recovered": 16,
+        "learned_affine_with_explicit_composition": {
+          "accuracy": 1,
+          "correct": 320,
+          "mean_absolute_error": 3.8613556796462826e-14,
+          "total": 320
+        },
+        "learned_affine_with_hdc_program_memory": {
+          "accuracy": 1,
+          "correct": 320,
+          "mean_absolute_error": 3.8613556796462826e-14,
+          "total": 320
+        },
+        "learned_affine_with_nearest_key_map": {
+          "accuracy": 1,
+          "correct": 320,
+          "mean_absolute_error": 3.8613556796462826e-14,
+          "total": 320
+        },
+        "nearest_key_program_recovered": 16,
+        "neural_mlp_direct": {
+          "accuracy": 0.03125,
+          "correct": 10,
+          "mean_absolute_error": 24.50127313050459,
+          "total": 320
+        },
+        "noise_rate": 0.4,
+        "queries": 320,
+        "seed": 2026
+      },
+      {
+        "hdc_program_recovered": 16,
+        "learned_affine_with_explicit_composition": {
+          "accuracy": 1,
+          "correct": 320,
+          "mean_absolute_error": 3.8613556796462826e-14,
+          "total": 320
+        },
+        "learned_affine_with_hdc_program_memory": {
+          "accuracy": 1,
+          "correct": 320,
+          "mean_absolute_error": 3.8613556796462826e-14,
+          "total": 320
+        },
+        "learned_affine_with_nearest_key_map": {
+          "accuracy": 1,
+          "correct": 320,
+          "mean_absolute_error": 3.8613556796462826e-14,
+          "total": 320
+        },
+        "nearest_key_program_recovered": 16,
+        "neural_mlp_direct": {
+          "accuracy": 0.009375,
+          "correct": 3,
+          "mean_absolute_error": 22.623623733450284,
+          "total": 320
+        },
+        "noise_rate": 0,
+        "queries": 320,
+        "seed": 2027
+      },
+      {
+        "hdc_program_recovered": 16,
+        "learned_affine_with_explicit_composition": {
+          "accuracy": 1,
+          "correct": 320,
+          "mean_absolute_error": 3.8613556796462826e-14,
+          "total": 320
+        },
+        "learned_affine_with_hdc_program_memory": {
+          "accuracy": 1,
+          "correct": 320,
+          "mean_absolute_error": 3.8613556796462826e-14,
+          "total": 320
+        },
+        "learned_affine_with_nearest_key_map": {
+          "accuracy": 1,
+          "correct": 320,
+          "mean_absolute_error": 3.8613556796462826e-14,
+          "total": 320
+        },
+        "nearest_key_program_recovered": 16,
+        "neural_mlp_direct": {
+          "accuracy": 0.009375,
+          "correct": 3,
+          "mean_absolute_error": 22.623623733450284,
+          "total": 320
+        },
+        "noise_rate": 0.2,
+        "queries": 320,
+        "seed": 2027
+      },
+      {
+        "hdc_program_recovered": 16,
+        "learned_affine_with_explicit_composition": {
+          "accuracy": 1,
+          "correct": 320,
+          "mean_absolute_error": 3.8613556796462826e-14,
+          "total": 320
+        },
+        "learned_affine_with_hdc_program_memory": {
+          "accuracy": 1,
+          "correct": 320,
+          "mean_absolute_error": 3.8613556796462826e-14,
+          "total": 320
+        },
+        "learned_affine_with_nearest_key_map": {
+          "accuracy": 1,
+          "correct": 320,
+          "mean_absolute_error": 3.8613556796462826e-14,
+          "total": 320
+        },
+        "nearest_key_program_recovered": 16,
+        "neural_mlp_direct": {
+          "accuracy": 0.009375,
+          "correct": 3,
+          "mean_absolute_error": 22.623623733450284,
+          "total": 320
+        },
+        "noise_rate": 0.4,
+        "queries": 320,
+        "seed": 2027
+      },
+      {
+        "hdc_program_recovered": 16,
+        "learned_affine_with_explicit_composition": {
+          "accuracy": 1,
+          "correct": 320,
+          "mean_absolute_error": 3.8613556796462826e-14,
+          "total": 320
+        },
+        "learned_affine_with_hdc_program_memory": {
+          "accuracy": 1,
+          "correct": 320,
+          "mean_absolute_error": 3.8613556796462826e-14,
+          "total": 320
+        },
+        "learned_affine_with_nearest_key_map": {
+          "accuracy": 1,
+          "correct": 320,
+          "mean_absolute_error": 3.8613556796462826e-14,
+          "total": 320
+        },
+        "nearest_key_program_recovered": 16,
+        "neural_mlp_direct": {
+          "accuracy": 0.009375,
+          "correct": 3,
+          "mean_absolute_error": 23.688286275577674,
+          "total": 320
+        },
+        "noise_rate": 0,
+        "queries": 320,
+        "seed": 2028
+      },
+      {
+        "hdc_program_recovered": 16,
+        "learned_affine_with_explicit_composition": {
+          "accuracy": 1,
+          "correct": 320,
+          "mean_absolute_error": 3.8613556796462826e-14,
+          "total": 320
+        },
+        "learned_affine_with_hdc_program_memory": {
+          "accuracy": 1,
+          "correct": 320,
+          "mean_absolute_error": 3.8613556796462826e-14,
+          "total": 320
+        },
+        "learned_affine_with_nearest_key_map": {
+          "accuracy": 1,
+          "correct": 320,
+          "mean_absolute_error": 3.8613556796462826e-14,
+          "total": 320
+        },
+        "nearest_key_program_recovered": 16,
+        "neural_mlp_direct": {
+          "accuracy": 0.009375,
+          "correct": 3,
+          "mean_absolute_error": 23.688286275577674,
+          "total": 320
+        },
+        "noise_rate": 0.2,
+        "queries": 320,
+        "seed": 2028
+      },
+      {
+        "hdc_program_recovered": 16,
+        "learned_affine_with_explicit_composition": {
+          "accuracy": 1,
+          "correct": 320,
+          "mean_absolute_error": 3.8613556796462826e-14,
+          "total": 320
+        },
+        "learned_affine_with_hdc_program_memory": {
+          "accuracy": 1,
+          "correct": 320,
+          "mean_absolute_error": 3.8613556796462826e-14,
+          "total": 320
+        },
+        "learned_affine_with_nearest_key_map": {
+          "accuracy": 1,
+          "correct": 320,
+          "mean_absolute_error": 3.8613556796462826e-14,
+          "total": 320
+        },
+        "nearest_key_program_recovered": 16,
+        "neural_mlp_direct": {
+          "accuracy": 0.009375,
+          "correct": 3,
+          "mean_absolute_error": 23.688286275577674,
+          "total": 320
+        },
+        "noise_rate": 0.4,
+        "queries": 320,
+        "seed": 2028
+      }
+    ],
+    "schema": "mbvm-compositional-ood-v1"
   }
 }
