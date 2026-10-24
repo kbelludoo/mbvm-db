@@ -71,6 +71,9 @@ func (c *RuleComposer) ComposeCRT(r1, r2 *Rule) (*ComposedCandidate, error) {
 	slices.Sort(combinedResidues)
 
 	derivedID := fmt.Sprintf("COMPOSED-CRT-%s-x-%s", r1.ID, r2.ID)
+	if _, exists := c.Graph.IDToIdx[derivedID]; exists {
+		return nil, fmt.Errorf("CRT rule %s is already registered: %w", derivedID, ErrInvalidInput)
+	}
 	derivedRule := &Rule{
 		ID:           derivedID,
 		Name:         fmt.Sprintf("CRT Composition of %s and %s", r1.Name, r2.Name),
@@ -102,11 +105,23 @@ func (c *RuleComposer) ComposeCRT(r1, r2 *Rule) (*ComposedCandidate, error) {
 		candidate.Refutation = err.Error()
 		candidate.DerivedRule.Status = StatusRefuted
 	} else {
-		candidate.Verified = true
+		// Register the derived rule BEFORE adding composition edges.
+		// A graph built solely from BaseRules cannot connect to an unknown target ID;
+		// ignoring AddEdge errors previously left "verified" rules disconnected.
+		//
+		// Rebuild locally first, then publish the complete graph atomically.
+		// Rule.Dependencies supplies the derived -> parent dependency edges.
+		nextRules := append(slices.Clone(c.BaseRules), derivedRule)
+		nextGraph := NewMathCSRGraph(nextRules)
+		for _, parentID := range candidate.ParentIDs {
+			if err := nextGraph.AddEdge(parentID, derivedRule.ID, RelComposition); err != nil {
+				return nil, fmt.Errorf("register CRT composition %s -> %s: %w", parentID, derivedRule.ID, err)
+			}
+		}
+		c.BaseRules = nextRules
+		*c.Graph = *nextGraph
+		candidate.Verified = true // finite-instance check, not a universal formal proof
 		candidate.DerivedRule.Status = StatusVerified
-		// Add edge in CSR graph
-		_ = c.Graph.AddEdge(r1.ID, derivedRule.ID, RelComposition)
-		_ = c.Graph.AddEdge(r2.ID, derivedRule.ID, RelComposition)
 	}
 
 	return candidate, nil
