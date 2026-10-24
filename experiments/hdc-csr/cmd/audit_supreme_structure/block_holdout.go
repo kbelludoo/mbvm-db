@@ -54,11 +54,8 @@ func analyzeBlockHoldout(vectors [][]byte, queries int) (BlockHoldoutReport,erro
  margins:=make([]int,0,queries)
  var sameTotal,otherTotal int64
  for q:=0;q<queries;q++{
-  block:=q%totalBlocks
-  ordinal:=q/totalBlocks
-  nInBlock:=(queries-1-block)/totalBlocks+1
-  offset:=(ordinal+1)*blockSize/(nInBlock+1)
-  src:=block*blockSize+offset
+  src:=blockHoldoutQueryID(q,queries)
+  block:=src/blockSize
   label:=inferGroup(src)
   r.PerDomainQueries[label]++
   bestOverallDist,bestOverallID:=vectorBits+1,-1
