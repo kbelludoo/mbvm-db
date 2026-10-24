@@ -17,6 +17,12 @@ func main() {
 
 	cmd := os.Args[1]
 	switch cmd {
+	case "impact":
+		if err := runImpact(os.Args[2:],os.Stdout);err!=nil{
+			fmt.Fprintf(os.Stderr,"mbvm-db impact: %v\n",err)
+			os.Exit(1)
+		}
+
 	case "build":
 		if len(os.Args) < 3 {
 			fmt.Println("Uso: mbvm-db build <dir_projeto> [arquivo_saida.mbvmdb]")
@@ -194,6 +200,7 @@ func printUsage() {
 	fmt.Println("MBVM-DB — Micro-Bytecode Virtual Machine Database Engine (Go 1.27)")
 	fmt.Println()
 	fmt.Println("COMANDOS:")
+	fmt.Println("  mbvm-db impact -dir <pacote> -symbol <funcao> [-simulate-add-param int] [-json]  Analisa impacto tipado")
 	fmt.Println("  mbvm-db build <dir> [arquivo.mbvmdb]             Compila AST para banco binário indexado persistente")
 	fmt.Println("  mbvm-db ingest-proto <saida.mbvmdb> <f.bin ...>  Ingere descritores Protobuf para banco binário de protocolo")
 	fmt.Println("  mbvm-db slice <dir|banco.mbvmdb> <simb> [prof]   Extrai fatia subgrafo para IA (-93% tokens)")
