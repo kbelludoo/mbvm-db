@@ -134,7 +134,7 @@ func (e *PureSemanticEngine) QueryTopK(req QueryRequest) []QueryResult {
 }
 
 // ---------------------------------------------------------
-// 3. Motor HDC Híbrido Pré-computado (Memória Contextual 2-Hop)
+// 3. Motor HDC Híbrido Pré-computado (Context Similarity)
 // ---------------------------------------------------------
 type HDCHybridEngine struct {
 	totalNodes int
@@ -153,7 +153,7 @@ func NewHDCHybridEngine(total int, orig []Hypervector, ctx *ContextualMemory, al
 }
 
 func (e *HDCHybridEngine) Name() string {
-	return "HDC_Hybrid_Scan"
+	return "HDC_Hybrid_ContextSimilarity"
 }
 
 func (e *HDCHybridEngine) QueryTopK(req QueryRequest) []QueryResult {
@@ -167,6 +167,83 @@ func (e *HDCHybridEngine) QueryTopK(req QueryRequest) []QueryResult {
 		}
 		score := ScoreCombined(req.Semantic, sourceCtx, e.origVec[id], e.contextMem.Contextual[id], e.contextMem.HasContext[id], e.alpha)
 		candidates = append(candidates, QueryResult{NodeID: id, Score: score})
+	}
+
+	sort.Slice(candidates, func(i, j int) bool {
+		return candidates[i].Score > candidates[j].Score
+	})
+
+	if len(candidates) > req.K {
+		candidates = candidates[:req.K]
+	}
+	return candidates
+}
+
+// ---------------------------------------------------------
+// 4. Motor HDC VSA Canonical Unbinding (Álgebra Canônica de 2-Hop)
+// ---------------------------------------------------------
+type HDCVSAUnbindEngine struct {
+	totalNodes     int
+	origVec        []Hypervector
+	contextMem     *ContextualMemory
+	role2Hop       Hypervector
+	shift2Hop      int
+}
+
+func NewHDCVSAUnbindEngine(total int, orig []Hypervector, ctx *ContextualMemory, hdcSys *HDCSystem) *HDCVSAUnbindEngine {
+	relCfgCall := hdcSys.RelConfigs[RelCall]
+	role2Hop := Bind(RotL8K(relCfgCall.RoleVector, relCfgCall.Shift), relCfgCall.RoleVector)
+	shift2Hop := relCfgCall.Shift + relCfgCall.Shift
+
+	return &HDCVSAUnbindEngine{
+		totalNodes: total,
+		origVec:    orig,
+		contextMem: ctx,
+		role2Hop:   role2Hop,
+		shift2Hop:  shift2Hop,
+	}
+}
+
+func (e *HDCVSAUnbindEngine) Name() string {
+	return "HDC_Canonical_VSA_Unbinding"
+}
+
+func (e *HDCVSAUnbindEngine) QueryTopK(req QueryRequest) []QueryResult {
+	sourceCtx := e.contextMem.Contextual[req.SourceID]
+	hasCtx := e.contextMem.HasContext[req.SourceID]
+
+	// Se não tem contexto de 2-hop, fallback para semântica pura
+	if !hasCtx {
+		candidates := make([]QueryResult, 0, e.totalNodes-1)
+		for i := 0; i < e.totalNodes; i++ {
+			id := uint16(i)
+			if id == req.SourceID {
+				continue
+			}
+			score := ScoreSemanticOnly(req.Semantic, e.origVec[id])
+			candidates = append(candidates, QueryResult{NodeID: id, Score: score})
+		}
+		sort.Slice(candidates, func(i, j int) bool { return candidates[i].Score > candidates[j].Score })
+		if len(candidates) > req.K { candidates = candidates[:req.K] }
+		return candidates
+	}
+
+	// Desassociação do vetor alvo esperado a 2 saltos
+	targetPredicted := RotR8K(Unbind(sourceCtx, e.role2Hop), e.shift2Hop)
+
+	candidates := make([]QueryResult, 0, e.totalNodes-1)
+	for i := 0; i < e.totalNodes; i++ {
+		id := uint16(i)
+		if id == req.SourceID {
+			continue
+		}
+		scoreVSA := ScoreSemanticOnly(targetPredicted, e.origVec[id])
+		scoreDirect := ScoreSemanticOnly(req.Semantic, e.origVec[id])
+		finalScore := scoreVSA
+		if scoreDirect > finalScore {
+			finalScore = scoreDirect
+		}
+		candidates = append(candidates, QueryResult{NodeID: id, Score: finalScore})
 	}
 
 	sort.Slice(candidates, func(i, j int) bool {

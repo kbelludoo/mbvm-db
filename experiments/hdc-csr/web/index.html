@@ -182,15 +182,17 @@
           <tr>
             <th>Motor Pareado</th>
             <th>Recall@10</th>
-            <th>Precision@10</th>
+            <th>P@10 (Convencional)</th>
+            <th>Precisão Relativa</th>
+            <th>Precisão dos Retornados</th>
+            <th>Falsos Positivos</th>
             <th>MRR</th>
             <th>Latência p50</th>
-            <th>Latência p95</th>
-            <th>Throughput (QPS)</th>
+            <th>QPS Estimado</th>
           </tr>
         </thead>
         <tbody id="ciPairedBody">
-          <tr><td colspan="7">Carregando métricas pareadas E2E do CI...</td></tr>
+          <tr><td colspan="9">Carregando métricas pareadas E2E do CI...</td></tr>
         </tbody>
       </table>
 
@@ -358,16 +360,22 @@
           let pairedRows = "";
           pairedEngines.forEach(eng => {
             const isCsr = eng.name.includes("CSR");
-            const color = isCsr ? "#3fb950" : (eng.name.includes("HDC") ? "#58a6ff" : "#8b949e");
+            const isVsa = eng.name.includes("VSA");
+            const color = isCsr ? "#3fb950" : (isVsa ? "#bc8cff" : (eng.name.includes("HDC") ? "#58a6ff" : "#8b949e"));
+            const p10 = (eng.precision_at_10 * 100).toFixed(1);
+            const relP = (eng.relative_precision * 100).toFixed(1);
+            const pRet = (eng.precision_of_returned * 100).toFixed(1);
             pairedRows += `
               <tr>
                 <td><strong style="color: ${color};">${eng.name}</strong></td>
                 <td>${(eng.recall_at_10 * 100).toFixed(1)}%</td>
-                <td>${(eng.precision_at_10 * 100).toFixed(1)}%</td>
+                <td><strong>${p10}%</strong></td>
+                <td>${relP}%</td>
+                <td>${pRet}%</td>
+                <td>${eng.avg_false_positives.toFixed(2)}</td>
                 <td>${eng.mrr.toFixed(3)}</td>
                 <td class="metric-value">${eng.p50_latency_us.toFixed(2)} µs</td>
-                <td>${eng.p95_latency_us.toFixed(2)} µs</td>
-                <td>${eng.queries_per_sec.toFixed(0)} QPS</td>
+                <td>${(eng.estimated_qps || eng.queries_per_sec).toFixed(0)}</td>
               </tr>
             `;
           });

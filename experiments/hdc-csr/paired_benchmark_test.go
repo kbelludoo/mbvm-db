@@ -10,16 +10,19 @@ import (
 )
 
 type EngineMetrics struct {
-	Name            string  `json:"name"`
-	RecallAt10      float64 `json:"recall_at_10"`
-	PrecisionAt10   float64 `json:"precision_at_10"`
-	MRR             float64 `json:"mrr"`
-	AvgFalsePos     float64 `json:"avg_false_positives"`
-	P50LatencyUs    float64 `json:"p50_latency_us"`
-	P95LatencyUs    float64 `json:"p95_latency_us"`
-	P99LatencyUs    float64 `json:"p99_latency_us"`
-	MeanLatencyUs   float64 `json:"mean_latency_us"`
-	QueriesPerSec   float64 `json:"queries_per_sec"`
+	Name                string  `json:"name"`
+	RecallAt10          float64 `json:"recall_at_10"`
+	PrecisionAt10       float64 `json:"precision_at_10"`          // Definição canônica: hits / 10
+	RelativePrecision   float64 `json:"relative_precision"`       // hits / min(10, |relevantes|)
+	PrecisionOfReturned float64 `json:"precision_of_returned"`    // hits / len(returned)
+	AvgReturnedResults  float64 `json:"avg_returned_results"`
+	MRR                 float64 `json:"mrr"`
+	AvgFalsePos         float64 `json:"avg_false_positives"`
+	P50LatencyUs        float64 `json:"p50_latency_us"`
+	P95LatencyUs        float64 `json:"p95_latency_us"`
+	P99LatencyUs        float64 `json:"p99_latency_us"`
+	MeanLatencyUs       float64 `json:"mean_latency_us"`
+	EstimatedQPS        float64 `json:"estimated_qps"`            // Inverso da latência média (10^6 / mean_latency_us)
 }
 
 type PairedBenchmarkReport struct {
@@ -29,8 +32,7 @@ type PairedBenchmarkReport struct {
 	Engines      []EngineMetrics `json:"engines"`
 }
 
-// buildBenchmarkEnvironment constrói um ambiente representativo com grafos e semântica correlacionada.
-func buildBenchmarkEnvironment(totalNodes int, seed int64) (*ExpCSRGraph, []Hypervector, *ContextualMemory, []QueryRequest, []map[uint16]bool) {
+func buildBenchmarkEnvironment(totalNodes int, seed int64) (*ExpCSRGraph, []Hypervector, *ContextualMemory, *HDCSystem, []QueryRequest, []map[uint16]bool) {
 	rng := rand.New(rand.NewSource(seed))
 
 	orig := make([]Hypervector, totalNodes)
@@ -38,7 +40,6 @@ func buildBenchmarkEnvironment(totalNodes int, seed int64) (*ExpCSRGraph, []Hype
 		orig[i] = GenerateRandomHypervector(rng)
 	}
 
-	// Constrói grafo esparso (3 arestas por nó)
 	adj := make([][]AdjEdge, totalNodes)
 	for i := 0; i < totalNodes; i++ {
 		for k := 0; k < 3; k++ {
@@ -52,13 +53,11 @@ func buildBenchmarkEnvironment(totalNodes int, seed int64) (*ExpCSRGraph, []Hype
 	hop1 := hdc.PropagateHop1(graph, orig)
 	hop2 := hdc.PropagateHop2(graph, hop1)
 
-	// Gera 100 queries de teste com destinos relevantes no 2-hop
 	queries := make([]QueryRequest, 0, 100)
 	groundTruths := make([]map[uint16]bool, 0, 100)
 
 	for q := 0; q < 100; q++ {
 		source := uint16(rng.Intn(totalNodes))
-		// Identifica os verdadeiros destinos a 2 saltos
 		relevant := make(map[uint16]bool)
 		startV := graph.Offsets[source]
 		endV := graph.Offsets[source+1]
@@ -86,7 +85,7 @@ func buildBenchmarkEnvironment(totalNodes int, seed int64) (*ExpCSRGraph, []Hype
 		groundTruths = append(groundTruths, relevant)
 	}
 
-	return graph, orig, hop2, queries, groundTruths
+	return graph, orig, hop2, hdc, queries, groundTruths
 }
 
 func evaluateEngineE2E(engine UnifiedEngine, queries []QueryRequest, groundTruths []map[uint16]bool) EngineMetrics {
@@ -94,7 +93,10 @@ func evaluateEngineE2E(engine UnifiedEngine, queries []QueryRequest, groundTruth
 	latencies := make([]float64, n)
 
 	totalRecall := 0.0
-	totalPrecision := 0.0
+	totalPrecision10 := 0.0
+	totalRelPrecision := 0.0
+	totalPrecisionReturned := 0.0
+	totalReturned := 0.0
 	totalMRR := 0.0
 	totalFalsePos := 0.0
 
@@ -104,10 +106,10 @@ func evaluateEngineE2E(engine UnifiedEngine, queries []QueryRequest, groundTruth
 
 		t0 := time.Now()
 		results := engine.QueryTopK(req)
-		durUs := float64(time.Since(t0).Nanoseconds()) / 1000.0
+		durNs := time.Since(t0).Nanoseconds()
+		durUs := float64(durNs) / 1000.0
 		latencies[i] = durUs
 
-		// Avalia acertos
 		hits := 0
 		firstRankHit := -1
 		for r, res := range results {
@@ -119,27 +121,38 @@ func evaluateEngineE2E(engine UnifiedEngine, queries []QueryRequest, groundTruth
 			}
 		}
 
-		// Recall@K
+		retCount := len(results)
+		totalReturned += float64(retCount)
+
+		// 1. Recall@K: hits / |relevantes|
 		if len(truth) > 0 {
 			totalRecall += float64(hits) / float64(len(truth))
 		}
 
-		// Precision@K (normalizado por min(K, |relevantes|) para neutralizar penalidade estrutural)
+		// 2. Precision@10 Convencional Estrita: hits / 10
+		totalPrecision10 += float64(hits) / float64(req.K)
+
+		// 3. Precisão Relativa (Normalizada pelo teto min(10, |relevantes|))
 		maxPossibleHits := req.K
 		if len(truth) < maxPossibleHits {
 			maxPossibleHits = len(truth)
 		}
 		if maxPossibleHits > 0 {
-			totalPrecision += float64(hits) / float64(maxPossibleHits)
+			totalRelPrecision += float64(hits) / float64(maxPossibleHits)
 		}
 
-		// MRR
+		// 4. Precisão entre os resultados efetivamente retornados
+		if retCount > 0 {
+			totalPrecisionReturned += float64(hits) / float64(retCount)
+		}
+
+		// 5. MRR
 		if firstRankHit != -1 {
 			totalMRR += 1.0 / float64(firstRankHit)
 		}
 
-		// Falsos positivos
-		totalFalsePos += float64(len(results) - hits)
+		// 6. Falsos positivos
+		totalFalsePos += float64(retCount - hits)
 	}
 
 	sort.Float64s(latencies)
@@ -158,28 +171,32 @@ func evaluateEngineE2E(engine UnifiedEngine, queries []QueryRequest, groundTruth
 	}
 
 	return EngineMetrics{
-		Name:          engine.Name(),
-		RecallAt10:    totalRecall / float64(n),
-		PrecisionAt10: totalPrecision / float64(n),
-		MRR:           totalMRR / float64(n),
-		AvgFalsePos:   totalFalsePos / float64(n),
-		P50LatencyUs:  p50,
-		P95LatencyUs:  p95,
-		P99LatencyUs:  p99,
-		MeanLatencyUs: mean,
-		QueriesPerSec: qps,
+		Name:                engine.Name(),
+		RecallAt10:          totalRecall / float64(n),
+		PrecisionAt10:       totalPrecision10 / float64(n),
+		RelativePrecision:   totalRelPrecision / float64(n),
+		PrecisionOfReturned: totalPrecisionReturned / float64(n),
+		AvgReturnedResults:  totalReturned / float64(n),
+		MRR:                 totalMRR / float64(n),
+		AvgFalsePos:         totalFalsePos / float64(n),
+		P50LatencyUs:        p50,
+		P95LatencyUs:        p95,
+		P99LatencyUs:        p99,
+		MeanLatencyUs:       mean,
+		EstimatedQPS:        qps,
 	}
 }
 
 func TestPairedBenchmarkE2E(t *testing.T) {
 	const totalNodes = 1000
-	graph, orig, hop2, queries, groundTruths := buildBenchmarkEnvironment(totalNodes, 42)
+	graph, orig, hop2, hdcSys, queries, groundTruths := buildBenchmarkEnvironment(totalNodes, 42)
 
 	csrEng := NewCSREngine(graph, orig)
 	semEng := NewPureSemanticEngine(totalNodes, orig)
-	hdcEng := NewHDCHybridEngine(totalNodes, orig, hop2, 0.5)
+	hdcSimEng := NewHDCHybridEngine(totalNodes, orig, hop2, 0.5)
+	hdcVsaEng := NewHDCVSAUnbindEngine(totalNodes, orig, hop2, hdcSys)
 
-	engines := []UnifiedEngine{csrEng, semEng, hdcEng}
+	engines := []UnifiedEngine{csrEng, semEng, hdcSimEng, hdcVsaEng}
 	report := PairedBenchmarkReport{
 		TotalQueries: len(queries),
 		TotalNodes:   totalNodes,
@@ -192,21 +209,23 @@ func TestPairedBenchmarkE2E(t *testing.T) {
 		metrics := evaluateEngineE2E(eng, queries, groundTruths)
 		report.Engines = append(report.Engines, metrics)
 		t.Logf("[%s]", metrics.Name)
-		t.Logf("  Recall@10:    %.2f%%", metrics.RecallAt10*100)
-		t.Logf("  Precision@10: %.2f%%", metrics.PrecisionAt10*100)
-		t.Logf("  MRR:          %.3f", metrics.MRR)
-		t.Logf("  Falsos Pos.:  %.1f", metrics.AvgFalsePos)
-		t.Logf("  Latência p50: %.2f µs (p95: %.2f µs, p99: %.2f µs)", metrics.P50LatencyUs, metrics.P95LatencyUs, metrics.P99LatencyUs)
-		t.Logf("  Throughput:   %.0f QPS", metrics.QueriesPerSec)
+		t.Logf("  Recall@10:             %.2f%%", metrics.RecallAt10*100)
+		t.Logf("  Precision@10 (Conv.):  %.2f%% (máximo teórico: 50.0%%)", metrics.PrecisionAt10*100)
+		t.Logf("  Relative Precision:    %.2f%%", metrics.RelativePrecision*100)
+		t.Logf("  Precision of Returned: %.2f%%", metrics.PrecisionOfReturned*100)
+		t.Logf("  Resultados Retornados: %.1f", metrics.AvgReturnedResults)
+		t.Logf("  MRR:                   %.3f", metrics.MRR)
+		t.Logf("  Falsos Positivos:      %.2f", metrics.AvgFalsePos)
+		t.Logf("  Latência p50:          %.2f µs (p95: %.2f µs, p99: %.2f µs)", metrics.P50LatencyUs, metrics.P95LatencyUs, metrics.P99LatencyUs)
+		t.Logf("  QPS Estimado:          %.0f", metrics.EstimatedQPS)
 	}
 
 	reportBytes, _ := json.MarshalIndent(report, "", "  ")
 	_ = os.WriteFile("paired_metrics.json", reportBytes, 0644)
 }
 
-// Benchmarks no formato Go para CI
 func BenchmarkE2E_CSR(b *testing.B) {
-	graph, orig, _, queries, _ := buildBenchmarkEnvironment(1000, 42)
+	graph, orig, _, _, queries, _ := buildBenchmarkEnvironment(1000, 42)
 	eng := NewCSREngine(graph, orig)
 	nQ := len(queries)
 
@@ -218,7 +237,7 @@ func BenchmarkE2E_CSR(b *testing.B) {
 }
 
 func BenchmarkE2E_Semantic(b *testing.B) {
-	_, orig, _, queries, _ := buildBenchmarkEnvironment(1000, 42)
+	_, orig, _, _, queries, _ := buildBenchmarkEnvironment(1000, 42)
 	eng := NewPureSemanticEngine(1000, orig)
 	nQ := len(queries)
 
@@ -230,7 +249,7 @@ func BenchmarkE2E_Semantic(b *testing.B) {
 }
 
 func BenchmarkE2E_HDC(b *testing.B) {
-	_, orig, hop2, queries, _ := buildBenchmarkEnvironment(1000, 42)
+	_, orig, hop2, _, queries, _ := buildBenchmarkEnvironment(1000, 42)
 	eng := NewHDCHybridEngine(1000, orig, hop2, 0.5)
 	nQ := len(queries)
 
