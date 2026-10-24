@@ -145,17 +145,21 @@ func (db *DB) IngestGoAST(rootDir string) error {
 
 				// Collect calls inside function
 				var callees []string
-				ast.Inspect(x.Body, func(bodyNode ast.Node) bool {
-					if call, ok := bodyNode.(*ast.CallExpr); ok {
-						switch fn := call.Fun.(type) {
-						case *ast.Ident:
-							callees = append(callees, fn.Name)
-						case *ast.SelectorExpr:
-							callees = append(callees, fn.Sel.Name)
+				if x.Body != nil {
+					ast.Inspect(x.Body, func(bodyNode ast.Node) bool {
+						if call, ok := bodyNode.(*ast.CallExpr); ok {
+							switch fn := call.Fun.(type) {
+							case *ast.Ident:
+								callees = append(callees, fn.Name)
+							case *ast.SelectorExpr:
+								if fn.Sel != nil {
+									callees = append(callees, fn.Sel.Name)
+								}
+							}
 						}
-					}
-					return true
-				})
+						return true
+					})
+				}
 
 				callerKey := funcName
 				if recvStr != "" {
