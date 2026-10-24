@@ -26,6 +26,7 @@ type BenchReport struct {
 	PairedE2EEvaluation     map[string]any    `json:"paired_e2e_evaluation,omitempty"`
 	LSHEvaluation           map[string]any    `json:"binary_lsh_evaluation,omitempty"`
 	LSHSweepEvaluation      map[string]any    `json:"binary_lsh_sweep_evaluation,omitempty"`
+	CompositionEvaluation   map[string]any    `json:"algebra_composition_evaluation,omitempty"`
 }
 
 func main() {
@@ -241,6 +242,25 @@ func main() {
 		fmt.Println("FALHA CRÍTICA NO CI: esperado 24 configurações no LSH sweep")
 		os.Exit(1)
 	}
+	rawComposition, err := os.ReadFile("experiments/hdc-csr/composition_lab_results.json")
+	if err != nil {
+		fmt.Printf("FALHA CRÍTICA NO CI: composition_lab_results.json ausente: %v\n", err)
+		os.Exit(1)
+	}
+	var composition map[string]any
+	if err := json.Unmarshal(rawComposition, &composition); err != nil {
+		fmt.Printf("FALHA CRÍTICA NO CI: composition_lab_results.json inválido: %v\n", err)
+		os.Exit(1)
+	}
+	if composition["schema"] != "mbvm-compositional-ood-v1" || composition["composition_training_labels"] != float64(0) {
+		fmt.Println("FALHA CRÍTICA NO CI: esquema do laboratório composicional inválido")
+		os.Exit(1)
+	}
+	if results, ok := composition["results"].([]any); !ok || len(results)!=9 {
+		fmt.Println("FALHA CRÍTICA NO CI: laboratório composicional deve ter 9 combinações de seed/ruído")
+		os.Exit(1)
+	}
+
 	var pairedMetrics map[string]any
 	rawPairedBytes, err := os.ReadFile(pairedFile)
 	if err == nil {
@@ -265,6 +285,7 @@ func main() {
 		PairedE2EEvaluation: pairedMetrics,
 		LSHEvaluation: lshMetrics,
 		LSHSweepEvaluation: lshSweep,
+		CompositionEvaluation: composition,
 	}
 
 	outBytes, err := json.MarshalIndent(report, "", "  ")
