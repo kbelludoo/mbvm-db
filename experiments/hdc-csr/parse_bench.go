@@ -28,6 +28,7 @@ type BenchReport struct {
 	LSHSweepEvaluation      map[string]any    `json:"binary_lsh_sweep_evaluation,omitempty"`
 	CompositionEvaluation   map[string]any    `json:"algebra_composition_evaluation,omitempty"`
 	DynamicCompositionEvaluation map[string]any `json:"dynamic_composition_evaluation,omitempty"`
+	HDCCapacityEvaluation map[string]any `json:"hdc_capacity_evaluation,omitempty"`
 }
 
 func main() {
@@ -291,6 +292,27 @@ func main() {
 		os.Exit(1)
 	}
 
+	rawCapacity, err := os.ReadFile("experiments/hdc-csr/hdc_capacity_results.json")
+	if err != nil {
+		fmt.Printf("FALHA CRÍTICA NO CI: hdc_capacity_results.json ausente: %v\n", err)
+		os.Exit(1)
+	}
+	var hdcCapacity map[string]any
+	if err := json.Unmarshal(rawCapacity, &hdcCapacity); err != nil {
+		fmt.Printf("FALHA CRÍTICA NO CI: hdc_capacity_results.json inválido: %v\n", err)
+		os.Exit(1)
+	}
+	if hdcCapacity["schema"] != "mbvm-hdc-capacity-v1" ||
+		hdcCapacity["composition_training_labels"] != float64(0) ||
+		hdcCapacity["compositions_pre_stored"] != float64(0) {
+		fmt.Println("FALHA CRÍTICA NO CI: dados de capacidade inválidos")
+		os.Exit(1)
+	}
+	if settings, ok := hdcCapacity["results"].([]any); !ok || len(settings)!=120 {
+		fmt.Println("FALHA CRÍTICA NO CI: esperado 120 cenários do HDC capacity stress")
+		os.Exit(1)
+	}
+
 	var pairedMetrics map[string]any
 	rawPairedBytes, err := os.ReadFile(pairedFile)
 	if err == nil {
@@ -317,6 +339,7 @@ func main() {
 		LSHSweepEvaluation: lshSweep,
 		CompositionEvaluation: composition,
 		DynamicCompositionEvaluation: dynamic,
+		HDCCapacityEvaluation: hdcCapacity,
 	}
 
 	outBytes, err := json.MarshalIndent(report, "", "  ")
