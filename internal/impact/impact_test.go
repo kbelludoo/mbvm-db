@@ -38,7 +38,7 @@ func TestSymbolIdentityAmbiguityAndBlastRadius(t *testing.T){
  if len(reach.Direct)!=1||len(reach.Transitive)!=1||g.Symbols[reach.Direct[0]].Name!="CallA"||g.Symbols[reach.Transitive[0]].Name!="ViaA"{
   t.Fatalf("expected CallA direct and ViaA transitive, got %+v",reach)
  }
- if g.UnresolvedCalls<1{t.Fatal("must record unresolved interface dispatch")}
+ if g.ExcludedCalls<1{t.Fatal("must count excluded interface dispatch")}
  for _,call:=range g.Calls{
   if g.Symbols[call.Caller].Name=="ViaInterface"{t.Fatal("interface call linked to arbitrary concrete method")}
  }
