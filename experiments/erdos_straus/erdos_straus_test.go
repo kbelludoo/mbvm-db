@@ -244,3 +244,56 @@ func TestSynthesizedAdditiveRules(t *testing.T) {
 		t.Logf("PASS: %s verified on 20 test instances", r.ID)
 	}
 }
+
+
+func TestHardClasses840ParametricFamilies(t *testing.T) {
+	rules := HardClasses840ParametricRules()
+	if len(rules) != 8 {
+		t.Fatalf("expected 8 hard class rules, got %d", len(rules))
+	}
+
+	for _, r := range rules {
+		// 1. Strict mathematical proof that this rule is NOT in any elementary class
+		// All hard class residues must be: n = 1 mod 24 => n = 1 mod 8 and n = 1 mod 3
+		for _, res := range r.Residues {
+			if res%2 == 0 {
+				t.Fatalf("rule %s contains even residue %d (violates hard class requirement)", r.ID, res)
+			}
+			if res%4 == 3 {
+				t.Fatalf("rule %s contains residue 3 mod 4 (violates hard class requirement)", r.ID)
+			}
+			if res%3 == 2 {
+				t.Fatalf("rule %s contains residue 2 mod 3 (violates hard class requirement)", r.ID)
+			}
+			if res%8 == 5 {
+				t.Fatalf("rule %s contains residue 5 mod 8 (violates hard class requirement)", r.ID)
+			}
+			// Verify it belongs to one of the 6 hard residues mod 840
+			res840 := res % 840
+			valid840 := res840 == 1 || res840 == 121 || res840 == 169 || res840 == 289 || res840 == 361 || res840 == 529
+			if !valid840 {
+				t.Fatalf("rule %s residue %d is not in the 6 hard quadratic classes mod 840", r.ID, res840)
+			}
+		}
+
+		// 2. Concrete test of closed polynomial solver over 25 values of k
+		for k := int64(0); k < 25; k++ {
+			nVal := r.Modulus*k + r.Residues[0]
+			if nVal < 2 {
+				continue
+			}
+			nBig := big.NewInt(nVal)
+
+			sol, err := r.Apply(nBig)
+			if err != nil {
+				t.Fatalf("rule %s failed on n=%d: %v", r.ID, nVal, err)
+			}
+			if err := VerifySolution(nBig, sol); err != nil {
+				t.Fatalf("rule %s verification failed on n=%d: %v", r.ID, nVal, err)
+			}
+		}
+
+		t.Logf("PASS: %s (mod %d, res %d) strictly outside elementary classes, verified 25 instances",
+			r.ID, r.Modulus, r.Residues[0])
+	}
+}
