@@ -1,6 +1,8 @@
 package hdccsr
 
 import (
+	"encoding/json"
+	"os"
 	"strings"
 	"testing"
 )
@@ -42,6 +44,40 @@ func TestRealWorldASTImpactOnOwnPackage(t *testing.T){
 		len(manifest.Symbols),graph.Edges,sym.Package,sym.Name,target,
 		reach.ImmediateCallers,reach.TransitiveCallers,reach.AllCallers,reach.MaxDepth)
 	t.Logf("contract change (structural only): %s -> %s",mutation.OriginalType,mutation.ChangedType)
+	// Publish only real symbol graph metadata and interpretation:
+	// no private Go source texts, weights, tokens or SSH material.
+	report:=struct {
+		Schema string `json:"schema"`
+		Source string `json:"source"`
+		SourceDigest string `json:"source_digest"`
+		Nodes int `json:"real_symbol_count"`
+		ResolvedCallEdges int `json:"name_resolved_call_edges"`
+		TargetID int `json:"mutated_symbol_id"`
+		TargetName string `json:"mutated_symbol_name"`
+		SignatureChanged bool `json:"api_signature_changed"`
+		FormatOnlyStable bool `json:"format_only_signature_stable"`
+		Immediate int `json:"immediate_possible_callers"`
+		Transitive int `json:"transitive_possible_callers"`
+		All int `json:"all_possible_callers"`
+		MaxDepth int `json:"max_reverse_call_depth"`
+		FunctionalCounterexample bool `json:"functional_counterexample_confirmed"`
+		Label string `json:"interpretation"`
+	}{
+		Schema:"mbvm-real-world-ast-impact-v1",
+		Source:"actual checked-in pkg/mbvmdb Go declarations",
+		SourceDigest:manifest.SourceDigest,
+		Nodes:len(manifest.Symbols),ResolvedCallEdges:graph.Edges,
+		TargetID:target,TargetName:sym.Package+"."+sym.Name,
+		SignatureChanged:mutation.OriginalType!=mutation.ChangedType,
+		FormatOnlyStable:mutation.FormattingStable,
+		Immediate:reach.ImmediateCallers,Transitive:reach.TransitiveCallers,
+		All:reach.AllCallers,MaxDepth:reach.MaxDepth,
+		FunctionalCounterexample:false,
+		Label:"Real-source, name-resolved static caller candidates only; signature difference is NOT a demonstrated build failure or behavioral change.",
+	}
+	raw,err:=json.MarshalIndent(report,"","  ")
+	if err!=nil{t.Fatal(err)}
+	if err:=os.WriteFile("real_world_impact_output.json",raw,0644);err!=nil{t.Fatal(err)}
 }
 
 func TestRealImpactReverseCSRCyclesAndDuplicateEdges(t *testing.T){
