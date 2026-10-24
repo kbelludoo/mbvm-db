@@ -1,7 +1,10 @@
 package hdccsr
 
 import (
+ "crypto/sha256"
+ "encoding/hex"
  "encoding/json"
+ "sort"
  "os"
  "path/filepath"
  "strings"
@@ -78,6 +81,23 @@ func TestTypedRealIdentityAndBreakageFixture(t *testing.T){
  }
 }
 
+// Hash the exact source files selected by Go's build constraints. No
+// temporary rewrite is permitted during this experiment.
+func realTypedSourceDigest(g *TypedRealGraph)(string,error){
+ var paths []string
+ for _,f:=range g.Files{paths=append(paths,g.Fset.Position(f.Pos()).Filename)}
+ sort.Strings(paths)
+ h:=sha256.New()
+ for _,path:=range paths{
+  data,err:=os.ReadFile(path);if err!=nil{return "",err}
+  h.Write([]byte(path))
+  h.Write([]byte{0})
+  h.Write(data)
+  h.Write([]byte{0})
+ }
+ return hex.EncodeToString(h.Sum(nil)),nil
+}
+
 func realTypedFixture(t testing.TB)(*TypedRealGraph,int){
  t.Helper()
  graph,err:=LoadTypedRealGraph("../../pkg/mbvmdb","github.com/kbelludoo/mbvm-db/pkg/mbvmdb")
@@ -92,6 +112,7 @@ func realTypedFixture(t testing.TB)(*TypedRealGraph,int){
 
 func TestTypedRealImpactOnMBVMDB(t *testing.T){
  graph,target:=realTypedFixture(t)
+ sourceBefore,err:=realTypedSourceDigest(graph);if err!=nil{t.Fatal(err)}
  reach,err:=graph.Reverse.Impact(target,NewRealImpactScratch(len(graph.Nodes)))
  if err!=nil{t.Fatal(err)}
  if reach.ImmediateCallers<1{t.Fatal("target must have real direct callers")}
@@ -106,6 +127,14 @@ func TestTypedRealImpactOnMBVMDB(t *testing.T){
  if len(changed.DirectCallersWithErrors)==0{
   t.Fatalf("no statically resolved caller with concrete Go type error: %+v",changed)
  }
+ sourceAfter,err:=realTypedSourceDigest(graph);if err!=nil{t.Fatal(err)}
+ if sourceAfter!=sourceBefore{
+  t.Fatal("the real Go source files changed during a supposedly in-memory-only contract mutation")
+ }
+ failing:=make([]string,0,len(changed.DirectCallersWithErrors))
+ for _,id:=range changed.DirectCallersWithErrors{failing=append(failing,typedName(graph.Nodes[id]))}
+ directNames:=make([]string,0,len(changed.DirectCallers))
+ for _,id:=range changed.DirectCallers{directNames=append(directNames,typedName(graph.Nodes[id]))}
  t.Logf("REAL typed pkg/mbvmdb: %d typed function symbols, %d typed local call sites, target=%s, direct=%d, transitive=%d, compile-time diagnostics=%d, confirmed direct failing callers=%d",
   len(graph.Nodes),len(graph.CallSites),changed.TargetName,reach.ImmediateCallers,reach.TransitiveCallers,len(changed.TypeErrors),len(changed.DirectCallersWithErrors))
 
@@ -125,6 +154,9 @@ func TestTypedRealImpactOnMBVMDB(t *testing.T){
   DirectFailing int `json:"direct_callers_with_type_errors"`
   UntypedDispatchExcluded bool `json:"dynamic_dispatch_not_assumed_resolved"`
   SourceUnmodified bool `json:"source_files_unmodified"`
+  SourceDigest string `json:"source_files_sha256"`
+  TypedDirectCallers []string `json:"typed_direct_caller_names"`
+  FailingCallers []string `json:"direct_callers_with_type_errors_names"`
   RuntimeBehaviorVerified bool `json:"runtime_behavior_verified"`
   Interpretation string `json:"interpretation"`
  }{
@@ -133,7 +165,9 @@ func TestTypedRealImpactOnMBVMDB(t *testing.T){
   Target:changed.TargetName,Direct:reach.ImmediateCallers,Transitive:reach.TransitiveCallers,
   BaselineTyped:changed.BaselineTypechecked,ChangedTyped:changed.ChangedPackageTypechecked,
   CompileErrors:len(changed.TypeErrors),DirectFailing:len(changed.DirectCallersWithErrors),
-  UntypedDispatchExcluded:true,SourceUnmodified:true,RuntimeBehaviorVerified:false,
+  UntypedDispatchExcluded:true,SourceUnmodified:sourceAfter==sourceBefore,
+  SourceDigest:sourceAfter,TypedDirectCallers:directNames,FailingCallers:failing,
+  RuntimeBehaviorVerified:false,
   Interpretation:"Go/types compile errors for an in-memory required-parameter mutation. Typed direct callers are established, while transitive callers are possible impact only; cross-package/dynamic callers excluded.",
  }
  buf,err:=json.MarshalIndent(report,"","  ");if err!=nil{t.Fatal(err)}
