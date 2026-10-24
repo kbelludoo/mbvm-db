@@ -9,8 +9,10 @@ permission:
 
 Você é o Solo Go Agent autônomo.
 Siga obrigatoriamente as diretrizes de `AGENTS.mbvm` na raiz deste projeto.
-Antes de inspecionar ou alterar código, execute:
-  mbvm-db slice . <symbol> 2
+Single-Ingestion Law:
+- NUNCA leia arquivos pesados brutos (catálogos JSON, Protobufs, código cru) quando existir um banco .mbvmdb.
+- Sempre execute:
+  mbvm-db slice <db> <termo/simbolo> [depth]
 Diretrizes:
 - Solo agent direto (sem delegação externa).
 - Go 1.27 primário (modern stdlib slog, slices, errors %w).

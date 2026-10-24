@@ -27,7 +27,8 @@ func (db *DB) extractSliceLocked(targetSymbol string, maxDepth int) *ContextSlic
 	var queue []uint16
 	var selected []*SymbolRecord
 
-	// Find starting symbols matching target (exact name, pkg.Name, or Type.Name)
+	// Find starting symbols matching target
+	// 1. Exact match check first
 	for _, sym := range db.symbols {
 		fullName := fmt.Sprintf("%s.%s", sym.Package, sym.Name)
 		var recvName string
@@ -41,6 +42,30 @@ func (db *DB) extractSliceLocked(targetSymbol string, maxDepth int) *ContextSlic
 				visitedBitset.Set(sym.ID)
 				selected = append(selected, sym)
 				queue = append(queue, sym.ID)
+			}
+		}
+	}
+
+	// 2. Fallback to case-insensitive or index alias only if no exact match was found
+	if len(selected) == 0 {
+		targetLower := strings.ToLower(targetSymbol)
+		if directSym, exists := db.indexByName[targetLower]; exists {
+			if !visitedBitset.Has(directSym.ID) {
+				visitedBitset.Set(directSym.ID)
+				selected = append(selected, directSym)
+				queue = append(queue, directSym.ID)
+			}
+		}
+
+		if len(selected) == 0 {
+			for _, sym := range db.symbols {
+				if strings.EqualFold(sym.Name, targetSymbol) {
+					if !visitedBitset.Has(sym.ID) {
+						visitedBitset.Set(sym.ID)
+						selected = append(selected, sym)
+						queue = append(queue, sym.ID)
+					}
+				}
 			}
 		}
 	}
@@ -342,6 +367,27 @@ func (db *DB) ProjectSlice(symbols []*SymbolRecord) string {
 				} else {
 					sb.WriteString(fmt.Sprintf("  func %s%s\n", s.Name, s.Signature))
 				}
+			case "proto_message":
+				sb.WriteString(fmt.Sprintf("  message %s {\n", s.Name))
+				for _, f := range s.Fields {
+					sb.WriteString(fmt.Sprintf("    %s\n", f))
+				}
+				sb.WriteString("  }\n")
+			case "proto_enum":
+				sb.WriteString(fmt.Sprintf("  enum %s {\n", s.Name))
+				for _, f := range s.Fields {
+					sb.WriteString(fmt.Sprintf("    %s;\n", f))
+				}
+				sb.WriteString("  }\n")
+			case "proto_tag", "proto_enum_val":
+				sb.WriteString(fmt.Sprintf("  %s (%s)\n", s.Name, s.Receiver))
+			case "game_hunt":
+				sb.WriteString(fmt.Sprintf("  tier %s (%s) [%s]\n", s.Name, s.Receiver, s.Signature))
+				for _, f := range s.Fields {
+					sb.WriteString(fmt.Sprintf("    • %s\n", f))
+				}
+			default:
+				sb.WriteString(fmt.Sprintf("  symbol %s: %s\n", s.Name, strings.Join(s.Fields, ", ")))
 			}
 		}
 	}

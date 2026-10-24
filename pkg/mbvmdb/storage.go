@@ -8,6 +8,7 @@ import (
 	"hash/crc32"
 	"io"
 	"os"
+	"strings"
 )
 
 var (
@@ -388,13 +389,30 @@ func LoadFromFile(filename string) (*DB, error) {
 		rec := &sym
 		symbols = append(symbols, rec)
 		indexByName[rec.Name] = rec
+		indexByName[strings.ToLower(rec.Name)] = rec
 		if rec.Package != "" {
 			indexByName[fmt.Sprintf("%s.%s", rec.Package, rec.Name)] = rec
+			indexByName[strings.ToLower(fmt.Sprintf("%s.%s", rec.Package, rec.Name))] = rec
 		}
 		if rec.Receiver != "" {
 			cleanRecv := CleanReceiverName(rec.Receiver)
 			indexByName[fmt.Sprintf("%s.%s", cleanRecv, rec.Name)] = rec
+			indexByName[strings.ToLower(fmt.Sprintf("%s.%s", cleanRecv, rec.Name))] = rec
 			methodsByReceiver[cleanRecv] = append(methodsByReceiver[cleanRecv], rec)
+		}
+
+		// Re-index game hunt aliases and proto tags stored in signature/fields
+		if rec.Kind == "game_hunt" {
+			for _, f := range rec.Fields {
+				if strings.HasPrefix(f, "Monster: ") {
+					// e.g. "Monster: Rato da Ruína (rato-ruina)"
+					parts := strings.Split(f, "(")
+					if len(parts) > 1 {
+						mID := strings.Trim(strings.TrimSuffix(parts[1], ")"), " ")
+						indexByName[mID] = rec
+					}
+				}
+			}
 		}
 	}
 

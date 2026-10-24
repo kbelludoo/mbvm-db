@@ -9,7 +9,9 @@
 ^ops {
   solo_agent_execution!
   lang_primary_go!
-  mbvm_db_first[mbvm-db slice . <symbol> <depth>]!
+  single_ingestion_law!
+  mbvm_db_first[mbvm-db slice <db> <symbol/term> <depth>]!
+  never_read_raw_catalogs_or_protobufs!
   codebase_mbvm_root!
   context_before_dump!
   compiler_as_truth[go_vet]!
