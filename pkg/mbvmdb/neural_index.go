@@ -26,10 +26,10 @@ type NeuralIndex struct {
 	Words        []uint64 // TotalSymbols * 128 uint64 (acesso direto sem cópia)
 }
 
-// NewNeuralIndex cria um novo índice vazio em memória.
+// NewNeuralIndex cria um novo índice vazio em memória com formato Versão 2 (alinhado a 64 bytes).
 func NewNeuralIndex(totalSymbols uint32) *NeuralIndex {
 	return &NeuralIndex{
-		Version:      1,
+		Version:      2,
 		TotalSymbols: totalSymbols,
 		Words:        make([]uint64, int(totalSymbols)*NeuralWordsPerVec),
 	}
@@ -102,7 +102,7 @@ func (idx *NeuralIndex) SaveToFile(filename string) error {
 	return nil
 }
 
-// LoadFromFile carrega o índice do disco validando a assinatura e o alinhamento de 64 bytes.
+// LoadNeuralIndexFromFile carrega o índice do disco validando a assinatura e tratando versão 1 (18B) e versão 2 (64B alinhado).
 func LoadNeuralIndexFromFile(filename string) (*NeuralIndex, error) {
 	f, err := os.Open(filename)
 	if err != nil {
@@ -110,25 +110,34 @@ func LoadNeuralIndexFromFile(filename string) (*NeuralIndex, error) {
 	}
 	defer f.Close()
 
-	header := make([]byte, NeuralHeaderSize)
-	if _, err := io.ReadFull(f, header); err != nil {
-		return nil, fmt.Errorf("falha ao ler header de 64 bytes: %w", err)
+	// Lê os primeiros 18 bytes mínimos obrigatórios
+	minHeader := make([]byte, 18)
+	if _, err := io.ReadFull(f, minHeader); err != nil {
+		return nil, fmt.Errorf("falha ao ler header mínimo de 18 bytes: %w", err)
 	}
 
-	if string(header[0:8]) != NeuralMagic8K {
+	if string(minHeader[0:8]) != NeuralMagic8K {
 		return nil, errors.New("cabeçalho neural inválido: esperado MBVM8K1\\x00")
 	}
 
-	version := binary.LittleEndian.Uint32(header[8:12])
-	totalSymbols := binary.LittleEndian.Uint32(header[12:16])
-	dim := binary.LittleEndian.Uint16(header[16:18])
+	version := binary.LittleEndian.Uint32(minHeader[8:12])
+	totalSymbols := binary.LittleEndian.Uint32(minHeader[12:16])
+	dim := binary.LittleEndian.Uint16(minHeader[16:18])
 
-	_ = version
 	if dim != NeuralVectorBits {
 		return nil, fmt.Errorf("dimensão incompatível: %d (esperado %d)", dim, NeuralVectorBits)
 	}
 
+	// Se for versão 2 ou superior, pula os 46 bytes restantes de padding para manter alinhamento de 64 bytes
+	if version >= 2 {
+		padding := make([]byte, 46)
+		if _, err := io.ReadFull(f, padding); err != nil {
+			return nil, fmt.Errorf("falha ao ler padding de alinhamento de 64 bytes: %w", err)
+		}
+	}
+
 	idx := NewNeuralIndex(totalSymbols)
+	idx.Version = version
 	buf := make([]byte, 8)
 	totalWords := int(totalSymbols) * NeuralWordsPerVec
 	for i := 0; i < totalWords; i++ {

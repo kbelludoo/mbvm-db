@@ -11,7 +11,10 @@ import (
 func (db *DB) ExtractSlice(targetSymbol string, maxDepth int) *ContextSlice {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
+	return db.extractSliceLocked(targetSymbol, maxDepth)
+}
 
+func (db *DB) extractSliceLocked(targetSymbol string, maxDepth int) *ContextSlice {
 	if targetSymbol == "" || maxDepth < 0 {
 		return &ContextSlice{
 			TargetSymbol:   targetSymbol,
