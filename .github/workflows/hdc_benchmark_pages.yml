@@ -42,12 +42,31 @@ jobs:
       - name: Run Single-Core HDC Tests & Scientific Quality Evaluation
         run: |
           cd experiments/hdc-csr
-          go test -v -cpu 1
+          go test -count=1 -v -cpu 1
 
       - name: Run Official Single-Core Benchmarks
         run: |
           cd experiments/hdc-csr
-          go test -bench=Benchmark -benchmem -cpu 1 -benchtime=2s | tee bench_output.txt
+          set -o pipefail
+          go test -run='^
+
+      - name: Generate Automated CI Benchmarks & Quality JSON
+        run: |
+          go run experiments/hdc-csr/parse_bench.go experiments/hdc-csr/bench_output.txt experiments/hdc-csr/quality_output.json experiments/hdc-csr/multipath_quality.json
+
+      - name: Build WebAssembly Module
+        run: |
+          mkdir -p experiments/hdc-csr/web
+          cp "$(go env GOROOT)/lib/wasm/wasm_exec.js" experiments/hdc-csr/web/wasm_exec.js || cp "$(go env GOROOT)/misc/wasm/wasm_exec.js" experiments/hdc-csr/web/wasm_exec.js
+          GOOS=js GOARCH=wasm go build -o experiments/hdc-csr/web/mbvm_hdc.wasm ./experiments/hdc-csr/wasm
+
+      - name: Deploy to GitHub Pages (gh-pages branch)
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./experiments/hdc-csr/web
+          keep_files: false
+ -count=1 -bench=Benchmark -benchmem -cpu 1 -benchtime=2s | tee bench_output.txt
 
       - name: Generate Automated CI Benchmarks & Quality JSON
         run: |
