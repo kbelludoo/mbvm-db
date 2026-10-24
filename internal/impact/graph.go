@@ -37,7 +37,7 @@ type Graph struct{
  Calls []CallSite
  Offsets []uint32 // incoming CSR, len(Symbols)+1
  Callers []uint32
- UnresolvedCalls int
+ ExcludedCalls int // interface, external or otherwise not declared in this package
  fset *token.FileSet
  files []*ast.File
  importer types.Importer
@@ -92,10 +92,15 @@ func Load(dir string)(*Graph,error){
   ast.Inspect(caller.decl.Body,func(node ast.Node)bool{
    expr,ok:=node.(*ast.CallExpr);if !ok{return true}
    obj:=calledFunc(expr.Fun,info)
-   if obj==nil {g.UnresolvedCalls++;return true}
-   if callee,found:=byObject[obj];found {
-    g.Calls=append(g.Calls,CallSite{Caller:caller.ID,Callee:callee,Position:fset.Position(expr.Pos()).String()})
+   if obj!=nil{
+    if callee,found:=byObject[obj];found{
+     g.Calls=append(g.Calls,CallSite{Caller:caller.ID,Callee:callee,Position:fset.Position(expr.Pos()).String()})
+     return true
+    }
    }
+   // Excluded: interface method, external package, function value,
+   // built-in or other call without a local concrete types.Func target.
+   g.ExcludedCalls++
    return true
   })
  }
