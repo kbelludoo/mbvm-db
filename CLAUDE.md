@@ -1,4 +1,4 @@
-@CLAUDE:3.2.0%cli=claude%lang=go%runtime=mbvm%mode=solo%engine=mbvm-db
+@CLAUDE:3.3.0%cli=claude%lang=go%runtime=mbvm%mode=solo%engine=mbvm-db
 
 ^claude {
   follow_AGENTS_mbvm!
@@ -13,11 +13,14 @@
   codebase_mbvm_root!
   context_before_dump!
   compiler_as_truth[go_vet]!
-  race_detector[go_test]!
+  test_flags[go_test_-race_-count=1_-v]!
   root_cause_first!
   targeted_minimal_diffs!
   no_import_cycles!
-  modern_stdlib[slog,errors_wrap_w,slices]!
+  modern_stdlib[slog,slices]!
+  err_wrap_w_only!no_v_in_errors!
+  consumer_interfaces!
+  goroutine_leak_prevention[ctx_done_select]!
   no_secrets!maskSecret()!
   max_loc_400!
   skills_mandatory!
