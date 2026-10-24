@@ -26,10 +26,18 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Set up Go
+      - name: Set up Go from go.mod
         uses: actions/setup-go@v5
         with:
-          go-version: '1.24'
+          go-version-file: 'go.mod'
+          check-latest: true
+
+      - name: Capture Environment Info
+        id: envinfo
+        run: |
+          echo "GO_VERSION=$(go version)" >> $GITHUB_ENV
+          CPU_NAME=$(lscpu | grep 'Model name' | head -n1 | cut -d: -f2 | xargs || echo "Runner CPU")
+          echo "CPU_MODEL=$CPU_NAME" >> $GITHUB_ENV
 
       - name: Run Single-Core HDC Tests
         run: |
@@ -40,6 +48,10 @@ jobs:
         run: |
           cd experiments/hdc-csr
           go test -bench=Benchmark -benchmem -cpu 1 -benchtime=2s | tee bench_output.txt
+
+      - name: Generate Automated CI Benchmarks JSON
+        run: |
+          go run experiments/hdc-csr/parse_bench.go experiments/hdc-csr/bench_output.txt
 
       - name: Build WebAssembly Module
         run: |

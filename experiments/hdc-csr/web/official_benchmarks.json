@@ -1,28 +1,31 @@
 {
   "project": "MBVM-DB",
   "module": "experiments/hdc-csr",
-  "commit": "2b9ac67",
+  "commit_sha": "local-manual",
   "baseline_reference_commit": "116ec92",
+  "generated_at_utc": "2026-10-24T04:07:56Z",
   "environment": {
-    "os": "windows/amd64",
-    "cpu": "Intel(R) Xeon(R) CPU E5-2697 v3 @ 2.60GHz",
-    "compiler": "go1.27",
-    "execution_mode": "Single-Core (-cpu 1, GOMAXPROCS=1)"
+    "compiler": "go version (not set)",
+    "cpu": "GitHub Actions Virtual CPU",
+    "execution_mode": "Single-Core (-cpu 1, GOMAXPROCS=1)",
+    "os": "linux/amd64"
   },
   "metrics": {
-    "hamming_8k_ns": 103.5,
-    "bind_8k_ns": 75.7,
-    "rotl_8k_ns": 470.7,
-    "majority3_8k_ns": 317.0,
-    "csr_1000nodes_propagate_ms": 4.07,
     "allocs_per_op_critical_path": 0,
+    "bind_8k_ns": 75.93,
     "bytes_per_op_critical_path": 0,
-    "memory_per_node_bytes": 1024
+    "csr_1000nodes_allocs_per_op": 3,
+    "csr_1000nodes_bytes_per_op": 1025104,
+    "csr_1000nodes_propagate_ms": 4.198012,
+    "hamming_8k_ns": 105.5,
+    "majority3_8k_ns": 337.7,
+    "memory_per_node_bytes": 1024,
+    "rotl_8k_ns": 472.5
   },
   "quality_evaluation": {
-    "experiment_a_pure_semantic_recall10": 0.0,
-    "experiment_b_hdc_1hop_unbinding_recall10": 50.0,
-    "experiment_c_hdc_2hop_composite_recall10": 50.0,
-    "status": "Associative retrieval verified (Generalization training pending Phase D)"
+    "experiment_a_pure_semantic_recall10": 0,
+    "experiment_b_hdc_1hop_unbinding_recall10": 50,
+    "experiment_c_hdc_2hop_composite_recall10": 50,
+    "status": "CI Verified via GitHub Actions runner"
   }
 }

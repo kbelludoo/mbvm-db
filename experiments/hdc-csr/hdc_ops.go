@@ -144,7 +144,8 @@ func Majority(messages []Hypervector, tieBreakerMask Hypervector) (Hypervector, 
 		return Majority4(messages[0], messages[1], messages[2], messages[3], tieBreakerMask), true
 	}
 
-	// Somador paralelo bit-slice para n >= 4
+	// Somador paralelo bit-slice para n >= 5
+	// maxBitsCount = número de bits necessários para representar n (ex: n=5..7 -> 3 bits, n=8..15 -> 4 bits, etc.)
 	maxBitsCount := 0
 	for tmp := n; tmp > 0; tmp >>= 1 {
 		maxBitsCount++
@@ -154,14 +155,15 @@ func Majority(messages []Hypervector, tieBreakerMask Hypervector) (Hypervector, 
 	threshold := n / 2
 	isEven := (n % 2) == 0
 
-	// Alocação em pilha fixa (máximo 8 bits = até 255 vizinhos por nó)
-	var bitsAcc [8]uint64
+	// Alocação dinâmica segura dimensionada exatamente para maxBitsCount (sem estouro de buffer)
+	bitsAcc := make([]uint64, maxBitsCount)
 
 	for w := 0; w < WordsPerVector; w++ {
 		for k := 0; k < maxBitsCount; k++ {
 			bitsAcc[k] = 0
 		}
 
+		// Adição em árvore bit-slice: propaga o carry através das fatias de bits
 		for m := 0; m < n; m++ {
 			carry := messages[m][w]
 			for k := 0; k < maxBitsCount && carry != 0; k++ {
@@ -174,6 +176,7 @@ func Majority(messages []Hypervector, tieBreakerMask Hypervector) (Hypervector, 
 		var wordResult uint64
 		tieWord := tieBreakerMask[w]
 
+		// Extrai a contagem para cada uma das 64 colunas da palavra uint64
 		for b := uint(0); b < 64; b++ {
 			bitMask := uint64(1) << b
 			count := 0
