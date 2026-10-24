@@ -18,13 +18,33 @@ func runImpactDiff(args []string,out io.Writer)error{
  flags.SetOutput(io.Discard)
  oldDir:=flags.String("old","","old Go package directory")
  newDir:=flags.String("new","","new Go package directory")
+ gitRepo:=flags.String("repo",".","local Git repository root (revision mode)")
+ oldRef:=flags.String("old-ref","","old local Git branch/tag/commit (revision mode)")
+ newRef:=flags.String("new-ref","","new local Git branch/tag/commit (revision mode)")
+ packageRel:=flags.String("package",".","repository-relative Go package path (revision mode)")
  jsonOutput:=flags.Bool("json",false,"emit machine-readable JSON")
  if err:=flags.Parse(args);err!=nil{return fmt.Errorf("impact-diff flags: %w",err)}
  if len(flags.Args())!=0{return fmt.Errorf("unexpected arguments: %s",strings.Join(flags.Args()," "))}
- if strings.TrimSpace(*oldDir)==""||strings.TrimSpace(*newDir)==""{
-  return fmt.Errorf("-old and -new package directories are required")
+ var report impact.VersionReport
+ var err error
+ revisionMode:=*oldRef!=""||*newRef!=""
+ if revisionMode{
+  if *oldRef==""||*newRef==""{
+   return fmt.Errorf("both -old-ref and -new-ref must be supplied")
+  }
+  if *oldDir!=""||*newDir!=""{
+   return fmt.Errorf("choose either -old/-new directories or -old-ref/-new-ref revisions, not both")
+  }
+  report,err=impact.CompareGitRefs(*gitRepo,*oldRef,*newRef,*packageRel)
+ }else{
+  if strings.TrimSpace(*oldDir)==""||strings.TrimSpace(*newDir)==""{
+   return fmt.Errorf("-old and -new package directories are required")
+  }
+  if *packageRel!="."||*gitRepo!="."{
+   return fmt.Errorf("-repo and -package are only valid with -old-ref/-new-ref")
+  }
+  report,err=impact.CompareDirs(*oldDir,*newDir)
  }
- report,err:=impact.CompareDirs(*oldDir,*newDir)
  if err!=nil{return err}
  if *jsonOutput{
   encoder:=json.NewEncoder(out)
