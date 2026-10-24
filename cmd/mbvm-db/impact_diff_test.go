@@ -3,7 +3,9 @@ package main
 import (
  "bytes"
  "encoding/json"
+ "fmt"
  "os"
+ "os/exec"
  "path/filepath"
  "strings"
  "testing"
@@ -56,5 +58,37 @@ func TestImpactDiffCommandTwoDirectories(t *testing.T){
  }
  if err:=runImpactDiff([]string{"-old",oldDir,"-new",newDir,"unexpected"},&out);err==nil{
   t.Fatal("accepted positional argument")
+ }
+}
+
+func TestImpactDiffGitRevisionFlags(t *testing.T){
+ if _,err:=exec.LookPath("git");err!=nil{t.Skip("git unavailable")}
+ root:=t.TempDir()
+ pkg:=filepath.Join(root,"pkg")
+ if err:=os.MkdirAll(pkg,0755);err!=nil{t.Fatal(err)}
+ git:=func(args ...string){
+  t.Helper()
+  cmd:=exec.Command("git",append([]string{"-C",root},args...)...)
+  if result,err:=cmd.CombinedOutput();err!=nil{
+   t.Fatalf("git %v: %v\n%s",args,err,result)
+  }
+ }
+ git("init")
+ path:=filepath.Join(pkg,"example.go")
+ old:="package example\nfunc Get(x int)int{return x}\nfunc Use()int{return Get(1)}\n"
+ newSource:="package example\nfunc Get(x,y int)int{return x+y}\nfunc Use()int{return Get(1,2)}\n"
+ for n,src:=range []string{old,newSource}{
+  if err:=os.WriteFile(path,[]byte(src),0600);err!=nil{t.Fatal(err)}
+  git("add","pkg/example.go")
+  git("-c","user.email=test@example.invalid","-c","user.name=MBVM Test","commit","-m",fmt.Sprintf("rev%d",n))
+ }
+ var out bytes.Buffer
+ if err:=runImpactDiff([]string{"-repo",root,"-old-ref","HEAD~1","-new-ref","HEAD","-package","pkg","-json"},&out);err!=nil{t.Fatal(err)}
+ if !strings.Contains(out.String(),`"signature_changed"`){
+  t.Fatalf("Git revision command did not identify API change: %s",out.String())
+ }
+ out.Reset()
+ if err:=runImpactDiff([]string{"-repo",root,"-old-ref","HEAD~1","-new-ref","HEAD","-old",pkg},&out);err==nil{
+  t.Fatal("mixed revision/directory flags accepted")
  }
 }
