@@ -27,6 +27,7 @@ type BenchReport struct {
 	LSHEvaluation           map[string]any    `json:"binary_lsh_evaluation,omitempty"`
 	LSHSweepEvaluation      map[string]any    `json:"binary_lsh_sweep_evaluation,omitempty"`
 	CompositionEvaluation   map[string]any    `json:"algebra_composition_evaluation,omitempty"`
+	DynamicCompositionEvaluation map[string]any `json:"dynamic_composition_evaluation,omitempty"`
 }
 
 func main() {
@@ -261,6 +262,27 @@ func main() {
 		os.Exit(1)
 	}
 
+	rawDynamic, err := os.ReadFile("experiments/hdc-csr/dynamic_composition_results.json")
+	if err != nil {
+		fmt.Printf("FALHA CRÍTICA NO CI: dynamic_composition_results.json ausente: %v\n", err)
+		os.Exit(1)
+	}
+	var dynamic map[string]any
+	if err := json.Unmarshal(rawDynamic, &dynamic); err != nil {
+		fmt.Printf("FALHA CRÍTICA NO CI: dynamic_composition_results.json inválido: %v\n", err)
+		os.Exit(1)
+	}
+	if dynamic["schema"] != "mbvm-dynamic-composition-v1" ||
+		dynamic["composed_training_labels"] != float64(0) ||
+		dynamic["programs_pre_stored"] != float64(0) {
+		fmt.Println("FALHA CRÍTICA NO CI: metadados do laboratório dinâmico inválidos")
+		os.Exit(1)
+	}
+	if trials, ok := dynamic["results"].([]any); !ok || len(trials)!=36 {
+		fmt.Println("FALHA CRÍTICA NO CI: esperado 36 cenários de composição dinâmica")
+		os.Exit(1)
+	}
+
 	var pairedMetrics map[string]any
 	rawPairedBytes, err := os.ReadFile(pairedFile)
 	if err == nil {
@@ -286,6 +308,7 @@ func main() {
 		LSHEvaluation: lshMetrics,
 		LSHSweepEvaluation: lshSweep,
 		CompositionEvaluation: composition,
+		DynamicCompositionEvaluation: dynamic,
 	}
 
 	outBytes, err := json.MarshalIndent(report, "", "  ")
