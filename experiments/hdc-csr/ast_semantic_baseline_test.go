@@ -76,6 +76,29 @@ func TestASTBaselineUnknownDoesNotImplyDifference(t *testing.T){
  // The result is simply unknown, not "functionally changed".
 }
 
+
+func TestASTBaselineRequiresTypeCorrectGo(t *testing.T){
+ // go/parser accepts both snippets syntactically; go/types must reject
+ // the constants because Go int has architecture-specific finite width.
+ invalid:=[]string{
+  "func F(a,b int) int { return 9999999999999999999999999999999999999 }",
+  "func F(a,b int) int { return a + 99999999999999999999999999999 }",
+  "func F(a,b int) int { return a * 99999999999999999999999999999 }",
+ }
+ for _,src:=range invalid{
+  if _,err:=ASTCanonicalIntFunction(src);err==nil{
+   t.Fatalf("AST normalizer improperly certified non-compilable Go: %s",src)
+  }
+ }
+ // Runtime arithmetic overflow is allowed for Go int and does not break
+ // sound polynomial equivalences; only overflowing untyped constants
+ // should be rejected at type-check time.
+ goodA:="func F(a,b int) int { return (a+b)-b }"
+ goodB:="func F(x,y int) int { return x }"
+ eq,err:=ASTConservativeEquivalent(goodA,goodB)
+ if err!=nil||!eq{t.Fatalf("type-correct polynomial identity not recognized: %v",err)}
+}
+
 func BenchmarkASTCanonicalGoFunction(b *testing.B){
  src:="func Weighted(a,b int) int { return a + (b * 2) }"
  b.ReportAllocs()
