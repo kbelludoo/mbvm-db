@@ -45,11 +45,34 @@ This command does not SSH into your VPS: run it in your repository checkout
 conversation; ideally independently confirm it against the Kaggle upload
 and/or authenticated downloaded artifact metadata.
 
-The Go audit strictly validates v1 and v2 headers, declared vector count,
-file size, dimensions, v2 padding and optional expected SHA-256; then
-samples nearest nonself Hamming distances, counts exact duplicate vectors,
-bit positions that never vary and observed fraction of 1 bits. Its Hamming
-scan does NOT need bit-order metadata to calculate distances. The index
+The Go audit (JSON schema `mbvm-index-audit-v2`) strictly validates v1
+and v2 headers, declared vector count, file size, dimensions, v2 padding and
+optional expected SHA-256. It samples nearest nonself Hamming distances,
+counts exact duplicate vectors, bit positions that never vary and observed
+fraction of 1 bits.
+
+**Important correction to v1:** `mean_random_pair_hamming` was misleadingly
+named. The previous code compared vector `i` with
+`(i + N/2 + 1) % N`, so its output (e.g., 2442.4375) depends on node
+ordering and is **not** a representative uniformly random-pair mean.
+v2 renames this legacy measure to `mean_fixed_offset_pair_hamming`.
+
+**New exact metric:** `mean_all_distinct_pair_hamming_exact` is computed
+over ALL unordered distinct pairs without quadratic work. For a dataset
+with `N` vectors and `k_j` ones at bit position `j`:
+
+```text
+mean_hamming = sum_j [ 2 * k_j * (N - k_j) / (N * (N - 1)) ]
+```
+
+This formula counts all disagreements per bit and sums them, giving the
+exact global pairwise mean in O(N*8192). It is not a sample.
+`mean_marginal_bit_entropy_bits` gives the average per-position binary
+entropy; it does **not** measure joint entropy or independence.
+A global fraction of one bits close to 0.5 cannot establish maximum
+information capacity when bits correlate.
+
+The Hamming scan does NOT need bit-order metadata to calculate distances. The index
 header does NOT encode bit endianness, so the tool explicitly reports it
 as unknown; do not claim to have inferred `np.packbits` order from the
 header. Provenance, source labels and real AST semantics are NOT
