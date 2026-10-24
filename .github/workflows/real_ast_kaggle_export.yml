@@ -1,0 +1,42 @@
+name: Real Go AST Manifest for Kaggle
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feature/hdc-csr-experimental
+    paths:
+      - 'experiments/hdc-csr/real_ast.go'
+      - 'experiments/hdc-csr/real_index.go'
+      - 'experiments/hdc-csr/real_ast_test.go'
+      - 'experiments/hdc-csr/cmd/export_real_ast/**'
+      - '.github/workflows/real_ast_kaggle_export.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  export-manifest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Go repository
+        uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: false
+      - name: Validate bridge and CSR alignment
+        run: |
+          go test -count=1 -v -run='^(TestExportRealASTAlignedSymbols|TestLoadRealCorpusRequiresValidReceiptAndIndex)$' ./experiments/hdc-csr
+      - name: Export real codebase AST
+        run: |
+          go run ./experiments/hdc-csr/cmd/export_real_ast -root=. -out=output/real_ast_manifest.json
+          sha256sum output/real_ast_manifest.json
+      - name: Upload real AST manifest for Kaggle
+        uses: actions/upload-artifact@v4
+        with:
+          name: mbvm-real-go-ast-manifest
+          path: output/real_ast_manifest.json
+          if-no-files-found: error
+          retention-days: 14
