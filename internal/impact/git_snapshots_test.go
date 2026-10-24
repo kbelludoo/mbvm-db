@@ -1,7 +1,9 @@
 package impact
 
 import (
+	"archive/tar"
 	"bytes"
+	"io"
 	"strings"
 	"os"
 	"os/exec"
@@ -93,4 +95,43 @@ func TestBoundedArchiveWriter(t *testing.T){
   t.Fatalf("writer must reject excess bytes without writing: n=%d err=%v",n,err)
  }
  if b.String()!="hello"{t.Fatalf("invalid bounded output: %s",b.String())}
+}
+
+func TestExtractGitArchivePAXMetadata(t *testing.T){
+ if _,err:=exec.LookPath("git");err!=nil{t.Skip("Git executable not available")}
+ repo:=t.TempDir()
+ gitFixtureRun(t,repo,"init")
+ source:=filepath.Join(repo,"example.go")
+ if err:=os.WriteFile(source,[]byte("package example\nfunc Test(){}\n"),0600);err!=nil{t.Fatal(err)}
+ gitFixtureRun(t,repo,"add","example.go")
+ gitFixtureRun(t,repo,"-c","user.name=MBVM Test","-c","user.email=mbvm@example.invalid","commit","-m","pax-fixture")
+ archiveCmd:=exec.Command("git","-C",repo,"archive","--format=tar","HEAD")
+ data,err:=archiveCmd.Output()
+ if err!=nil{t.Fatalf("git archive: %v",err)}
+ reader:=tar.NewReader(bytes.NewReader(data))
+ hasPAX:=false
+ for{
+  h,err:=reader.Next()
+  if err==io.EOF{break}
+  if err!=nil{t.Fatal(err)}
+  if h.Typeflag==tar.TypeXGlobalHeader||h.Typeflag==tar.TypeXHeader{
+   hasPAX=true
+  }
+ }
+ dest:=filepath.Join(t.TempDir(),"extracted")
+ if err:=extractGitTree(repo,"HEAD",dest);err!=nil{
+  t.Fatalf("git PAX archive extraction failed: %v",err)
+ }
+ restored,err:=os.ReadFile(filepath.Join(dest,"example.go"))
+ if err!=nil||string(restored)!="package example\nfunc Test(){}\n"{
+  t.Fatalf("real source not correctly extracted: %q %v",restored,err)
+ }
+ if _,err:=os.Stat(filepath.Join(dest,"pax_global_header"));!os.IsNotExist(err){
+  t.Fatalf("PAX global metadata must never be written as a file: %v",err)
+ }
+ if !hasPAX{
+  t.Log("this Git distribution did not emit a PAX header; direct Windows fixture is still required")
+ }else{
+  t.Log("verified that Git PAX headers were metadata only and source was extracted")
+ }
 }
