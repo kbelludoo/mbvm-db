@@ -53,6 +53,43 @@ func main() {
 		fmt.Printf("  • Símbolos Indexados: %d\n", db.TotalSymbols())
 		fmt.Printf("  • Bytecode Compilado: %d bytes\n", db.BytecodeSize())
 
+	case "ingest-proto":
+		if len(os.Args) < 4 {
+			fmt.Println("Uso: mbvm-db ingest-proto <arquivo_saida.mbvmdb> <proto_file_1.bin> [proto_file_2.bin ...]")
+			os.Exit(1)
+		}
+		outPath := os.Args[2]
+		protoFiles := os.Args[3:]
+
+		start := time.Now()
+		var db *mbvmdb.DB
+		if _, err := os.Stat(outPath); err == nil {
+			db, err = mbvmdb.LoadFromFile(outPath)
+			if err != nil {
+				db = mbvmdb.New()
+			}
+		} else {
+			db = mbvmdb.New()
+		}
+
+		for _, pf := range protoFiles {
+			if err := db.IngestProtoDescriptor(pf); err != nil {
+				fmt.Fprintf(os.Stderr, "Aviso ao ingerir %s: %v\n", pf, err)
+			} else {
+				fmt.Printf("✓ Ingerido Protobuf descriptor: %s\n", pf)
+			}
+		}
+		db.CompileGameBytecode()
+
+		if err := db.SaveToFile(outPath); err != nil {
+			fmt.Fprintf(os.Stderr, "Erro ao salvar banco de proto: %v\n", err)
+			os.Exit(1)
+		}
+		duration := time.Since(start)
+		fmt.Printf("⚡ [MBVM-DB] Conhecimento de Protocolo compilado em %v!\n", duration)
+		fmt.Printf("  • Arquivo: %s\n", outPath)
+		fmt.Printf("  • Símbolos Totais: %d\n", db.TotalSymbols())
+
 	case "slice", "query":
 		if len(os.Args) < 4 {
 			fmt.Println("Uso: mbvm-db slice <dir_ou_arquivo.mbvmdb> <simbolo_ou_funcao> [profundidade]")
@@ -158,6 +195,7 @@ func printUsage() {
 	fmt.Println()
 	fmt.Println("COMANDOS:")
 	fmt.Println("  mbvm-db build <dir> [arquivo.mbvmdb]             Compila AST para banco binário indexado persistente")
+	fmt.Println("  mbvm-db ingest-proto <saida.mbvmdb> <f.bin ...>  Ingere descritores Protobuf para banco binário de protocolo")
 	fmt.Println("  mbvm-db slice <dir|banco.mbvmdb> <simb> [prof]   Extrai fatia subgrafo para IA (-93% tokens)")
 	fmt.Println("  mbvm-db slice-budget <dir|banco> <símb> <tokens> Extrai fatia com teto estrito de tokens e anti-ruído")
 	fmt.Println("  mbvm-db inspect [dir|banco.mbvmdb]               Inspeciona símbolos e bytecode do projeto")

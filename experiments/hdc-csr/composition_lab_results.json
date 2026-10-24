@@ -1,0 +1,289 @@
+{
+  "schema": "mbvm-compositional-ood-v1",
+  "atomic_training_range": "[-10,10], 21 numbers x 4 operations x 2 singleton positions",
+  "ood_range": "[11,30], 20 numbers x 16 two-operation programs",
+  "composition_training_labels": 0,
+  "program_count": 16,
+  "interpretation": "Toy affine function composition; HDC memorizes task programs, not arithmetic. Compare HDC against nearest-key exact map. No Kaggle neural embeddings or general reasoning claim.",
+  "results": [
+    {
+      "seed": 2026,
+      "noise_rate": 0,
+      "queries": 320,
+      "neural_mlp_direct": {
+        "correct": 10,
+        "total": 320,
+        "accuracy": 0.03125,
+        "mean_absolute_error": 24.50127313050459
+      },
+      "learned_affine_with_explicit_composition": {
+        "correct": 320,
+        "total": 320,
+        "accuracy": 1,
+        "mean_absolute_error": 3.8613556796462826e-14
+      },
+      "learned_affine_with_hdc_program_memory": {
+        "correct": 320,
+        "total": 320,
+        "accuracy": 1,
+        "mean_absolute_error": 3.8613556796462826e-14
+      },
+      "learned_affine_with_nearest_key_map": {
+        "correct": 320,
+        "total": 320,
+        "accuracy": 1,
+        "mean_absolute_error": 3.8613556796462826e-14
+      },
+      "hdc_program_recovered": 16,
+      "nearest_key_program_recovered": 16
+    },
+    {
+      "seed": 2026,
+      "noise_rate": 0.2,
+      "queries": 320,
+      "neural_mlp_direct": {
+        "correct": 10,
+        "total": 320,
+        "accuracy": 0.03125,
+        "mean_absolute_error": 24.50127313050459
+      },
+      "learned_affine_with_explicit_composition": {
+        "correct": 320,
+        "total": 320,
+        "accuracy": 1,
+        "mean_absolute_error": 3.8613556796462826e-14
+      },
+      "learned_affine_with_hdc_program_memory": {
+        "correct": 320,
+        "total": 320,
+        "accuracy": 1,
+        "mean_absolute_error": 3.8613556796462826e-14
+      },
+      "learned_affine_with_nearest_key_map": {
+        "correct": 320,
+        "total": 320,
+        "accuracy": 1,
+        "mean_absolute_error": 3.8613556796462826e-14
+      },
+      "hdc_program_recovered": 16,
+      "nearest_key_program_recovered": 16
+    },
+    {
+      "seed": 2026,
+      "noise_rate": 0.4,
+      "queries": 320,
+      "neural_mlp_direct": {
+        "correct": 10,
+        "total": 320,
+        "accuracy": 0.03125,
+        "mean_absolute_error": 24.50127313050459
+      },
+      "learned_affine_with_explicit_composition": {
+        "correct": 320,
+        "total": 320,
+        "accuracy": 1,
+        "mean_absolute_error": 3.8613556796462826e-14
+      },
+      "learned_affine_with_hdc_program_memory": {
+        "correct": 320,
+        "total": 320,
+        "accuracy": 1,
+        "mean_absolute_error": 3.8613556796462826e-14
+      },
+      "learned_affine_with_nearest_key_map": {
+        "correct": 320,
+        "total": 320,
+        "accuracy": 1,
+        "mean_absolute_error": 3.8613556796462826e-14
+      },
+      "hdc_program_recovered": 16,
+      "nearest_key_program_recovered": 16
+    },
+    {
+      "seed": 2027,
+      "noise_rate": 0,
+      "queries": 320,
+      "neural_mlp_direct": {
+        "correct": 3,
+        "total": 320,
+        "accuracy": 0.009375,
+        "mean_absolute_error": 22.623623733450284
+      },
+      "learned_affine_with_explicit_composition": {
+        "correct": 320,
+        "total": 320,
+        "accuracy": 1,
+        "mean_absolute_error": 3.8613556796462826e-14
+      },
+      "learned_affine_with_hdc_program_memory": {
+        "correct": 320,
+        "total": 320,
+        "accuracy": 1,
+        "mean_absolute_error": 3.8613556796462826e-14
+      },
+      "learned_affine_with_nearest_key_map": {
+        "correct": 320,
+        "total": 320,
+        "accuracy": 1,
+        "mean_absolute_error": 3.8613556796462826e-14
+      },
+      "hdc_program_recovered": 16,
+      "nearest_key_program_recovered": 16
+    },
+    {
+      "seed": 2027,
+      "noise_rate": 0.2,
+      "queries": 320,
+      "neural_mlp_direct": {
+        "correct": 3,
+        "total": 320,
+        "accuracy": 0.009375,
+        "mean_absolute_error": 22.623623733450284
+      },
+      "learned_affine_with_explicit_composition": {
+        "correct": 320,
+        "total": 320,
+        "accuracy": 1,
+        "mean_absolute_error": 3.8613556796462826e-14
+      },
+      "learned_affine_with_hdc_program_memory": {
+        "correct": 320,
+        "total": 320,
+        "accuracy": 1,
+        "mean_absolute_error": 3.8613556796462826e-14
+      },
+      "learned_affine_with_nearest_key_map": {
+        "correct": 320,
+        "total": 320,
+        "accuracy": 1,
+        "mean_absolute_error": 3.8613556796462826e-14
+      },
+      "hdc_program_recovered": 16,
+      "nearest_key_program_recovered": 16
+    },
+    {
+      "seed": 2027,
+      "noise_rate": 0.4,
+      "queries": 320,
+      "neural_mlp_direct": {
+        "correct": 3,
+        "total": 320,
+        "accuracy": 0.009375,
+        "mean_absolute_error": 22.623623733450284
+      },
+      "learned_affine_with_explicit_composition": {
+        "correct": 320,
+        "total": 320,
+        "accuracy": 1,
+        "mean_absolute_error": 3.8613556796462826e-14
+      },
+      "learned_affine_with_hdc_program_memory": {
+        "correct": 320,
+        "total": 320,
+        "accuracy": 1,
+        "mean_absolute_error": 3.8613556796462826e-14
+      },
+      "learned_affine_with_nearest_key_map": {
+        "correct": 320,
+        "total": 320,
+        "accuracy": 1,
+        "mean_absolute_error": 3.8613556796462826e-14
+      },
+      "hdc_program_recovered": 16,
+      "nearest_key_program_recovered": 16
+    },
+    {
+      "seed": 2028,
+      "noise_rate": 0,
+      "queries": 320,
+      "neural_mlp_direct": {
+        "correct": 3,
+        "total": 320,
+        "accuracy": 0.009375,
+        "mean_absolute_error": 23.688286275577674
+      },
+      "learned_affine_with_explicit_composition": {
+        "correct": 320,
+        "total": 320,
+        "accuracy": 1,
+        "mean_absolute_error": 3.8613556796462826e-14
+      },
+      "learned_affine_with_hdc_program_memory": {
+        "correct": 320,
+        "total": 320,
+        "accuracy": 1,
+        "mean_absolute_error": 3.8613556796462826e-14
+      },
+      "learned_affine_with_nearest_key_map": {
+        "correct": 320,
+        "total": 320,
+        "accuracy": 1,
+        "mean_absolute_error": 3.8613556796462826e-14
+      },
+      "hdc_program_recovered": 16,
+      "nearest_key_program_recovered": 16
+    },
+    {
+      "seed": 2028,
+      "noise_rate": 0.2,
+      "queries": 320,
+      "neural_mlp_direct": {
+        "correct": 3,
+        "total": 320,
+        "accuracy": 0.009375,
+        "mean_absolute_error": 23.688286275577674
+      },
+      "learned_affine_with_explicit_composition": {
+        "correct": 320,
+        "total": 320,
+        "accuracy": 1,
+        "mean_absolute_error": 3.8613556796462826e-14
+      },
+      "learned_affine_with_hdc_program_memory": {
+        "correct": 320,
+        "total": 320,
+        "accuracy": 1,
+        "mean_absolute_error": 3.8613556796462826e-14
+      },
+      "learned_affine_with_nearest_key_map": {
+        "correct": 320,
+        "total": 320,
+        "accuracy": 1,
+        "mean_absolute_error": 3.8613556796462826e-14
+      },
+      "hdc_program_recovered": 16,
+      "nearest_key_program_recovered": 16
+    },
+    {
+      "seed": 2028,
+      "noise_rate": 0.4,
+      "queries": 320,
+      "neural_mlp_direct": {
+        "correct": 3,
+        "total": 320,
+        "accuracy": 0.009375,
+        "mean_absolute_error": 23.688286275577674
+      },
+      "learned_affine_with_explicit_composition": {
+        "correct": 320,
+        "total": 320,
+        "accuracy": 1,
+        "mean_absolute_error": 3.8613556796462826e-14
+      },
+      "learned_affine_with_hdc_program_memory": {
+        "correct": 320,
+        "total": 320,
+        "accuracy": 1,
+        "mean_absolute_error": 3.8613556796462826e-14
+      },
+      "learned_affine_with_nearest_key_map": {
+        "correct": 320,
+        "total": 320,
+        "accuracy": 1,
+        "mean_absolute_error": 3.8613556796462826e-14
+      },
+      "hdc_program_recovered": 16,
+      "nearest_key_program_recovered": 16
+    }
+  ]
+}

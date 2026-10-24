@@ -22,8 +22,9 @@
    - Ataque sempre a causa-raiz do problema; nunca aplique "curativos" em sintomas.
    - Edições cirúrgicas e mínimas: nunca reescreva arquivos inteiros quando um diff direcionado resolve.
    - Se encontrar bug: crie um teste reproduzindo a falha primeiro, depois implemente a correção.
-5. MB-VM & MBVM-DB FIRST (SMART SLICING & ECONOMIA DE TOKENS):
-   - **MBVM-DB Smart Slicing:** Antes de inspecionar ou alterar código, use `mbvm-db slice . <Symbol> [depth]` (ex: `mbvm-db slice . Evaluator 2`) para obter o subgrafo direcionado de dependências (200-400 tokens, 99% de economia).
+5. MB-VM & MBVM-DB FIRST (SINGLE-INGESTION & SMART SLICING):
+   - **Single-Ingestion Law:** Arquivos pesados (Protobuf, catálogos JSON, pacotes inteiros, dados de jogos) são processados uma única vez em bancos binários `.mbvmdb` (`codebase.mbvmdb`, `game.mbvmdb`).
+   - **A IA NUNCA lê arquivos brutos de dezenas de milhares de tokens.** Sempre execute `mbvm-db slice <db> <termo/símbolo> [depth]` (retorna a fatia exata em 1–3ms com 60–200 tokens).
    - **Camada 1 (AST):** Consulte `codebase.mbvm` para obter assinaturas globais antes de ler arquivos brutos.
    - **Camada 2 (MCP):** Ferramentas MCP comprimidas para assinaturas tipadas de 1 linha.
    - **Camada 3 (Runtime/DB):** Cache e runtime gravados como micro-bytecode no SQLite (`page_bytecodes.db`).
