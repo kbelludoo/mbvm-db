@@ -25,6 +25,7 @@ type BenchReport struct {
 	MultiPathEvaluation     map[string]any    `json:"multipath_evaluation"`
 	PairedE2EEvaluation     map[string]any    `json:"paired_e2e_evaluation,omitempty"`
 	LSHEvaluation           map[string]any    `json:"binary_lsh_evaluation,omitempty"`
+	LSHSweepEvaluation      map[string]any    `json:"binary_lsh_sweep_evaluation,omitempty"`
 }
 
 func main() {
@@ -222,6 +223,24 @@ func main() {
 		os.Exit(1)
 	}
 
+	rawSweep, err := os.ReadFile("experiments/hdc-csr/lsh_sweep_quality.json")
+	if err != nil {
+		fmt.Printf("FALHA CRÍTICA NO CI: lsh_sweep_quality.json ausente: %v\n", err)
+		os.Exit(1)
+	}
+	var lshSweep map[string]any
+	if err := json.Unmarshal(rawSweep, &lshSweep); err != nil {
+		fmt.Printf("FALHA CRÍTICA NO CI: lsh_sweep_quality.json inválido: %v\n", err)
+		os.Exit(1)
+	}
+	if lshSweep["schema"] != "mbvm-binary-lsh-sweep-v1" {
+		fmt.Println("FALHA CRÍTICA NO CI: esquema LSH sweep desconhecido")
+		os.Exit(1)
+	}
+	if combos, ok := lshSweep["settings"].([]any); !ok || len(combos) != 24 {
+		fmt.Println("FALHA CRÍTICA NO CI: esperado 24 configurações no LSH sweep")
+		os.Exit(1)
+	}
 	var pairedMetrics map[string]any
 	rawPairedBytes, err := os.ReadFile(pairedFile)
 	if err == nil {
@@ -245,6 +264,7 @@ func main() {
 		MultiPathEvaluation: multiPathMetrics,
 		PairedE2EEvaluation: pairedMetrics,
 		LSHEvaluation: lshMetrics,
+		LSHSweepEvaluation: lshSweep,
 	}
 
 	outBytes, err := json.MarshalIndent(report, "", "  ")
