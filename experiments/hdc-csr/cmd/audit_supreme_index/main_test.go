@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/binary"
+	"math"
 	"testing"
 )
 
@@ -37,6 +38,18 @@ func TestIndexAuditV1V2AndBitStatistics(t *testing.T) {
 			t.Fatalf("v%d: nearest extrema %d %d",version,
 				report.MinNearestNonSelfHamming,report.MaxNearestNonSelfHamming)
 		}
+		wantGlobalMean:=2.0*8192.0/3.0
+		if math.Abs(report.MeanAllDistinctPairHamming-wantGlobalMean)>1e-6 {
+			t.Fatalf("v%d: exact global pair Hamming mean=%g, expected=%g",
+				version, report.MeanAllDistinctPairHamming,wantGlobalMean)
+		}
+		const wantEntropy=0.9182958340544896 // H_2(1/3), bits per column
+		if math.Abs(report.MeanMarginalBitEntropy-wantEntropy)>1e-12 {
+			t.Fatalf("v%d: marginal entropy %g",version,report.MeanMarginalBitEntropy)
+		}
+		if report.Schema!="mbvm-index-audit-v2" {
+			t.Fatalf("v%d: report schema %q",version,report.Schema)
+		}
 		if report.ExpectedFileBytes!=int64(len(raw)) || report.FileSHA256=="" {
 			t.Fatalf("v%d: invalid size/hash",version)
 		}
@@ -62,5 +75,31 @@ func TestIndexAuditRejectBadHeadersAndLengths(t *testing.T) {
 	v2[18]=1
 	if _,err:=inspect(v2,100,1);err==nil{
 		t.Fatal("nonzero v2 header padding accepted")
+	}
+}
+
+func TestExactPairHammingUnbiasedByNodeOrdering(t *testing.T) {
+	// Eight pair combinations are fixed by the data, regardless of order.
+	// A fixed offset can be manipulated by permuting nodes, while the
+	// per-coordinate exact all-pairs mean cannot.
+	raw:=fakeIndex(2,4)
+	start:=64
+	copy(raw[start+0*1024:start+1*1024],make([]byte,1024))
+	for i:=start+1024;i<start+2048;i++ {raw[i]=0xff}
+	for i:=start+2048;i<start+3072;i++ {raw[i]=0xaa}
+	for i:=start+3072;i<start+4096;i++ {raw[i]=0x55}
+	before,err:=inspect(raw,100,4)
+	if err!=nil {t.Fatal(err)}
+	// Swap vectors 1 and 2 to alter fixed-offset neighborhoods.
+	tmp:=append([]byte{},raw[start+1024:start+2048]...)
+	copy(raw[start+1024:start+2048],raw[start+2048:start+3072])
+	copy(raw[start+2048:start+3072],tmp)
+	after,err:=inspect(raw,100,4)
+	if err!=nil {t.Fatal(err)}
+	if math.Abs(before.MeanAllDistinctPairHamming-after.MeanAllDistinctPairHamming)>1e-8 {
+		t.Fatalf("global Hamming population mean changed under permutation: %f vs %f",before.MeanAllDistinctPairHamming,after.MeanAllDistinctPairHamming)
+	}
+	if math.Abs(before.MeanAllDistinctPairHamming-8192.0*2/3)>1e-8 {
+		t.Fatalf("unexpected population mean %f",before.MeanAllDistinctPairHamming)
 	}
 }
