@@ -6,13 +6,13 @@ import (
 	"sort"
 )
 
-// ImpactSeverity classifica o nível de risco e impacto predito.
+// ImpactSeverity classifica o nível de risco e impacto com terminologia precisa.
 type ImpactSeverity string
 
 const (
-	SeverityDirectBreaking ImpactSeverity = "DIRECT_BREAKING" // Aresta determinística no CSR
-	SeveritySemanticDrift  ImpactSeverity = "SEMANTIC_DRIFT"  // Não há chamada explícita, mas forte afinidade semântica
-	SeverityIndirectCaller ImpactSeverity = "INDIRECT_CALLER" // Chamador transitivo
+	SeverityDirectDependency   ImpactSeverity = "DIRECT_DEPENDENCY"   // Chamador direto (CSR Reverso)
+	SeverityIndirectDependency ImpactSeverity = "INDIRECT_DEPENDENCY" // Chamador transitivo
+	SeveritySemanticAssociation ImpactSeverity = "SEMANTIC_ASSOCIATION" // Afinidade semântica sem aresta estrutural
 )
 
 // GuidedImpactNode representa um nó avaliado conjuntamente pelo Grafo e pela Rede Neural.
@@ -26,24 +26,29 @@ type GuidedImpactNode struct {
 	Reason          string         `json:"reason"`
 }
 
-// GuidedBlastRadiusResult consolida a decisão onde a rede neural REALMENTE guia a busca no grafo.
+// GuidedBlastRadiusResult consolida a decisão com contadores auditáveis.
 type GuidedBlastRadiusResult struct {
-	TargetSymbol       string              `json:"target_symbol"`
-	TargetID           uint16              `json:"target_id"`
-	TotalEvaluated     int                 `json:"total_evaluated"`
-	ImpactedNodes      []*GuidedImpactNode `json:"impacted_nodes"`
-	DeterministicCount int                 `json:"deterministic_count"`
-	SemanticDriftCount int                 `json:"semantic_drift_count"`
+	TargetSymbol              string              `json:"target_symbol"`
+	TargetID                  uint16              `json:"target_id"`
+	TotalEvaluated            int                 `json:"total_evaluated"`
+	ImpactedNodes             []*GuidedImpactNode `json:"impacted_nodes"`
+	DeterministicCallersCount int                 `json:"deterministic_callers_count"`
+	SemanticAssociationCount  int                 `json:"semantic_association_count"`
+	PrunedBranchesCount       int                 `json:"pruned_branches_count"`
 }
 
-// QueryGuidedNeuralBlastRadius executa a verdadeira INFERÊNCIA NEURO-SIMBÓLICA CONJUNTA:
-// O Grafo CSR fornece a topologia estrutural exata.
-// A Rede Neural de 8.192 bits (128 uint64 XOR+POPCNT) afeta a busca de 3 formas concretas:
-// 1. Poda Guiada: Se a distância semântica for quase ortogonal (Hamming > 3800), a propagação no CSR é atenuada.
-// 2. Descoberta de Violação Implícita (Semantic Drift): Identifica nós do mesmo domínio funcional sem aresta direta no CSR
-//    (ex: auth.RevokeSession esquecida de ser chamada quando auth.ValidateSession é alterada).
-// 3. Cálculo de Risco Combinado: Risco = (W_grafo / (Depth + 1)) * (1.0 + W_neural * SemanticScore).
-func (db *DB) QueryGuidedNeuralBlastRadius(targetSymbol string, neuralIdx *NeuralIndex, maxDepth int, semanticThreshold float64) (*GuidedBlastRadiusResult, error) {
+// QueryGuidedNeuralBlastRadius implementa todas as 4 correções da auditoria Zyon:
+// 1. Direção Correta: Segue o CSR Reverso (csrRevOffsets / csrRevEdges) para identificar quem depende da função modificada.
+// 2. Poda Neural Real: Se Hamming > pruneHammingThreshold (ruído/ortogonal), a propagação do ramo é interrompida no CSR.
+// 3. Terminologia Rigorosa: Substitui "BREAKING" e "DRIFT" por "DIRECT_DEPENDENCY" e "SEMANTIC_ASSOCIATION".
+// 4. Ordenação 100% Determinística: Desempate secundário por Symbol.ID.
+func (db *DB) QueryGuidedNeuralBlastRadius(
+	targetSymbol string,
+	neuralIdx *NeuralIndex,
+	maxDepth int,
+	semanticThreshold float64,
+	pruneHammingThreshold int,
+) (*GuidedBlastRadiusResult, error) {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
 
@@ -59,7 +64,11 @@ func (db *DB) QueryGuidedNeuralBlastRadius(targetSymbol string, neuralIdx *Neura
 		TotalEvaluated: len(db.symbols),
 	}
 
-	// 1. Pré-calcula distâncias semânticas se o índice neural estiver presente
+	if pruneHammingThreshold <= 0 {
+		pruneHammingThreshold = 3800 // Poda nós que tiverem distância de Hamming muito alta (> 46.4% de divergência de bits)
+	}
+
+	// 1. Pré-calcula vetor semântico do alvo
 	var targetWords []uint64
 	hasNeural := neuralIdx != nil && uint32(targetID) < neuralIdx.TotalSymbols
 	if hasNeural {
@@ -69,7 +78,7 @@ func (db *DB) QueryGuidedNeuralBlastRadius(targetSymbol string, neuralIdx *Neura
 
 	getHamming := func(symID uint16) (int, float64) {
 		if !hasNeural || uint32(symID) >= neuralIdx.TotalSymbols {
-			return 4096, 0.0 // Neutro / Ortogonal
+			return 4096, 0.0
 		}
 		candOffset := int(symID) * NeuralWordsPerVec
 		candWords := neuralIdx.Words[candOffset : candOffset+NeuralWordsPerVec]
@@ -81,7 +90,7 @@ func (db *DB) QueryGuidedNeuralBlastRadius(targetSymbol string, neuralIdx *Neura
 		return dist, sim
 	}
 
-	// 2. Travessia Simbólica Ponderada pela Semântica (CSR BFS com Poda Neural)
+	// 2. Travessia Simbólica de Impacto Reverso (CSR Reverso: quem chama o alvo) com Poda Neural
 	visited := NewBitset(len(db.symbols) + 64)
 	visited.Set(targetID)
 
@@ -100,43 +109,49 @@ func (db *DB) QueryGuidedNeuralBlastRadius(targetSymbol string, neuralIdx *Neura
 			continue
 		}
 
-		// Percorre arestas sainte (CSR)
-		start := db.csrOffsets[curr.id]
-		end := db.csrOffsets[curr.id+1]
-		for e := start; e < end; e++ {
-			calleeID := db.csrEdges[e]
-			if !visited.Has(calleeID) {
-				visited.Set(calleeID)
-				dist, sim := getHamming(calleeID)
+		// Segue o CSR Reverso (csrRevOffsets / csrRevEdges)
+		if int(curr.id) < len(db.csrRevOffsets)-1 {
+			start := db.csrRevOffsets[curr.id]
+			end := db.csrRevOffsets[curr.id+1]
+			for e := start; e < end; e++ {
+				callerID := db.csrRevEdges[e]
+				if !visited.Has(callerID) {
+					visited.Set(callerID)
+					dist, sim := getHamming(callerID)
 
-				// Ponderação do risco: CSR estrutural calibrado pela coerência semântica
-				graphWeight := 1.0 / float64(curr.depth+1)
-				combinedRisk := graphWeight * (1.0 + 0.5*sim)
+					// PODA NEURAL ATIVA: Se a distância ultrapassar o limite, interrompe a expansão deste ramo
+					if hasNeural && dist > pruneHammingThreshold {
+						result.PrunedBranchesCount++
+						continue
+					}
 
-				severity := SeverityIndirectCaller
-				if curr.depth == 0 {
-					severity = SeverityDirectBreaking
+					graphWeight := 1.0 / float64(curr.depth+1)
+					combinedRisk := graphWeight * (1.0 + 0.5*sim)
+
+					severity := SeverityIndirectDependency
+					if curr.depth == 0 {
+						severity = SeverityDirectDependency
+					}
+
+					callerSym := db.symbols[callerID]
+					node := &GuidedImpactNode{
+						Symbol:          callerSym,
+						Severity:        severity,
+						GraphDepth:      curr.depth + 1,
+						HammingDistance: dist,
+						SemanticScore:   sim,
+						CombinedRisk:    combinedRisk,
+						Reason:          fmt.Sprintf("Dependência reversa no grafo (nível %d) com coerência semântica %.2f", curr.depth+1, sim),
+					}
+					impactMap[callerID] = node
+
+					queue = append(queue, queueItem{id: callerID, depth: curr.depth + 1})
 				}
-
-				calleeSym := db.symbols[calleeID]
-				node := &GuidedImpactNode{
-					Symbol:          calleeSym,
-					Severity:        severity,
-					GraphDepth:      curr.depth + 1,
-					HammingDistance: dist,
-					SemanticScore:   sim,
-					CombinedRisk:    combinedRisk,
-					Reason:          fmt.Sprintf("Chamada direta no grafo (nível %d) com coerência semântica %.2f", curr.depth+1, sim),
-				}
-				impactMap[calleeID] = node
-
-				// Continua expansão no CSR apenas se não for ruído semântico completo
-				queue = append(queue, queueItem{id: calleeID, depth: curr.depth + 1})
 			}
 		}
 	}
 
-	// 3. Inferência de Violação Implícita (Nós com altíssima afinidade semântica SEM aresta direta no CSR)
+	// 3. Associação Semântica sem Aresta no CSR (Semantic Association)
 	if hasNeural {
 		for i := 0; i < len(db.symbols); i++ {
 			sid := db.symbols[i].ID
@@ -145,33 +160,36 @@ func (db *DB) QueryGuidedNeuralBlastRadius(targetSymbol string, neuralIdx *Neura
 			}
 
 			dist, sim := getHamming(sid)
-			// Se afinidade semântica for muito alta (ex: > 0.70 ou conforme threshold), é um Drift Semântico
 			if sim >= semanticThreshold {
 				node := &GuidedImpactNode{
 					Symbol:          db.symbols[sid],
-					Severity:        SeveritySemanticDrift,
-					GraphDepth:      -1, // Sem aresta no CSR
+					Severity:        SeveritySemanticAssociation,
+					GraphDepth:      -1,
 					HammingDistance: dist,
 					SemanticScore:   sim,
-					CombinedRisk:    0.85 * sim, // Risco alto por acoplamento conceitual oculto
-					Reason:          fmt.Sprintf("Acoplamento semântico oculto (sem chamada no CSR, mas afinidade neural de %.2f)", sim),
+					CombinedRisk:    0.80 * sim,
+					Reason:          fmt.Sprintf("Associação semântica no mesmo domínio funcional (sem chamada reversa no CSR, afinidade de %.2f)", sim),
 				}
 				impactMap[sid] = node
-				result.SemanticDriftCount++
+				result.SemanticAssociationCount++
 			}
 		}
 	}
 
-	// 4. Consolida e ordena os resultados por Risco Combinado Decrescente
+	// 4. Consolidação com ORDENAÇÃO 100% DETERMINÍSTICA
 	for _, node := range impactMap {
-		if node.Severity != SeveritySemanticDrift {
-			result.DeterministicCount++
+		if node.Severity != SeveritySemanticAssociation {
+			result.DeterministicCallersCount++
 		}
 		result.ImpactedNodes = append(result.ImpactedNodes, node)
 	}
 
+	// Ordena por CombinedRisk decrescente; havendo empate, desempata pelo Symbol.ID (estabilidade total)
 	sort.Slice(result.ImpactedNodes, func(i, j int) bool {
-		return result.ImpactedNodes[i].CombinedRisk > result.ImpactedNodes[j].CombinedRisk
+		if result.ImpactedNodes[i].CombinedRisk != result.ImpactedNodes[j].CombinedRisk {
+			return result.ImpactedNodes[i].CombinedRisk > result.ImpactedNodes[j].CombinedRisk
+		}
+		return result.ImpactedNodes[i].Symbol.ID < result.ImpactedNodes[j].Symbol.ID
 	})
 
 	return result, nil
