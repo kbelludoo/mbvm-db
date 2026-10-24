@@ -135,6 +135,14 @@ func main() {
 				metrics["e2e_semantic_ns"] = nsOp
 			case strings.Contains(name, "E2E_HDC"):
 				metrics["e2e_hdc_ns"] = nsOp
+			case strings.Contains(name, "ASTCanonicalGoFunction"):
+				metrics["ast_canonical_go_function_ns"] = nsOp
+				if len(matches) >= 6 && matches[4] != "" {
+					bOp, _ := strconv.Atoi(matches[4])
+					allocsOp, _ := strconv.Atoi(matches[5])
+					metrics["ast_canonical_go_function_bytes_per_op"] = bOp
+					metrics["ast_canonical_go_function_allocs_per_op"] = allocsOp
+				}
 			case strings.Contains(name, "NativeProjection8K_384"):
 				metrics["native_projection_384_to_8192_ns"] = nsOp
 				if len(matches) >= 6 && matches[4] != "" {
