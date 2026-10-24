@@ -193,6 +193,30 @@
       </table>
     </div>
 
+
+    <!-- Experimental results: exact CSR baseline versus precomputed associative HDC -->
+    <div class="card" style="margin-bottom:24px;">
+      <h2>🧪 Avaliação multicaminho — 50 sementes sintéticas</h2>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:10px;">
+        Recall@10 e MRR avaliam destinos a dois saltos com filtro semântico simulado.
+        Não são medidas de generalização de uma rede neural treinada.
+      </p>
+      <table>
+        <thead><tr><th>Abordagem</th><th>Recall@10 médio</th><th>MRR médio</th></tr></thead>
+        <tbody id="multipathTable"><tr><td colspan="3">Aguardando métricas experimentais...</td></tr></tbody>
+      </table>
+      <div id="multipathMeta" class="meta-tag" style="margin-top:10px;"></div>
+      <h2 style="margin-top:20px;">Consultas e propagação — GitHub Actions</h2>
+      <table>
+        <thead><tr><th>Operação</th><th>Tempo médio no CI</th></tr></thead>
+        <tbody id="hop2QueryTable"><tr><td colspan="2">Aguardando benchmarks...</td></tr></tbody>
+      </table>
+      <p style="font-size:12px;color:var(--text-muted);margin-top:8px;">
+        HDC membership mede um candidato; HDC full scan examina todos os 1.000 candidatos.
+        CSR + semântica examina somente os destinos alcançáveis. A construção de contexto HDC é medida separadamente.
+      </p>
+    </div>
+
     <!-- SEÇÃO B: WEB ASSEMBLY INTERATIVO -->
     <div class="grid-2">
       <div class="card">
@@ -245,6 +269,26 @@
         const commitShort = (data.commit_sha || "").substring(0, 7) || "manual";
         document.getElementById("ciMeta").innerHTML = 
           `Commit: <code>${commitShort}</code> | CPU: <code>${env.cpu || "Linux Runner"}</code> | Compilador: <code>${env.compiler || "Go"}</code> | Gerado em: <code>${data.generated_at_utc || "N/A"}</code>`;
+
+
+        const mp = data.multipath_evaluation || {};
+        const readablePercent = (v) => (typeof v === "number" && Number.isFinite(v)) ? (100*v).toFixed(1)+"%" : "N/D";
+        const readableMRR = (v) => (typeof v === "number" && Number.isFinite(v)) ? v.toFixed(3) : "N/D";
+        document.getElementById("multipathTable").innerHTML = [
+          ["CSR exato + filtro semântico",mp.csr_semantic_recall_at_10,mp.csr_semantic_mrr],
+          ["Somente busca semântica",mp.semantic_only_recall_at_10,mp.semantic_only_mrr],
+          ["HDC híbrido (pré-computado)",mp.hdc_hybrid_recall_at_10,mp.hdc_hybrid_mrr]
+        ].map(row => "<tr><td>"+row[0]+"</td><td>"+readablePercent(row[1])+"</td><td>"+readableMRR(row[2])+"</td></tr>").join("");
+        document.getElementById("multipathMeta").textContent =
+          "Sementes: "+(mp.seeds ?? "N/D")+" | Consultas: "+(mp.queries ?? "N/D")+
+          " | Destinos relevantes por consulta: "+(typeof mp.average_relevant==="number" ? mp.average_relevant.toFixed(2) : "N/D");
+        const readableNs = (v) => (typeof v === "number" && Number.isFinite(v)) ? v.toFixed(1)+" ns/op" : "N/D";
+        document.getElementById("hop2QueryTable").innerHTML = [
+          ["Propagar 2 hops (1.000 nós)",typeof m.csr_1000nodes_propagate_hop2_ms==="number" ? m.csr_1000nodes_propagate_hop2_ms.toFixed(2)+" ms/op" : "N/D"],
+          ["CSR 2-hop + filtro semântico",readableNs(m.csr_hybrid_query_1000nodes_ns)],
+          ["HDC membership: 1 candidato",readableNs(m.hdc_membership_query_1000nodes_ns)],
+          ["HDC full scan: 1.000 candidatos",readableNs(m.hdc_fullscan_query_1000nodes_ns)]
+        ].map(row=>"<tr><td>"+row[0]+"</td><td>"+row[1]+"</td></tr>").join("");
 
         const hamNs = m.hamming_8k_ns || 103.5;
         const bindNs = m.bind_8k_ns || 75.7;
