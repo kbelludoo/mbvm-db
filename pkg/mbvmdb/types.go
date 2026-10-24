@@ -64,3 +64,44 @@ type ContextSlice struct {
 	TotalFiles     int
 	TokensEstimate int
 }
+
+// Bitset represents a high-performance 64-bit word bitmap for zero-allocation visited tracking.
+type Bitset struct {
+	words []uint64
+}
+
+// NewBitset initializes a bitset capable of storing up to size bits.
+func NewBitset(size int) *Bitset {
+	if size <= 0 {
+		size = 64
+	}
+	return &Bitset{
+		words: make([]uint64, (size+63)/64),
+	}
+}
+
+// Has returns true if the bit for id is set.
+func (b *Bitset) Has(id uint16) bool {
+	w := id >> 6
+	if int(w) >= len(b.words) {
+		return false
+	}
+	return (b.words[w] & (uint64(1) << (id & 63))) != 0
+}
+
+// Set marks the bit for id as true, expanding words if necessary.
+func (b *Bitset) Set(id uint16) {
+	w := id >> 6
+	if int(w) >= len(b.words) {
+		newWords := make([]uint64, w+1)
+		copy(newWords, b.words)
+		b.words = newWords
+	}
+	b.words[w] |= (uint64(1) << (id & 63))
+}
+
+// ScoredSymbol associates a symbol record with its centrality & relevance score.
+type ScoredSymbol struct {
+	Record *SymbolRecord
+	Score  float64
+}
