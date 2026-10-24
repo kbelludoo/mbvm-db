@@ -5,7 +5,7 @@
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/kbelludoo/mbvm-db)](https://goreportcard.com/report/github.com/kbelludoo/mbvm-db)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/Real--World%20Bug%20Tests-112%20Passed-brightgreen.svg)](#-suíte-de-112-testes-de-bugs-reais)
+[![Tests](https://img.shields.io/badge/Real--World%20Bug%20Tests-114%20Passed-brightgreen.svg)](#-suíte-de-114-testes-de-bugs-reais)
 
 ---
 
@@ -13,11 +13,12 @@
 
 O **MBVM-DB** é um motor de banco de dados embutido especializado em grafos de código, AST (Abstract Syntax Tree) e bytecode compacto para alimentar agentes autônomos de IA.
 
-Ao contrário de abordagens estáticas que despejam o código cru (40.000 a 100.000 tokens) ou ASTs inteiras monolíticas (3.000 a 10.000 tokens), o MBVM-DB trata o repositório como um **banco de dados vivo indexado em memória e disco com grafo de chamadas bidirecional**:
-1. **Indexação O(1) com Opcodes:** Structs, interfaces, métodos e chamadas (`OpCallEdge`) são indexados bidirecionalmente.
+Ao contrário de abordagens estáticas que despejam o código cru (40.000 a 100.000 tokens) ou ASTs inteiras monolíticas (3.000 a 10.000 tokens), o MBVM-DB trata o repositório como um **banco de dados vivo indexado em memória e disco com grafo de chamadas bidirecional em formato CSR**:
+1. **Indexação O(1) com CSR e Opcodes:** Structs, interfaces, métodos e chamadas (`OpCallEdge`) são indexados bidirecionalmente em arrays contíguos CSR (*Compressed Sparse Row*), otimizados para cache L1/L2.
 2. **Sub-graph Slicing Dinâmico:** Em vez de mandar todo o projeto para a IA, você consulta `mbvm-db slice <banco.mbvmdb> <funcao> [profundidade]` e o banco faz travessia BFS nos opcodes em ~22 microssegundos.
-3. **Persistência Binária Atômica com CRC32:** Salva o banco compilado em arquivo único `.mbvmdb` com cabeçalho mágico (`MBVM\x01\x00`), carregável em 269 microssegundos.
-4. **Economia Líquida:** Reduz de **67% a 93% a mais de tokens sobre o MB-VM puro** (e **96% a 99.5% sobre o código cru original**).
+3. **Slicing por Orçamento Estrito de Tokens (`slice-budget`):** Permite à IA especificar um teto rígido de tokens (ex: `100 tokens`). O algoritmo prioriza os nós centrais via relevância e penaliza utilitários ruidosos de alto in-degree (ex: loggers).
+4. **Persistência Binária Atômica com CRC32:** Salva o banco compilado em arquivo único `.mbvmdb` com cabeçalho mágico (`MBVM\x01\x00`), carregável em 269 microssegundos.
+5. **Economia Líquida:** Reduz de **67% a 93% a mais de tokens sobre o MB-VM puro** (e **96% a 99.5% sobre o código cru original**).
 
 ---
 
@@ -97,12 +98,18 @@ mbvm-db verify codebase.mbvmdb
 mbvm-db slice codebase.mbvmdb "ExtractSlice" 1
 ```
 
-### 4. Inspecionar Estatísticas do Banco
+### 4. Extrair Fatia com Teto Estrito de Tokens (Anti-Ruído / Context-Budget)
+```bash
+# Garante que a resposta NUNCA ultrapasse 100 tokens, priorizando nós centrais
+mbvm-db slice-budget codebase.mbvmdb "ExtractSlice" 100
+```
+
+### 5. Inspecionar Estatísticas do Banco
 ```bash
 mbvm-db inspect codebase.mbvmdb
 ```
 
-### 5. Rodar Benchmark Comparativo
+### 6. Rodar Benchmark Comparativo
 ```bash
 go run ./cmd/benchmark . ExtractSlice
 ```

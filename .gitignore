@@ -25,6 +25,8 @@ build/
 tmp/
 .tmp/
 *.tmp
+*.zip
+output/
 
 # Secrets / local env
 .env

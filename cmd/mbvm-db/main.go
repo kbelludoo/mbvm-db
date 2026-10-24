@@ -79,6 +79,34 @@ func main() {
 			sym, duration, depth, len(slice.Symbols), slice.TokensEstimate)
 		fmt.Println(db.ProjectSlice(slice.Symbols))
 
+	case "slice-budget", "budget":
+		if len(os.Args) < 5 {
+			fmt.Println("Uso: mbvm-db slice-budget <dir_ou_arquivo.mbvmdb> <simbolo> <max_tokens> [profundidade]")
+			os.Exit(1)
+		}
+		target := os.Args[2]
+		sym := os.Args[3]
+		maxTokens := 500
+		_, _ = fmt.Sscanf(os.Args[4], "%d", &maxTokens)
+		depth := 3
+		if len(os.Args) > 5 {
+			_, _ = fmt.Sscanf(os.Args[5], "%d", &depth)
+		}
+
+		start := time.Now()
+		db, err := loadOrIngest(target)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Erro ao carregar banco: %v\n", err)
+			os.Exit(1)
+		}
+
+		slice := db.ExtractBudgetSlice(sym, depth, maxTokens)
+		duration := time.Since(start)
+
+		fmt.Fprintf(os.Stderr, "⚡ [MBVM-DB] Símbolo '%s' fatiado com teto de %d tokens em %v (%d símbolos | ~%d tokens)\n\n",
+			sym, maxTokens, duration, len(slice.Symbols), slice.TokensEstimate)
+		fmt.Println(db.ProjectSlice(slice.Symbols))
+
 	case "inspect":
 		target := "."
 		if len(os.Args) > 2 {
@@ -131,6 +159,7 @@ func printUsage() {
 	fmt.Println("COMANDOS:")
 	fmt.Println("  mbvm-db build <dir> [arquivo.mbvmdb]             Compila AST para banco binário indexado persistente")
 	fmt.Println("  mbvm-db slice <dir|banco.mbvmdb> <simb> [prof]   Extrai fatia subgrafo para IA (-93% tokens)")
+	fmt.Println("  mbvm-db slice-budget <dir|banco> <símb> <tokens> Extrai fatia com teto estrito de tokens e anti-ruído")
 	fmt.Println("  mbvm-db inspect [dir|banco.mbvmdb]               Inspeciona símbolos e bytecode do projeto")
 	fmt.Println("  mbvm-db verify <arquivo.mbvmdb>                  Verifica integridade binária e CRC32")
 }
