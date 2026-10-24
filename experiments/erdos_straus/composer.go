@@ -113,6 +113,23 @@ func (c *RuleComposer) ComposeCRT(r1, r2 *Rule) (*ComposedCandidate, error) {
 		// Rule.Dependencies supplies the derived -> parent dependency edges.
 		nextRules := append(slices.Clone(c.BaseRules), derivedRule)
 		nextGraph := NewMathCSRGraph(nextRules)
+		// NewMathCSRGraph rebuilds dependency/generalization edges from the
+		// catalog, but previously inserted RelComposition edges are dynamic.
+		// Preserve all earlier composition edges before attaching the new rule.
+		for sourceIdx, sourceID := range c.Graph.RuleIDs {
+			for _, edge := range c.Graph.Neighbors(sourceIdx) {
+				if edge.Rel != RelComposition {
+					continue
+				}
+				if edge.Target < 0 || edge.Target >= len(c.Graph.RuleIDs) {
+					return nil, fmt.Errorf("invalid existing composition target %d for %s: %w", edge.Target, sourceID, ErrInvalidInput)
+				}
+				targetID := c.Graph.RuleIDs[edge.Target]
+				if err := nextGraph.AddEdge(sourceID, targetID, RelComposition); err != nil {
+					return nil, fmt.Errorf("preserve existing composition %s -> %s: %w", sourceID, targetID, err)
+				}
+			}
+		}
 		for _, parentID := range candidate.ParentIDs {
 			if err := nextGraph.AddEdge(parentID, derivedRule.ID, RelComposition); err != nil {
 				return nil, fmt.Errorf("register CRT composition %s -> %s: %w", parentID, derivedRule.ID, err)
