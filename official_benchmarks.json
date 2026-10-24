@@ -1,31 +1,33 @@
 {
   "project": "MBVM-DB",
   "module": "experiments/hdc-csr",
-  "commit_sha": "d9040b07bbec727d4b57d8ed7c0cefb6727be576",
+  "commit_sha": "3d3204a6ce186d0ca2eef91358f0d256135ff59b",
   "baseline_reference_commit": "116ec92",
-  "generated_at_utc": "2026-10-24T04:09:11Z",
+  "generated_at_utc": "2026-10-24T04:15:53Z",
   "environment": {
     "compiler": "go version go1.27.3 linux/amd64",
-    "cpu": "AMD EPYC 7763 64-Core Processor",
+    "cpu": "AMD EPYC 9V45 96-Core Processor",
     "execution_mode": "Single-Core (-cpu 1, GOMAXPROCS=1)",
     "os": "Linux"
   },
   "metrics": {
     "allocs_per_op_critical_path": 0,
-    "bind_8k_ns": 78.66,
+    "bind_8k_ns": 40.18,
     "bytes_per_op_critical_path": 0,
     "csr_1000nodes_allocs_per_op": 3,
     "csr_1000nodes_bytes_per_op": 1025104,
-    "csr_1000nodes_propagate_ms": 3.283375,
-    "hamming_8k_ns": 98.21,
-    "majority3_8k_ns": 262.5,
+    "csr_1000nodes_propagate_ms": 1.792152,
+    "hamming_8k_ns": 48.36,
+    "majority3_8k_ns": 126.3,
     "memory_per_node_bytes": 1024,
-    "rotl_8k_ns": 380.1
+    "rotl_8k_ns": 208.7
   },
   "quality_evaluation": {
     "experiment_a_pure_semantic_recall10": 0,
     "experiment_b_hdc_1hop_unbinding_recall10": 50,
-    "experiment_c_hdc_2hop_composite_recall10": 50,
-    "status": "CI Verified via GitHub Actions runner"
+    "experiment_c_hdc_2hop_composite_recall10": 100,
+    "hop2_target_distance_bits": 0,
+    "hop2_target_recovered_rank": 1,
+    "status": "PASSED"
   }
 }
