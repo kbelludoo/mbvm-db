@@ -1,26 +1,26 @@
 {
   "project": "MBVM-DB",
   "module": "experiments/hdc-csr",
-  "commit_sha": "3d3204a6ce186d0ca2eef91358f0d256135ff59b",
+  "commit_sha": "d4e0b2ecc63e66dda6ebfc70efa22cb143370bdd",
   "baseline_reference_commit": "116ec92",
-  "generated_at_utc": "2026-10-24T04:15:53Z",
+  "generated_at_utc": "2026-10-24T04:20:40Z",
   "environment": {
     "compiler": "go version go1.27.3 linux/amd64",
-    "cpu": "AMD EPYC 9V45 96-Core Processor",
+    "cpu": "AMD EPYC 9V74 80-Core Processor",
     "execution_mode": "Single-Core (-cpu 1, GOMAXPROCS=1)",
     "os": "Linux"
   },
   "metrics": {
     "allocs_per_op_critical_path": 0,
-    "bind_8k_ns": 40.18,
+    "bind_8k_ns": 55.44,
     "bytes_per_op_critical_path": 0,
     "csr_1000nodes_allocs_per_op": 3,
     "csr_1000nodes_bytes_per_op": 1025104,
-    "csr_1000nodes_propagate_ms": 1.792152,
-    "hamming_8k_ns": 48.36,
-    "majority3_8k_ns": 126.3,
+    "csr_1000nodes_propagate_ms": 2.864489,
+    "hamming_8k_ns": 77.6,
+    "majority3_8k_ns": 218.2,
     "memory_per_node_bytes": 1024,
-    "rotl_8k_ns": 208.7
+    "rotl_8k_ns": 321.8
   },
   "quality_evaluation": {
     "experiment_a_pure_semantic_recall10": 0,
