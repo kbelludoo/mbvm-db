@@ -14,19 +14,20 @@
    - Tipagem estrita: Proibido `any`/`interface{}` vazio sem justificativa de codec. Structs com tags explícitas.
    - Zero Dependências Cíclicas: Fluxo unidirecional de imports (`cmd/` -> `pkg/` -> `domain`).
 3. COMPILER AS GROUND TRUTH:
-   - Toda alteração em `.go` deve ser validada imediatamente com `go vet ./...` e `go test -race ./...`.
+   - Toda alteração em `.go` deve ser validada imediatamente com `go vet ./...` e `go test ./...`.
    - Use os erros do compilador Go como feedback determinístico imediato de autocura.
 4. ROOT-CAUSE FIRST & MINIMAL DIFFS:
    - Ataque sempre a causa-raiz do problema; nunca aplique "curativos" em sintomas.
    - Edições cirúrgicas e mínimas: nunca reescreva arquivos inteiros quando um diff direcionado resolve.
    - Se encontrar bug: crie um teste reproduzindo a falha primeiro, depois implemente a correção.
-5. MB-VM FIRST (3 CAMADAS):
-   - Camada 1: Consulte `codebase.mbvm` antes de ler arquivos crus (95% de economia de contexto).
-   - Camada 2: Ferramentas MCP comprimidas para assinaturas tipadas de 1 linha.
-   - Camada 3: Cache de páginas e runtime salvo como bytecode em SQLite.
+5. MB-VM & MBVM-DB FIRST (SMART SLICING & ECONOMIA DE TOKENS):
+   - **MBVM-DB Smart Slicing:** Antes de inspecionar ou alterar código, use `mbvm-db slice . <Symbol> [depth]` (ex: `mbvm-db slice . Evaluator 2`) para obter o subgrafo direcionado de dependências (200-400 tokens, 99% de economia).
+   - **Camada 1 (AST):** Consulte `codebase.mbvm` para obter assinaturas globais antes de ler arquivos brutos.
+   - **Camada 2 (MCP):** Ferramentas MCP comprimidas para assinaturas tipadas de 1 linha.
+   - **Camada 3 (Runtime/DB):** Cache e runtime gravados como micro-bytecode no SQLite (`page_bytecodes.db`).
 6. MODULARITY: Limite estrito de 400 linhas por arquivo.
 7. GIT GLOBAL PRE-COMMIT:
-   - Hook global `~/.git-hooks/pre-commit` recompila `codebase.mbvm` automaticamente via `go-tools mbvm .` a cada commit.
+   - Hook global `~/.git-hooks/pre-commit` recompila `codebase.mbvm` via `go-tools mbvm .` e valida integridade via `mbvm-db inspect .` a cada commit.
 
 ## Fonte Canônica
 Seguir `AGENTS.mbvm` na raiz do projeto.
