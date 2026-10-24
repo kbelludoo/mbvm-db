@@ -62,7 +62,7 @@ func extractGitTree(repo,ref,dest string)error{
   case tar.TypeDir:
    if err:=os.MkdirAll(output,0700);err!=nil{return err}
   case tar.TypeReg,tar.TypeRegA:
-   if h.Size<0||total+h.Size>maxSnapshotBytes{
+   if h.Size<0||h.Size>maxSnapshotBytes-total{
     return fmt.Errorf("Git snapshot exceeds %d-byte limit",maxSnapshotBytes)
    }
    total+=h.Size
