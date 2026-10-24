@@ -34,3 +34,11 @@ kaggle-watcher-linux
 .env
 **/.env
 !.env.example
+
+kaggle_watcher.go
+push_to_kaggle.go
+kaggle-watcher.service
+*.key
+*.bin
+*.zip
+
