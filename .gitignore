@@ -27,6 +27,8 @@ tmp/
 *.tmp
 *.zip
 output/
+mbvm_neural_weights.bin
+kaggle-watcher-linux
 
 # Secrets / local env
 .env
