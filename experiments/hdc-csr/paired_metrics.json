@@ -1,0 +1,67 @@
+{
+  "total_queries": 100,
+  "total_nodes": 1000,
+  "k": 10,
+  "engines": [
+    {
+      "name": "CSR_Local_Semantic",
+      "recall_at_10": 1,
+      "precision_at_10": 0.5,
+      "normalized_precision_at_k": 1,
+      "precision_of_returned": 0.833333333333333,
+      "avg_returned_results": 6,
+      "mrr": 0.865,
+      "avg_false_positives": 1,
+      "p50_latency_us": 0,
+      "p95_latency_us": 0,
+      "p99_latency_us": 0,
+      "mean_latency_us": 0,
+      "estimated_qps": 0
+    },
+    {
+      "name": "Pure_Semantic_Scan",
+      "recall_at_10": 0.008,
+      "precision_at_10": 0.004,
+      "normalized_precision_at_k": 0.008,
+      "precision_of_returned": 0.004,
+      "avg_returned_results": 10,
+      "mrr": 0.008083333333333333,
+      "avg_false_positives": 9.96,
+      "p50_latency_us": 0,
+      "p95_latency_us": 1013,
+      "p99_latency_us": 1031.6,
+      "mean_latency_us": 333.18699999999995,
+      "estimated_qps": 3001.3175784169252
+    },
+    {
+      "name": "HDC_Hybrid_ContextSimilarity",
+      "recall_at_10": 0.40599999999999925,
+      "precision_at_10": 0.20299999999999963,
+      "normalized_precision_at_k": 0.40599999999999925,
+      "precision_of_returned": 0.20299999999999963,
+      "avg_returned_results": 10,
+      "mrr": 0.29083333333333317,
+      "avg_false_positives": 7.97,
+      "p50_latency_us": 999.3,
+      "p95_latency_us": 1487.9,
+      "p99_latency_us": 1999.2,
+      "mean_latency_us": 824.3389999999998,
+      "estimated_qps": 1213.0931570628106
+    },
+    {
+      "name": "HDC_Canonical_VSA_Unbinding",
+      "recall_at_10": 1,
+      "precision_at_10": 0.5,
+      "normalized_precision_at_k": 1,
+      "precision_of_returned": 0.5,
+      "avg_returned_results": 10,
+      "mrr": 1,
+      "avg_false_positives": 5,
+      "p50_latency_us": 998.7,
+      "p95_latency_us": 1000.4,
+      "p99_latency_us": 1001.1,
+      "mean_latency_us": 539.689,
+      "estimated_qps": 1852.9189959402545
+    }
+  ]
+}
