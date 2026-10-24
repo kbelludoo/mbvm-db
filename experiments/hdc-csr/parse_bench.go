@@ -122,6 +122,14 @@ func main() {
 				metrics["e2e_semantic_ns"] = nsOp
 			case strings.Contains(name, "E2E_HDC"):
 				metrics["e2e_hdc_ns"] = nsOp
+			case strings.Contains(name, "IncrementalUpdate_1000Nodes"):
+				metrics["incremental_update_1000nodes_ms"] = nsOp / 1000000.0
+				if len(matches) >= 6 && matches[4] != "" {
+					bOp, _ := strconv.Atoi(matches[4])
+					allocsOp, _ := strconv.Atoi(matches[5])
+					metrics["incremental_update_bytes_per_op"] = bOp
+					metrics["incremental_update_allocs_per_op"] = allocsOp
+				}
 			}
 		}
 	}
