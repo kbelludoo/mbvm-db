@@ -297,3 +297,44 @@ func TestHardClasses840ParametricFamilies(t *testing.T) {
 			r.ID, r.Modulus, r.Residues[0])
 	}
 }
+
+
+func TestRegressionAuditedCases(t *testing.T) {
+	// Regression 1: p = 2 must panic due to parity bug identified in audit
+	defer func() {
+		if r := recover(); r == nil {
+			t.Fatalf("expected panic for even prime p=2, but did not panic")
+		} else {
+			t.Logf("PASS: HardClassParametricFamily correctly panicked on even p=2: %v", r)
+		}
+	}()
+	_ = HardClassParametricFamily("RULE-INVALID-P2", 2, 1, 9240, 8401)
+}
+
+func TestRegressionGeneralTheoremOverlap(t *testing.T) {
+	// Regression 2: p = 5, n = 37 demonstrates that the general 1 mod 12 theorem
+	// is valid algebraically, but intersects the elementary class n = 5 mod 8
+	n := big.NewInt(37)
+	p := int64(5)
+
+	// x = (n+3)/4 = 10
+	x := new(big.Int).Div(new(big.Int).Add(n, threeBig), four)
+	// y = (n(n+3) + 4p)/12 = (37*40 + 20)/12 = 1500/12 = 125
+	nNplus3 := new(big.Int).Mul(n, new(big.Int).Add(n, threeBig))
+	y := new(big.Int).Div(new(big.Int).Add(nNplus3, big.NewInt(4*p)), twelveBig)
+	// z = n(n+3)[n(n+3)+4p] / (48p) = (1480 * 1500) / 240 = 9250
+	zNum := new(big.Int).Mul(nNplus3, new(big.Int).Add(nNplus3, big.NewInt(4*p)))
+	z := new(big.Int).Div(zNum, big.NewInt(48*p))
+
+	sol := &Solution{X: x, Y: y, Z: z}
+	if err := VerifySolution(n, sol); err != nil {
+		t.Fatalf("p=5, n=37 verification failed: %v", err)
+	}
+
+	// Verify n = 37 mod 8 == 5 (elementary class overlap)
+	if n.Int64()%8 != 5 {
+		t.Fatalf("expected n=37 to be 5 mod 8, got %d", n.Int64()%8)
+	}
+	t.Logf("PASS: n=37, p=5 verified algebraically (x=%s, y=%s, z=%s) and correctly identified in elementary class 5 mod 8",
+		x.String(), y.String(), z.String())
+}

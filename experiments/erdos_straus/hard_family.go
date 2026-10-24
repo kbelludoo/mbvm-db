@@ -35,8 +35,10 @@ func HardClassParametricFamily(id string, p int64, hardResidue840 int64, combine
 			"3. p is odd and n = 1 mod 4: let n+3 = 4m. Then n(n+3)[n(n+3)+4p] = 16mn(mn+p). "+
 			"Since p is odd, exactly one of mn or mn+p is even, making 16mn(mn+p) divisible by 32. "+
 			"Together with 3 | [n(n+3)+4p] and p | (n+3) => p^2 | numerator, 48p divides the numerator, ensuring z is integer.\n"+
-			"Crucially, n = 1 mod 24, so this family is strictly disjoint from all elementary classes (n even, n=3 mod 4, n=2 mod 3, n=5 mod 8).",
-		combinedRes, combinedMod, hardResidue840)
+			"For this specific 840-subfamily where residue %d projects to %d mod 840 (with %d = 1 mod 24), "+
+			"the progression is strictly disjoint from all elementary classes (n even, n=3 mod 4, n=2 mod 3, n=5 mod 8). "+
+			"Note that the broader algebraic theorem requires only n = 1 mod 12 and n = -3 mod p.",
+		combinedRes, combinedMod, hardResidue840, combinedRes, hardResidue840, hardResidue840)
 
 	pBig := big.NewInt(p)
 	fourP := new(big.Int).Mul(big.NewInt(4), pBig)
