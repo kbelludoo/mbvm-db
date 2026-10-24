@@ -133,3 +133,49 @@ Omit `-synthetic-v4-layout` when the producer is uncertain. The CLI will
 still test sampled interbit correlations, but will not infer domain labels.
 The 8-domain hypothesis is about synthetic software-topic descriptors,
 not arbitrary real code or programming intelligence.
+
+## V4 source-block leakage and duplicate controls
+
+The structure audit also reports `block_holdout` when
+`-synthetic-v4-layout` is enabled (default 160 sampled queries, adjustable
+with `-block-holdout-queries`; 0 disables it).
+
+This stronger check omits **all 250 vectors in the same generation chunk as
+the query**, including the query itself and within-chunk near-clones.
+It uses every remaining vector as a nearest-neighbor candidate and then
+scores the inferred synthetic topic label. A secondary metric excludes
+**zero-distance candidates**, including duplicates in other chunks.
+
+The default 160 queries are deterministically spread across the 40 chunks.
+For 10,000 vectors, there are exactly 9,750 eligible candidates per query:
+1,000 of them come from the four other chunks carrying the same one of
+eight synthetic labels. A **uniform random** label-matching baseline is
+therefore `1000/9750 = 10.2564%`, not the 12.49% used when only the
+query's own vector is excluded.
+
+The report includes cross-block Top1, cross-block nonidentical Top1,
+exact-duplicate nearest neighbors, nearest same/other class distances,
+margins, and per-domain query/correct counts. A high cross-block score
+is evidence of robust topic-template retrieval, **not** validation of Go
+behavior semantics.
+
+**Trivial non-neural baseline:** the V4 exporter writes each domain name
+and its keyword list *literally* into the input string. A substring
+classifier that matches the known eight domain names in those strings
+assigns all of them correctly **by construction**. Consequently,
+domain-label accuracy without a lexically harder held-out dataset
+cannot establish any incremental semantic benefit from HDC.
+
+Recommended command on VPS:
+
+```sh
+go run ./experiments/hdc-csr/cmd/audit_supreme_structure \
+  -file /home/ubuntu/mbvm_neural_output/output/knowledge_8k_supreme.bin \
+  -expected-sha256 29d947f45ab120e25ea91630c64a6f55916019d16e7477da5f1019640e154d1b \
+  -synthetic-v4-layout -block-holdout-queries 160 \
+  -column-pairs 512 -domain-pairs 2048 -nearest-queries 32 \
+  -out /home/ubuntu/supreme_structure_holdout.json
+```
+
+This does not require weights W and does not change the current trained
+index. It assumes the V4 writer's chunk order is unchanged.
