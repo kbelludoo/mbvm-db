@@ -7,6 +7,8 @@ on:
       - main
     paths:
       - 'experiments/hdc-csr/**'
+      - 'internal/impact/**'
+      - 'cmd/mbvm-db/**'
       - '.github/workflows/hdc_benchmark_pages.yml'
   workflow_dispatch:
 
@@ -43,6 +45,10 @@ jobs:
         run: |
           cd experiments/hdc-csr
           go test -count=1 -v -cpu 1
+
+      - name: Validate Production Impact CLI and Typed Analysis
+        run: |
+          CGO_ENABLED=0 go test -count=1 -v ./internal/impact ./cmd/mbvm-db
 
       - name: Validate Kaggle Index Audit (Go-only, synthetic v1/v2 fixtures)
         run: |
