@@ -22,11 +22,13 @@ type BenchReport struct {
 	Environment             map[string]string `json:"environment"`
 	Metrics                 map[string]any    `json:"metrics"`
 	QualityEvaluation       map[string]any    `json:"quality_evaluation"`
+	MultiPathEvaluation     map[string]any    `json:"multipath_evaluation"`
 }
 
 func main() {
 	benchFile := "experiments/hdc-csr/bench_output.txt"
 	qualityFile := "experiments/hdc-csr/quality_output.json"
+	multiPathFile := "experiments/hdc-csr/multipath_quality.json"
 	outPath := "experiments/hdc-csr/web/official_benchmarks.json"
 
 	if len(os.Args) > 1 {
@@ -34,6 +36,9 @@ func main() {
 	}
 	if len(os.Args) > 2 {
 		qualityFile = os.Args[2]
+	}
+	if len(os.Args) > 3 {
+		multiPathFile = os.Args[3]
 	}
 
 	commitSHA := os.Getenv("GITHUB_SHA")
@@ -85,7 +90,21 @@ func main() {
 				metrics["rotl_8k_ns"] = nsOp
 			case strings.Contains(name, "Majority3Vectors8K"):
 				metrics["majority3_8k_ns"] = nsOp
-			case strings.Contains(name, "PropagateHop1_1000Nodes"):
+			case strings.Contains(name,"PropagateHop2_1000Nodes"):
+                metrics["csr_1000nodes_propagate_hop2_ms"] = nsOp/1000000.0
+                if matches[4]!="" {
+                    bOp,_:=strconv.Atoi(matches[4])
+                    allocs,_:=strconv.Atoi(matches[5])
+                    metrics["csr_1000nodes_hop2_bytes_per_op"]=bOp
+                    metrics["csr_1000nodes_hop2_allocs_per_op"]=allocs
+                }
+            case strings.Contains(name,"CSR2HopSemantics_1000Nodes"):
+                metrics["csr_hybrid_query_1000nodes_ns"] = nsOp
+            case strings.Contains(name,"HDC2HopMembership_1000Nodes"):
+                metrics["hdc_membership_query_1000nodes_ns"] = nsOp
+            case strings.Contains(name,"HDC2HopFullScan_1000Nodes"):
+                metrics["hdc_fullscan_query_1000nodes_ns"] = nsOp
+            case strings.Contains(name, "PropagateHop1_1000Nodes"):
 				metrics["csr_1000nodes_propagate_ms"] = nsOp / 1000000.0
 				if len(matches) >= 6 && matches[4] != "" {
 					bOp, _ := strconv.Atoi(matches[4])
@@ -98,7 +117,7 @@ func main() {
 	}
 
 	// Validação obrigatória: exige que todos os benchmarks essenciais tenham sido executados
-	requiredBenchmarks := []string{"hamming_8k_ns", "bind_8k_ns", "rotl_8k_ns", "majority3_8k_ns", "csr_1000nodes_propagate_ms"}
+	requiredBenchmarks := []string{"hamming_8k_ns", "bind_8k_ns", "rotl_8k_ns", "majority3_8k_ns", "csr_1000nodes_propagate_ms", "csr_1000nodes_propagate_hop2_ms", "csr_hybrid_query_1000nodes_ns", "hdc_membership_query_1000nodes_ns", "hdc_fullscan_query_1000nodes_ns"}
 	for _, req := range requiredBenchmarks {
 		if _, ok := metrics[req]; !ok {
 			fmt.Printf("FALHA CRÍTICA NO CI: Métrica obrigatória '%s' ausente na saída do benchmark!\n", req)
@@ -129,6 +148,31 @@ func main() {
 		os.Exit(1)
 	}
 
+
+    // Scientific evaluation with 50 independent seeds; never fill these fields with constants.
+    rawMulti,err:=os.ReadFile(multiPathFile)
+    if err!=nil { fmt.Fprintf(os.Stderr,"Missing multipath metrics: %v\n",err); os.Exit(1) }
+    multipath:=make(map[string]any)
+    if err=json.Unmarshal(rawMulti,&multipath);err!=nil {
+        fmt.Fprintf(os.Stderr,"Malformed multipath JSON: %v\n",err);os.Exit(1)
+    }
+    if seeds,ok:=multipath["seeds"].(float64);!ok||seeds!=50 {
+        fmt.Fprintln(os.Stderr,"Multi-path test must contain exactly 50 seeds");os.Exit(1)
+    }
+    if queries,ok:=multipath["queries"].(float64);!ok||queries<=0 {
+        fmt.Fprintln(os.Stderr,"Multi-path evaluation has no queries");os.Exit(1)
+    }
+    for _,key:=range []string{
+        "csr_semantic_recall_at_10","csr_semantic_mrr",
+        "semantic_only_recall_at_10","semantic_only_mrr",
+        "hdc_hybrid_recall_at_10","hdc_hybrid_mrr",
+    } {
+        metric,ok:=multipath[key].(float64)
+        if !ok||metric<0||metric>1 {
+            fmt.Fprintf(os.Stderr,"Invalid or missing multi-path metric %s\n",key);os.Exit(1)
+        }
+    }
+
 	report := BenchReport{
 		Project:                 "MBVM-DB",
 		Module:                  "experiments/hdc-csr",
@@ -143,6 +187,7 @@ func main() {
 		},
 		Metrics:           metrics,
 		QualityEvaluation: qualityMetrics,
+        MultiPathEvaluation: multipath,
 	}
 
 	outBytes, err := json.MarshalIndent(report, "", "  ")
