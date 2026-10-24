@@ -83,6 +83,14 @@ runtime and any other database structures. Do not claim a universal
 single cached-query benchmark. Go allocation statistics do not certify
 absence of memory leaks over long durations.
 
+The real-package test writes `experiments/hdc-csr/real_world_impact_output.json`
+with source digest, count of actual Go symbols, count of **name-resolved**
+call edges, selected target symbol, immediate/indirect/total possible
+callers, and explicit `functional_counterexample_confirmed=false`.
+The CI parser requires this file and publishes it under
+`real_ast_impact_evaluation` in `gh-pages/official_benchmarks.json`.
+No private source text is copied to the published report.
+
 The official `gh-pages/official_benchmarks.json` parser publishes:
 
 - `metrics.real_ast_full_ingest_mutation_reverse_csr_ns`
