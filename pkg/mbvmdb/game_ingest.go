@@ -243,7 +243,7 @@ func (db *DB) CompileGameBytecode() {
 				buf.WriteByte(OpProtoField)
 				_ = binary.Write(&buf, binary.BigEndian, db.pool.Intern(f))
 			}
-		} else if s.Kind == "game_hunt" {
+		} else if strings.HasPrefix(s.Kind, "game_") {
 			buf.WriteByte(OpGameTier)
 			_ = binary.Write(&buf, binary.BigEndian, db.pool.Intern(s.Name))
 			_ = binary.Write(&buf, binary.BigEndian, uint16(len(s.Fields)))
