@@ -363,19 +363,19 @@
             const isVsa = eng.name.includes("VSA");
             const color = isCsr ? "#3fb950" : (isVsa ? "#bc8cff" : (eng.name.includes("HDC") ? "#58a6ff" : "#8b949e"));
             const p10 = (eng.precision_at_10 * 100).toFixed(1);
-            const relP = (eng.relative_precision * 100).toFixed(1);
+            const normP = ((eng.normalized_precision_at_k || eng.relative_precision || 0) * 100).toFixed(1);
             const pRet = (eng.precision_of_returned * 100).toFixed(1);
             pairedRows += `
               <tr>
                 <td><strong style="color: ${color};">${eng.name}</strong></td>
                 <td>${(eng.recall_at_10 * 100).toFixed(1)}%</td>
                 <td><strong>${p10}%</strong></td>
-                <td>${relP}%</td>
+                <td>${normP}%</td>
                 <td>${pRet}%</td>
                 <td>${eng.avg_false_positives.toFixed(2)}</td>
                 <td>${eng.mrr.toFixed(3)}</td>
                 <td class="metric-value">${eng.p50_latency_us.toFixed(2)} µs</td>
-                <td>${(eng.estimated_qps || eng.queries_per_sec).toFixed(0)}</td>
+                <td>${(eng.estimated_qps || eng.queries_per_sec || 0).toFixed(0)}</td>
               </tr>
             `;
           });
