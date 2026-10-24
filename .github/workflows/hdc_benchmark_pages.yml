@@ -44,6 +44,10 @@ jobs:
           cd experiments/hdc-csr
           go test -count=1 -v -cpu 1
 
+      - name: Validate Kaggle Index Audit (Go-only, synthetic v1/v2 fixtures)
+        run: |
+          go test -count=1 -v ./experiments/hdc-csr/cmd/audit_supreme_index
+
       - name: Run Official Single-Core Benchmarks
         run: |
           cd experiments/hdc-csr
