@@ -42,6 +42,7 @@ type Result struct {
  NeighborQueries int `json:"nearest_neighbor_queries,omitempty"`
  NearestSameGroupRate *float64 `json:"nearest_same_inferred_domain_rate,omitempty"`
  RandomSameGroupBaseline *float64 `json:"random_same_inferred_domain_baseline,omitempty"`
+ BlockHoldout *BlockHoldoutReport `json:"block_holdout,omitempty"`
  Caveats []string `json:"caveats"`
 }
 var domains=[]string{"concurrency","networking","storage","distributed","compiler","security","memory","blast_radius"}
@@ -141,11 +142,12 @@ func main(){
  columns:=flag.Int("column-pairs",512,"sampled pairs of bit positions")
  domainPairs:=flag.Int("domain-pairs",2048,"pairs in each inferred-domain stratum")
  queries:=flag.Int("nearest-queries",32,"fullscan neighbor queries")
+ holdoutQueries:=flag.Int("block-holdout-queries",160,"V4-only queries excluding all candidates from the same 250-record block; set 0 to disable")
  synthetic:=flag.Bool("synthetic-v4-layout",false,"enable label inference ONLY for the V4 250-row/8-domain synthetic trainer")
  limit:=flag.Int("max-vectors",100000,"vector-count safety limit")
  out:=flag.String("out","","optional output JSON")
  flag.Parse()
- if *columns<1||*domainPairs<1||*queries<1||*limit<2{fmt.Fprintln(os.Stderr,"sample counts must be positive");os.Exit(2)}
+ if *columns<1||*domainPairs<1||*queries<1||*holdoutQueries<0||*limit<2{fmt.Fprintln(os.Stderr,"sample counts must be positive");os.Exit(2)}
  stat,err:=os.Stat(*file);if err!=nil{fmt.Fprintln(os.Stderr,err);os.Exit(1)}
  if stat.Size()<18||stat.Size()>64+int64(*limit)*vectorBytes{fmt.Fprintln(os.Stderr,"file size outside limit");os.Exit(1)}
  raw,err:=os.ReadFile(*file);if err!=nil{fmt.Fprintln(os.Stderr,err);os.Exit(1)}
@@ -154,6 +156,11 @@ func main(){
  vectors,ver,err:=load(raw,*limit);if err!=nil{fmt.Fprintln(os.Stderr,err);os.Exit(1)}
  if *synthetic&&len(vectors)!=10000{fmt.Fprintln(os.Stderr,"V4 synthetic label inference requires 10000 vectors");os.Exit(1)}
  result:=analyze(vectors,ver,*seed,*columns,*domainPairs,*queries,*synthetic)
+ if *synthetic&&*holdoutQueries>0 {
+  holdout,err:=analyzeBlockHoldout(vectors,*holdoutQueries)
+  if err!=nil{fmt.Fprintln(os.Stderr,"V4 block holdout:",err);os.Exit(1)}
+  result.BlockHoldout=&holdout
+ }
  result.FileSHA256=sha
  b,err:=json.MarshalIndent(result,"","  ");if err!=nil{fmt.Fprintln(os.Stderr,err);os.Exit(1)};b=append(b,'\n')
  if *out!=""{if err=os.WriteFile(*out,b,0600);err!=nil{fmt.Fprintln(os.Stderr,err);os.Exit(1)}}
