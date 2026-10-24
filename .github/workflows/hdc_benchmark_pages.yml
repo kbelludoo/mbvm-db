@@ -47,6 +47,7 @@ jobs:
       - name: Validate Kaggle Index Audit (Go-only, synthetic v1/v2 fixtures)
         run: |
           go test -count=1 -v ./experiments/hdc-csr/cmd/audit_supreme_index
+          go test -count=1 -v ./experiments/hdc-csr/cmd/audit_supreme_structure
 
       - name: Run Official Single-Core Benchmarks
         run: |
