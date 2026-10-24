@@ -39,6 +39,12 @@ files. `TestExtractGitArchivePAXMetadata` verifies extraction using a
 real `git archive` and verifies that the metadata entry never appears
 as a file in the snapshot.
 
+`TestExtractArchiveDeterministicPAXAndRejectLinks` additionally creates
+an actual global PAX TAR header via Go's standard `archive/tar.Writer`,
+checks that a regular Go file is extracted, and checks that TAR symlinks
+remain rejected. It does not depend on whether the installed Git
+happens to emit a PAX global header.
+
 The Git archive reader no longer mixes an application-owned
 `StdoutPipe` with `cmd.Wait`. It now uses `exec.CommandContext` and
 `cmd.Run` to write a bounded TAR stream to a **temporary regular file**,
