@@ -80,7 +80,7 @@ func main() {
 	}
 
 	metrics := make(map[string]any)
-	reBench := regexp.MustCompile(`(Benchmark\w+)(?:-\d+)?\s+(\d+)\s+([\d\.]+)\s+ns/op(?:\s+(\d+)\s+B/op\s+(\d+)\s+allocs/op)?`)
+	reBench := regexp.MustCompile(`(Benchmark[\w/]+)(?:-\d+)?\s+(\d+)\s+([\d\.]+)\s+ns/op(?:\s+(\d+)\s+B/op\s+(\d+)\s+allocs/op)?`)
 
 	scanner := bufio.NewScanner(strings.NewReader(cleanedBench))
 	for scanner.Scan() {
@@ -135,6 +135,29 @@ func main() {
 				metrics["e2e_semantic_ns"] = nsOp
 			case strings.Contains(name, "E2E_HDC"):
 				metrics["e2e_hdc_ns"] = nsOp
+			case strings.Contains(name, "RealWorldASTImpact/"):
+				// Distinguish ingestion, real-graph build, mutation and cached
+				// query; the cached query alone excludes parsing/ingestion.
+				metricBase := ""
+				switch {
+				case strings.Contains(name, "/FullIngestMutationReverseCSR"):
+					metricBase = "real_ast_full_ingest_mutation_reverse_csr"
+				case strings.Contains(name, "/BuildReverseCSR"):
+					metricBase = "real_ast_build_reverse_csr"
+				case strings.Contains(name, "/RealSignatureMutation"):
+					metricBase = "real_ast_signature_mutation"
+				case strings.Contains(name, "/CachedReverseCSRQuery"):
+					metricBase = "real_ast_cached_reverse_csr_query"
+				}
+				if metricBase != "" {
+					metrics[metricBase+"_ns"] = nsOp
+					if len(matches) >= 6 && matches[4] != "" {
+						bOp, _ := strconv.Atoi(matches[4])
+						allocsOp, _ := strconv.Atoi(matches[5])
+						metrics[metricBase+"_bytes_per_op"] = bOp
+						metrics[metricBase+"_allocs_per_op"] = allocsOp
+					}
+				}
 			case strings.Contains(name, "ASTCanonicalGoFunction"):
 				metrics["ast_canonical_go_function_ns"] = nsOp
 				if len(matches) >= 6 && matches[4] != "" {
