@@ -1,6 +1,8 @@
 package impact
 
 import (
+	"bytes"
+	"strings"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -25,6 +27,13 @@ func TestCompareGitRefsCommittedTreesOnly(t *testing.T) {
 		t.Fatal(err)
 	}
 	gitFixtureRun(t, root, "init")
+	// Both revisions contain a TAR substantially larger than the default
+	// Windows anonymous pipe buffer. Prior StdoutPipe+Wait code could hang
+	// here even though the package being analyzed contains little Go.
+	if err := os.MkdirAll(filepath.Join(root,"bulk"),0755);err!=nil{t.Fatal(err)}
+	bulk:=[]byte(strings.Repeat("cross-platform-git-archive-stream\n",8192))
+	if err:=os.WriteFile(filepath.Join(root,"bulk","stream.txt"),bulk,0600);err!=nil{t.Fatal(err)}
+
 	filename := filepath.Join(root, "pkg", "example.go")
 	write := func(src string) {
 		t.Helper()
@@ -34,7 +43,7 @@ func TestCompareGitRefsCommittedTreesOnly(t *testing.T) {
 	}
 	commit := func(msg string) {
 		t.Helper()
-		gitFixtureRun(t, root, "add", "pkg/example.go")
+		gitFixtureRun(t, root, "add", "pkg/example.go", "bulk/stream.txt")
 		gitFixtureRun(t, root, "-c", "user.name=MBVM Test", "-c", "user.email=mbvm@example.invalid", "commit", "-m", msg)
 	}
 	write("package example\nfunc F(a int) int {return a}\nfunc Call() int{return F(1)}\n")
@@ -72,4 +81,16 @@ func TestCompareGitRefsCommittedTreesOnly(t *testing.T) {
 		t.Fatal("accepted unsafe package path")
 	}
 	t.Logf("Git ref comparison found %d changed symbols without checkout or source-file writes", len(report.Changes))
+}
+
+func TestBoundedArchiveWriter(t *testing.T){
+ var b bytes.Buffer
+ writer:=&boundedArchiveWriter{dest:&b,remaining:5}
+ if n,err:=writer.Write([]byte("hello"));err!=nil||n!=5{
+  t.Fatalf("bounded write failed n=%d err=%v",n,err)
+ }
+ if n,err:=writer.Write([]byte("!"));err==nil||n!=0{
+  t.Fatalf("writer must reject excess bytes without writing: n=%d err=%v",n,err)
+ }
+ if b.String()!="hello"{t.Fatalf("invalid bounded output: %s",b.String())}
 }
