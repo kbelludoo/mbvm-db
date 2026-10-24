@@ -65,8 +65,10 @@ The real-source test type-checks `pkg/mbvmdb` and writes
 `typed_real_impact_output.json`. The official CI benchmark parser
 publishes it under `typed_real_breakage_evaluation`, including the
 chosen function, number of typed local call sites, compile errors
-observed after mutation, and direct callers whose enclosing functions
-produced diagnostics. It explicitly records
+observed after mutation, and the **names** of direct callers whose
+functions produced diagnostics. It hashes all selected real Go source
+files before and after the in-memory mutation, fails on a mismatch,
+and records the source digest. It explicitly records
 `runtime_behavior_verified=false` and makes no cross-package claims.
 
 ## Performance boundary
