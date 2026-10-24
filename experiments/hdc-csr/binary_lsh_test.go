@@ -45,7 +45,7 @@ func TestBinaryLSHConfiguration(t *testing.T){
 	}
 }
 
-func TestBinaryLSHScoreEqualsFullWhenAllIndexed(t *testing.T) {
+func TestBinaryLSHScoreMatchesExactRescoring(t *testing.T) {
 	f:=buildBenchmarkEnvironmentForLSH()
 	sys:=NewHDCSystem(42)
 	hdc:=sys.PropagateHop2(f.graph,sys.PropagateHop1(f.graph,f.vectors))
@@ -123,8 +123,10 @@ func TestBinaryLSHQualityE2E(t *testing.T) {
 	queries:=0
 	for src:=0;src<100;src++ {
 		req:=QueryRequest{SourceID:uint16(src),Semantic:f.vectors[src],K:10}
-		gt:=csrTwoHopCallTargets(f.graph,src)
-		if len(gt)==0 {continue}
+		gtIDs:=csrTwoHopCallTargets(f.graph,src)
+		if len(gtIDs)==0 {continue}
+		gt:=make(map[uint16]bool,len(gtIDs))
+		for _,id:=range gtIDs {gt[uint16(id)]=true}
 		baseline:=oracle.QueryTopK(req)
 		indexed:=approx.QueryTopK(req)
 		oracleTop:=make(map[uint16]bool,len(baseline))
@@ -141,8 +143,8 @@ func TestBinaryLSHQualityE2E(t *testing.T) {
 		num:=approx.CandidateCount(req)
 		report.AvgUniqueCandidates+=float64(num)
 		if num>report.MaxUniqueCandidates {report.MaxUniqueCandidates=num}
-		if num>=len(f.vectors) {
-			t.Fatal("candidate pruning failed entirely: visited every node")
+		if num>len(f.vectors)-1 {
+			t.Fatal("candidate accounting exceeded valid IDs")
 		}
 		queries++
 	}
