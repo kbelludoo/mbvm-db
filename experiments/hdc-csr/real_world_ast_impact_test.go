@@ -70,6 +70,45 @@ func TestRealImpactReverseCSRCyclesAndDuplicateEdges(t *testing.T){
 	if _,err:=BuildRealReverseCallsCSR(&bad);err==nil{t.Fatal("corrupt CSR should be rejected")}
 }
 
+func TestRealContractMutationControls(t *testing.T){
+	testCases:=[]struct{
+		name,source string
+		mutatable bool
+	}{
+		{"simple","func Target(a, b int) int { return a + b }",true},
+		{"no_parameters","func Target() int { return 5 }",true},
+		{"method","func (x *Index) Target(a int) int { return a }",true},
+		{"variadic","func Target(args ...int) int { return len(args) }",false},
+	}
+	for _,tc:=range testCases{
+		sym:=RealASTSymbol{Kind:"func",Name:"Target",Text:tc.source}
+		got,err:=RealMutationOfDeclaration(sym)
+		if tc.mutatable{
+			if err!=nil{t.Fatalf("%s: %v",tc.name,err)}
+			if got.OriginalType==got.ChangedType||!got.FormattingStable{
+				t.Fatalf("%s: no structural change: %+v",tc.name,got)
+			}
+			if !strings.Contains(got.ChangedType,"__mbvm_contract_probe int"){
+				t.Fatalf("%s: missing signature contract probe: %q",tc.name,got.ChangedType)
+			}
+		}else if err==nil{
+			t.Fatalf("%s: unsafe variadic mutation was accepted",tc.name)
+		}
+	}
+}
+
+// Validate the scratch path on the actual corpus: these measurements say
+// nothing about the heap cost of AST parsing, type checking or the index.
+func TestRealImpactCachedQueryAllocation(t *testing.T){
+	_,graph,target:=realImpactFixture(t)
+	s:=NewRealImpactScratch(graph.Nodes)
+	allocs:=testing.AllocsPerRun(100,func(){
+		if _,err:=graph.Impact(target,s);err!=nil{panic(err)}
+	})
+	t.Logf("cached real reverse CSR traversal allocations=%.2f/op (excludes ingest and scratch construction)",allocs)
+	if allocs!=0{t.Fatalf("cached BFS unexpectedly allocated %f times/op",allocs)}
+}
+
 func BenchmarkRealWorldASTImpact(b *testing.B){
 	manifest,graph,target:=realImpactFixture(b)
 	sym:=manifest.Symbols[target]
