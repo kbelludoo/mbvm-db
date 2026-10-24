@@ -1,0 +1,54 @@
+[
+  {
+    "group": "Group A (Direct Baseline)",
+    "solved_count": 11,
+    "total_problems": 11,
+    "success_rate": 1,
+    "total_tokens": 1320,
+    "average_tokens": 120,
+    "execution_time": 537500,
+    "total_attempts": 11,
+    "rules_retrieved": 0,
+    "invalid_returned": 0,
+    "memory_type": "none (direct)"
+  },
+  {
+    "group": "Group B (Conventional Retrieval)",
+    "solved_count": 11,
+    "total_problems": 11,
+    "success_rate": 1,
+    "total_tokens": 5874,
+    "average_tokens": 534,
+    "execution_time": 525100,
+    "total_attempts": 11,
+    "rules_retrieved": 59,
+    "invalid_returned": 0,
+    "memory_type": "flat searchable list"
+  },
+  {
+    "group": "Group C (MBVM-DB Full: CSR + HDC + Composer)",
+    "solved_count": 11,
+    "total_problems": 11,
+    "success_rate": 1,
+    "total_tokens": 1431,
+    "average_tokens": 130.0909090909091,
+    "execution_time": 598000,
+    "total_attempts": 11,
+    "rules_retrieved": 17,
+    "invalid_returned": 0,
+    "memory_type": "MBVM-DB (HDC + CSR + Composer)"
+  },
+  {
+    "group": "Group D (MBVM-DB No-HDC: CSR + Map + Composer)",
+    "solved_count": 11,
+    "total_problems": 11,
+    "success_rate": 1,
+    "total_tokens": 950,
+    "average_tokens": 86.36363636363636,
+    "execution_time": 0,
+    "total_attempts": 11,
+    "rules_retrieved": 11,
+    "invalid_returned": 0,
+    "memory_type": "MBVM-DB No-HDC (Exact Map + CSR + Composer)"
+  }
+]
