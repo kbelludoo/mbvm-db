@@ -28,9 +28,16 @@ Each given sequence is encoded anew by position-role binding, Majority
 superposition, and recovered by XOR unbinding followed by nearest-Hamming
 operation codebook lookup.
 
-Two essential nonlearning controls:
+Three essential nonlearning controls:
 - Symbolic byte list, `length` bytes, assumed uncorrupted. A trivial
   exact reference for the explicitly supplied sequence.
+- **Equal-budget classical repetition error code**, also **1024 bytes**:
+  because there are 4 possible operations, each operation is exactly
+  2 logical bits. The ordered logical bitstream is divided into equal-size
+  contiguous repetition blocks spanning 8192 physical bits; each bit is
+  recovered by majority vote. Exactly the **same number and positions**
+  of bit flips are applied to the HDC and repetition-code representation
+  for each program/noise seed.
 - Separate HDC codewords, `1024*length` bytes. Each carries an individual
   codeword with the SAME fraction of bits flipped; no superposition.
 
@@ -46,7 +53,12 @@ For each (seed,length,noise), record separately:
 1. **Step accuracy:** fraction of original ordered operation IDs recovered.
 2. **Exact-program rate:** fraction of full ordered sequences recovered
    without any wrong steps. This is the crucial capacity metric.
-3. **Rounded numerical accuracy:** fraction of evaluated inputs
+3. **Equal-budget ECC vs HDC:** compare whole-program recovery with
+   classical repetition at the SAME 1024-byte representation budget and
+   matched bit-flip positions. The ECC is specialized for a known,
+   fixed-length 4-symbol alphabet; it is a legitimate minimal baseline
+   for these pre-specified symbolic programs.
+4. **Rounded numerical accuracy:** fraction of evaluated inputs
    (11, 17, 30) that produce exact output. This may exceed exact-program
    recovery because wrong operations can accidentally cancel or
    yield the same answer.
