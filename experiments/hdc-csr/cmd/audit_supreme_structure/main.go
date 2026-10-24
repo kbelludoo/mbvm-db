@@ -43,6 +43,7 @@ type Result struct {
  NearestSameGroupRate *float64 `json:"nearest_same_inferred_domain_rate,omitempty"`
  RandomSameGroupBaseline *float64 `json:"random_same_inferred_domain_baseline,omitempty"`
  BlockHoldout *BlockHoldoutReport `json:"block_holdout,omitempty"`
+ LexicalHoldout *LexicalHoldoutReport `json:"lexical_holdout,omitempty"`
  Caveats []string `json:"caveats"`
 }
 var domains=[]string{"concurrency","networking","storage","distributed","compiler","security","memory","blast_radius"}
@@ -160,6 +161,9 @@ func main(){
   holdout,err:=analyzeBlockHoldout(vectors,*holdoutQueries)
   if err!=nil{fmt.Fprintln(os.Stderr,"V4 block holdout:",err);os.Exit(1)}
   result.BlockHoldout=&holdout
+  lexical,err:=analyzeLexicalBlockHoldout(*holdoutQueries,holdout.CrossBlockTop1Accuracy)
+  if err!=nil{fmt.Fprintln(os.Stderr,"V4 lexical baseline:",err);os.Exit(1)}
+  result.LexicalHoldout=&lexical
  }
  result.FileSHA256=sha
  b,err:=json.MarshalIndent(result,"","  ");if err!=nil{fmt.Fprintln(os.Stderr,err);os.Exit(1)};b=append(b,'\n')
