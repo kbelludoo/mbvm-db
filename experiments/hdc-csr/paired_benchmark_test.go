@@ -12,8 +12,8 @@ import (
 type EngineMetrics struct {
 	Name                string  `json:"name"`
 	RecallAt10          float64 `json:"recall_at_10"`
-	PrecisionAt10       float64 `json:"precision_at_10"`          // Definição canônica: hits / 10
-	RelativePrecision   float64 `json:"relative_precision"`       // hits / min(10, |relevantes|)
+	PrecisionAt10       float64 `json:"precision_at_10"`          // Definição canônica universal: hits / 10
+	NormalizedPrecision float64 `json:"normalized_precision_at_k"` // hits / min(10, |relevantes|) (teto estrutural)
 	PrecisionOfReturned float64 `json:"precision_of_returned"`    // hits / len(returned)
 	AvgReturnedResults  float64 `json:"avg_returned_results"`
 	MRR                 float64 `json:"mrr"`
@@ -22,7 +22,7 @@ type EngineMetrics struct {
 	P95LatencyUs        float64 `json:"p95_latency_us"`
 	P99LatencyUs        float64 `json:"p99_latency_us"`
 	MeanLatencyUs       float64 `json:"mean_latency_us"`
-	EstimatedQPS        float64 `json:"estimated_qps"`            // Inverso da latência média (10^6 / mean_latency_us)
+	EstimatedQPS        float64 `json:"estimated_qps"`            // Estimativa de QPS mono-thread (10^6 / mean_latency_us)
 }
 
 type PairedBenchmarkReport struct {
@@ -174,7 +174,7 @@ func evaluateEngineE2E(engine UnifiedEngine, queries []QueryRequest, groundTruth
 		Name:                engine.Name(),
 		RecallAt10:          totalRecall / float64(n),
 		PrecisionAt10:       totalPrecision10 / float64(n),
-		RelativePrecision:   totalRelPrecision / float64(n),
+		NormalizedPrecision: totalRelPrecision / float64(n),
 		PrecisionOfReturned: totalPrecisionReturned / float64(n),
 		AvgReturnedResults:  totalReturned / float64(n),
 		MRR:                 totalMRR / float64(n),
@@ -211,7 +211,7 @@ func TestPairedBenchmarkE2E(t *testing.T) {
 		t.Logf("[%s]", metrics.Name)
 		t.Logf("  Recall@10:             %.2f%%", metrics.RecallAt10*100)
 		t.Logf("  Precision@10 (Conv.):  %.2f%% (máximo teórico: 50.0%%)", metrics.PrecisionAt10*100)
-		t.Logf("  Relative Precision:    %.2f%%", metrics.RelativePrecision*100)
+		t.Logf("  Precisão Normalizada:  %.2f%%", metrics.NormalizedPrecision*100)
 		t.Logf("  Precision of Returned: %.2f%%", metrics.PrecisionOfReturned*100)
 		t.Logf("  Resultados Retornados: %.1f", metrics.AvgReturnedResults)
 		t.Logf("  MRR:                   %.3f", metrics.MRR)
