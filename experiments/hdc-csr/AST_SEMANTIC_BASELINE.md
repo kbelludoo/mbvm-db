@@ -4,6 +4,12 @@ This is an intentionally conservative, deterministic, Go-standard-library-only
 reference for the five curated source-code transformation fixtures in
 `semantic_sensitivity_cases.json`. It is NOT a full Go semantic analyzer.
 
+Before certifying a canonical identity, it now also runs `go/types` against
+`runtime.GOARCH`: `go/parser` alone accepts syntactically valid but
+non-compiling Go (for example integer constants exceeding `int`). The
+current proof is limited to **well-typed programs in the accepted subset
+on the selected target architecture**, not arbitrary Go input.
+
 ## Run
 
 ```sh
@@ -15,6 +21,11 @@ Implemented by `ast_semantic_baseline.go` with tests in
 `ast_semantic_baseline_test.go`. The ordinary Go CI tests in
 `.github/workflows/hdc_benchmark_pages.yml` include these files
 through `go test` of the entire `experiments/hdc-csr` package.
+
+**Performance caveat:** `go/parser`, `go/types`, maps, and `math/big`
+allocate heap memory. The reported `0.01s` is a test-run duration, not
+per-function latency or evidence of zero allocations. Use the included
+`BenchmarkASTCanonicalGoFunction` to report `ns/op`, `B/op`, and `allocs/op`.
 
 ## Explicitly supported semantics
 
