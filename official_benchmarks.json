@@ -1,9 +1,9 @@
 {
   "project": "MBVM-DB",
   "module": "experiments/hdc-csr",
-  "commit_sha": "d4e0b2ecc63e66dda6ebfc70efa22cb143370bdd",
+  "commit_sha": "9357196d318f2ed0691104dd478ebc9a903d09d8",
   "baseline_reference_commit": "116ec92",
-  "generated_at_utc": "2026-10-24T04:20:40Z",
+  "generated_at_utc": "2026-10-24T04:21:48Z",
   "environment": {
     "compiler": "go version go1.27.3 linux/amd64",
     "cpu": "AMD EPYC 9V74 80-Core Processor",
@@ -12,15 +12,21 @@
   },
   "metrics": {
     "allocs_per_op_critical_path": 0,
-    "bind_8k_ns": 55.44,
+    "bind_8k_ns": 56.06,
     "bytes_per_op_critical_path": 0,
     "csr_1000nodes_allocs_per_op": 3,
     "csr_1000nodes_bytes_per_op": 1025104,
-    "csr_1000nodes_propagate_ms": 2.864489,
-    "hamming_8k_ns": 77.6,
-    "majority3_8k_ns": 218.2,
+    "csr_1000nodes_hop2_allocs_per_op": 607,
+    "csr_1000nodes_hop2_bytes_per_op": 1086816,
+    "csr_1000nodes_propagate_hop2_ms": 160.121735,
+    "csr_1000nodes_propagate_ms": 2.879803,
+    "csr_hybrid_query_1000nodes_ns": 1791,
+    "hamming_8k_ns": 77.67,
+    "hdc_fullscan_query_1000nodes_ns": 100737,
+    "hdc_membership_query_1000nodes_ns": 577.6,
+    "majority3_8k_ns": 218.3,
     "memory_per_node_bytes": 1024,
-    "rotl_8k_ns": 321.8
+    "rotl_8k_ns": 322.7
   },
   "quality_evaluation": {
     "experiment_a_pure_semantic_recall10": 0,
@@ -29,5 +35,18 @@
     "hop2_target_distance_bits": 0,
     "hop2_target_recovered_rank": 1,
     "status": "PASSED"
+  },
+  "multipath_evaluation": {
+    "average_relevant": 2.9022556390977443,
+    "csr_semantic_mrr": 1,
+    "csr_semantic_recall_at_10": 1,
+    "evaluation": "synthetic_context_capacity_not_neural_generalization",
+    "hdc_hybrid_mrr": 0.8978895577965388,
+    "hdc_hybrid_recall_at_10": 0.9065431435732186,
+    "queries": 133,
+    "seeds": 50,
+    "semantic_only_mrr": 0.1837491666178191,
+    "semantic_only_recall_at_10": 0.2324024346580737,
+    "skipped_no_relevant": 17
   }
 }
