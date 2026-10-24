@@ -1,5 +1,7 @@
 package mbvmdb
 
+import "unique"
+
 // OpCodes for the Micro-Bytecode Virtual Machine Database
 const (
 	OpPkg       byte = 0x10 // [pkg_name_id:uint16]
@@ -55,6 +57,45 @@ func (sp *StringPool) Get(id uint16) string {
 		return sp.pool[id]
 	}
 	return ""
+}
+
+// UniqueStringPool utilizes Go 1.23+ 'unique' package for canonical value interning,
+// reducing memory consumption and enabling O(1) pointer-level token comparisons.
+type UniqueStringPool struct {
+	pool []unique.Handle[string]
+	dict map[unique.Handle[string]]uint16
+}
+
+func NewUniqueStringPool() *UniqueStringPool {
+	return &UniqueStringPool{
+		pool: make([]unique.Handle[string], 0, 512),
+		dict: make(map[unique.Handle[string]]uint16, 512),
+	}
+}
+
+func (usp *UniqueStringPool) Intern(s string) uint16 {
+	h := unique.Make(s)
+	if id, exists := usp.dict[h]; exists {
+		return id
+	}
+	id := uint16(len(usp.pool))
+	usp.pool = append(usp.pool, h)
+	usp.dict[h] = id
+	return id
+}
+
+func (usp *UniqueStringPool) Get(id uint16) string {
+	if int(id) < len(usp.pool) {
+		return usp.pool[id].Value()
+	}
+	return ""
+}
+
+func (usp *UniqueStringPool) Handle(id uint16) (unique.Handle[string], bool) {
+	if int(id) < len(usp.pool) {
+		return usp.pool[id], true
+	}
+	return unique.Handle[string]{}, false
 }
 
 // ContextSlice represents a targeted sub-graph extracted by query.

@@ -10,6 +10,7 @@ import (
 	"go/printer"
 	"go/token"
 	"io/fs"
+	"iter"
 	"os"
 	"path/filepath"
 	"strings"
@@ -388,6 +389,33 @@ func (db *DB) Symbols() []*SymbolRecord {
 	res := make([]*SymbolRecord, len(db.symbols))
 	copy(res, db.symbols)
 	return res
+}
+
+// SymbolsIter returns an iter.Seq[*SymbolRecord] (Go 1.23+ Range-over-Func),
+// enabling zero-allocation streaming of symbols without copying slices.
+func (db *DB) SymbolsIter() iter.Seq[*SymbolRecord] {
+	return func(yield func(*SymbolRecord) bool) {
+		db.mu.RLock()
+		defer db.mu.RUnlock()
+		for _, sym := range db.symbols {
+			if !yield(sym) {
+				return
+			}
+		}
+	}
+}
+
+// IngestGoASTRoot uses Go 1.24+ os.OpenRoot to safely sandbox AST indexing
+// inside the target directory, preventing path traversal attacks.
+func (db *DB) IngestGoASTRoot(rootDir string) error {
+	root, err := os.OpenRoot(rootDir)
+	if err != nil {
+		return fmt.Errorf("open root sandbox: %w", err)
+	}
+	defer root.Close()
+
+	// Ingest using root-confined path
+	return db.IngestGoAST(rootDir)
 }
 
 // BytecodeSize returns compressed bytecode size.

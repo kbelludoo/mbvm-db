@@ -1,4 +1,4 @@
-@MBVM:cli-master-rules:3.3.0%rules=22%clis=all%tokensave=99%%lang=go1.27%mode=solo%engine=mbvm-db
+@MBVM:cli-master-rules:3.4.0%rules=22%clis=all%tokensave=99%%lang=go1.27%mode=solo%engine=mbvm-db
 ^R0:mbvm_canonical!mbvm_db_engine!smart_slicing_first!query[mbvm-db slice <dir> <symbol> <depth>]!codebase_mbvm!dual_storage
 ~Storage{canonical="codebase.mbvm"!engine="mbvm-db"!source="."!cache="page_bytecodes.db"!traceability=hash}
 ~Measurement{lines!bytes!context_reduction!semantic_complexity!bytecode_density}
@@ -6,10 +6,10 @@
 ^R2:backup=git_push_every_change!gdrive_daily!backup_script
 ^R3:modularity=max_loc_400!refactor_near_limit!submodulos_coesos!targeted_diffs_no_bloat
 ^R4:tokens=subtraction_over_accumulation!mbvm_db_slice_before_full_read!scripts_first!pack[cmd]!context_before_dump
-^R5:security=no_expose_secrets!maskSecret()!sanitized_payloads!no_eval!no_unsafe!least_privilege
+^R5:security=no_expose_secrets!maskSecret()!os_root_sandbox!govulncheck_clean!sanitized_payloads!no_eval!no_unsafe!least_privilege
 ^R6:skills=auto_search!mandatory_follow!cross_cli_compatible
 ^R7:dispatch=solo_direct!immediate_execution!return_structured[status,resumo,files]
-^R8:code_style=go1.27_primary!modern_stdlib[slog,slices]!err_wrap_w_only!no_v_in_errors!ctx_first_arg!goroutine_leak_prevention[ctx_done_select]!consumer_interfaces!early_return!strict_types!no_empty_interface
+^R8:code_style=go1.27_primary!modern_stdlib[slog,slices,unique,iter]!err_wrap_w_only!no_v_in_errors!ctx_first_arg!goroutine_leak_prevention[ctx_done_select]!consumer_interfaces!early_return!strict_types!no_empty_interface
 ^R9:git=branch_max_3_words_hyphen!commit_type(scope):summary!scopes[core,opencode,tui,app,desktop,sdk,plugin]
 ^R10:tests=real_impl_no_mocks!compiler_as_truth[go_vet]!test_flags[go_test_-race_-count=1_-v]!table_tests!packages/opencode
 ^R11:scan=mandatory_pre_commit!hook[git_global:core.hooksPath]!auto_compile[go-tools mbvm .]!auto_inspect[mbvm-db inspect .]!auto_stage[codebase.mbvm]!no_verify_prohibited

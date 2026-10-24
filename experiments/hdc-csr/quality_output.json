@@ -1,0 +1,8 @@
+{
+  "experiment_a_pure_semantic_recall10": 0,
+  "experiment_b_hdc_1hop_unbinding_recall10": 50,
+  "experiment_c_hdc_2hop_composite_recall10": 100,
+  "hop2_target_recovered_rank": 1,
+  "hop2_target_distance_bits": 0,
+  "status": "PASSED"
+}
