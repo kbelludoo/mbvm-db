@@ -34,7 +34,15 @@ controlled function signature change in memory.
   It **never writes** modified Go source to disk.
 - Source provenance and build-selection environment matter.
   The current implementation handles one non-cgo Go package;
-  `go/importer.Default` must be able to resolve dependencies.
+  module dependencies are now resolved through the installed Go toolchain
+  (`go list -mod=readonly -deps -export -json .`) into an export-file
+  lookup, passed to `go/importer.ForCompiler(fset, "gc", lookup)`.
+  This does not assume legacy GOPATH archives or add x/tools.
+  The export importer is retained by the graph and REUSED when type
+  checking the mutated package. No source code or go.mod is modified.
+  It requires the correct module/workspace configuration, installed
+  Go toolchain, resolvable dependencies and accessible build cache;
+  it cannot guarantee working offline if module dependencies are absent.
   It is not a comprehensive module-wide Go build, `go/packages`
   workspace analysis, interface call graph or cross-package regression
   runner.
@@ -49,6 +57,15 @@ CGO_ENABLED=0 GOMAXPROCS=1 go test -run '^$' \
   -bench '^BenchmarkTypedRealWorldImpact$' \
   -benchmem -cpu=1 -benchtime=2s ./experiments/hdc-csr
 ```
+
+The new `TestTypedRealModuleAwareImportAndBreakage` fixture creates
+an entirely local temporary Go Modules project with an external module
+import resolved by `replace ... => ./external`. It verifies that a
+typed consumer's compile error is found after a signature mutation,
+without networking, installing packages or requiring legacy GOPATH
+archives. `TestTypedRealModuleImporterFailsClosedWithoutDependency`
+ensures missing imports are rejected rather than replaced with
+invented stub types.
 
 The fixture test validates:
 
