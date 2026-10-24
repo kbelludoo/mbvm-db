@@ -72,6 +72,7 @@ func (r *Runner) RunSingleIntegrationTest(ctx context.Context) (*TrialResult, er
 		Latency:              latency,
 		Success:              success,
 		VerificationStatus:   details,
+		ResponseText:         ansText,
 		ModelVersion:         resp.ModelVersion,
 		RetrievalPath:        retrieval.Path,
 		RulesRetrieved:       retrieval.RuleIDs,
@@ -119,16 +120,17 @@ func (r *Runner) RunBenchmarkWithProblems(ctx context.Context, problems []EvalPr
 				continue
 			}
 
+			var ansText string
+			if len(resp.Candidates) > 0 && len(resp.Candidates[0].Content.Parts) > 0 {
+				ansText = resp.Candidates[0].Content.Parts[0].Text
+			}
+
 			trial.PromptTokensReal = resp.UsageMetadata.PromptTokenCount
 			trial.CompletionTokensReal = resp.UsageMetadata.CandidatesTokenCount
 			trial.TotalTokensReal = resp.UsageMetadata.TotalTokenCount
 			trial.ReasoningTokensReal = resp.UsageMetadata.EffectiveReasoningTokens()
 			trial.ModelVersion = resp.ModelVersion
-
-			var ansText string
-			if len(resp.Candidates) > 0 && len(resp.Candidates[0].Content.Parts) > 0 {
-				ansText = resp.Candidates[0].Content.Parts[0].Text
-			}
+			trial.ResponseText = ansText
 
 			success, details := VerifyResponse(prob, ansText)
 			trial.Success = success

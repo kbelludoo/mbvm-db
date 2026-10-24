@@ -56,6 +56,7 @@ func main() {
 		fmt.Printf("   • Tokens Totais Reais: %d\n", result.TotalTokensReal)
 		fmt.Printf("   • Latência: %v\n", result.Latency)
 		fmt.Printf("   • Caminho CSR: %s\n", result.RetrievalPath)
+		fmt.Printf("   • Resposta do Modelo:\n%s\n", result.ResponseText)
 		return
 	}
 

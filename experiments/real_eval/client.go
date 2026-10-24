@@ -59,7 +59,7 @@ func (c *GeminiClient) GenerateContent(ctx context.Context, systemPrompt, userPr
 		},
 		"generationConfig": map[string]any{
 			"temperature":     0.1,
-			"maxOutputTokens": 2048,
+			"maxOutputTokens": 8192,
 		},
 	}
 

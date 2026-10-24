@@ -40,7 +40,7 @@ func GenerateUnseenBenchmark20() ([]EvalProblem, error) {
 	problems = append(problems, EvalProblem{
 		ID:     "U20-10",
 		Type:   ProblemProof,
-		Prompt: "Prove that for any prime p >= 5 with p = 2 mod 3, the linear congruence 4k = -3 mod p always has a unique solution k mod p, and that n = 12m + 1 with m = k mod p satisfies both n = 1 mod 12 and n = -3 mod p.",
+		Prompt: "Prove that for any prime p >= 5 with p = 2 mod 3, the linear congruence 12k = -4 mod p always has a unique solution k mod p, and that n = 12k + 1 satisfies both n = 1 mod 12 and n = -3 mod p.",
 	})
 	problems = append(problems, EvalProblem{
 		ID:     "U20-11",
@@ -72,14 +72,14 @@ func GenerateUnseenBenchmark20() ([]EvalProblem, error) {
 	problems = append(problems, EvalProblem{
 		ID:     "U20-16",
 		Type:   ProblemRefutation,
-		Prompt: "Refute with an exact counterexample: 'For n = 25, the choice x = (25+3)/4 = 7 allows completing 4/25 = 1/7 + 1/y + 1/z with integers y, z.'",
+		Prompt: "Refute with an exact counterexample: 'For all integers n = 1 mod 12, the choice x = (n+3)/4 allows completing 4/n = 1/x + 1/y + 1/z with positive integers y, z.'",
 	})
 
 	// 4. 4 Unexposed Modular Obstruction / Density Problems
 	problems = append(problems, EvalProblem{
 		ID:     "U20-17",
 		Type:   ProblemObstruction,
-		Prompt: "Prove that there is no integer q such that 4q^2 - 3 is congruent to 361 modulo 840, by analyzing quadratic residues modulo 7.",
+		Prompt: "Prove that there is no integer q such that 4q^2 - 3 is congruent to 121 modulo 840, by analyzing quadratic residues modulo 7.",
 	})
 	problems = append(problems, EvalProblem{
 		ID:     "U20-18",

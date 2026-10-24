@@ -58,6 +58,7 @@ type TrialResult struct {
 	Latency              time.Duration `json:"latency"`
 	Success              bool          `json:"success"`
 	VerificationStatus   string        `json:"verification_status"`
+	ResponseText         string        `json:"response_text,omitempty"`
 	ModelVersion         string        `json:"model_version"`
 	RetrievalPath        string        `json:"retrieval_path"`
 	RulesRetrieved       []string      `json:"rules_retrieved"`

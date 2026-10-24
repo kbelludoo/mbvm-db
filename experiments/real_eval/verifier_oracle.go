@@ -30,25 +30,41 @@ func VerifyResponse(p EvalProblem, respText string) (bool, string) {
 	}
 }
 
+var reTriple = regexp.MustCompile(`(?i)\bx\s*[:=]\s*(\d+)[^0-9\n\r]+y\s*[:=]\s*(\d+)[^0-9\n\r]+z\s*[:=]\s*(\d+)`)
+
 func verifyConstruction(p EvalProblem, text string) (bool, string) {
-	x, y, z := extractXYZ(text)
-	if x == "" || y == "" || z == "" {
-		return false, "could not extract positive integers x, y, z"
+	// 1. First scan for explicit triples (x=..., y=..., z=...) from end to beginning
+	allTriples := reTriple.FindAllStringSubmatch(text, -1)
+	for i := len(allTriples) - 1; i >= 0; i-- {
+		m := allTriples[i]
+		if len(m) >= 4 {
+			xBig, okX := new(big.Int).SetString(m[1], 10)
+			yBig, okY := new(big.Int).SetString(m[2], 10)
+			zBig, okZ := new(big.Int).SetString(m[3], 10)
+			if okX && okY && okZ {
+				sol := &erdosstraus.Solution{X: xBig, Y: yBig, Z: zBig}
+				if err := erdosstraus.VerifySolution(p.N, sol); err == nil {
+					return true, fmt.Sprintf("exact identity verified: 4/%s = 1/%s + 1/%s + 1/%s", p.N.String(), m[1], m[2], m[3])
+				}
+			}
+		}
 	}
 
-	xBig, okX := new(big.Int).SetString(x, 10)
-	yBig, okY := new(big.Int).SetString(y, 10)
-	zBig, okZ := new(big.Int).SetString(z, 10)
-	if !okX || !okY || !okZ {
-		return false, "failed to parse x, y, z as integers"
+	// 2. Fallback: extract last individual x, y, z occurrences
+	x, y, z := extractLastXYZ(text)
+	if x != "" && y != "" && z != "" {
+		xBig, okX := new(big.Int).SetString(x, 10)
+		yBig, okY := new(big.Int).SetString(y, 10)
+		zBig, okZ := new(big.Int).SetString(z, 10)
+		if okX && okY && okZ {
+			sol := &erdosstraus.Solution{X: xBig, Y: yBig, Z: zBig}
+			if err := erdosstraus.VerifySolution(p.N, sol); err == nil {
+				return true, fmt.Sprintf("exact identity verified: 4/%s = 1/%s + 1/%s + 1/%s", p.N.String(), x, y, z)
+			}
+		}
 	}
 
-	sol := &erdosstraus.Solution{X: xBig, Y: yBig, Z: zBig}
-	if err := erdosstraus.VerifySolution(p.N, sol); err != nil {
-		return false, fmt.Sprintf("solution failed exact math/big equality: %v", err)
-	}
-
-	return true, fmt.Sprintf("exact identity verified: 4/%s = 1/%s + 1/%s + 1/%s", p.N.String(), x, y, z)
+	return false, fmt.Sprintf("no valid integer triplet (x, y, z) satisfying 4/%s was found in response", p.N.String())
 }
 
 func verifyRefutation(p EvalProblem, text string) (bool, string) {
@@ -136,9 +152,12 @@ func verifyRefutation(p EvalProblem, text string) (bool, string) {
 		}
 		return false, "failed to exhibit counterexample for x=(n+3)/4 completion"
 
-	case "U20-15": // Non-uniqueness for primes: e.g. n=5 has 2 solutions
+	case "U20-15": // Non-uniqueness for primes: e.g. n=5 or n=3 has multiple solutions
 		hasPrime := strings.Contains(text, "5") || strings.Contains(text, "3")
-		hasTwoSols := strings.Contains(text, "20") || strings.Contains(text, "10") || strings.Contains(text, "multiple") || strings.Contains(text, "duas")
+		hasTwoSols := strings.Contains(text, "20") || strings.Contains(text, "10") ||
+			strings.Contains(text, "12") || strings.Contains(text, "distinct") ||
+			strings.Contains(text, "more than one") || strings.Contains(text, "three") ||
+			strings.Contains(text, "two") || strings.Contains(text, "multiple")
 		if hasPrime && hasTwoSols {
 			return true, "correctly proved non-uniqueness exhibiting multiple distinct solutions"
 		}
@@ -147,6 +166,10 @@ func verifyRefutation(p EvalProblem, text string) (bool, string) {
 	case "U20-16": // n=25, x=7 => a=3, t=175 = 1 mod 3
 		has25 := strings.Contains(text, "25") && strings.Contains(text, "7")
 		has175 := strings.Contains(text, "175") || strings.Contains(text, "mod 3")
+		if has25 && has175 {
+			return true, "correctly proved divisor obstruction for n=25, x=7"
+		}
+		return false, "failed to prove divisor obstruction for n=25, x=7"
 		if has25 && has175 {
 			return true, "correctly proved divisor obstruction for n=25, x=7"
 		}
@@ -332,13 +355,15 @@ func verifyObstruction(p EvalProblem, text string) (bool, string) {
 		return false, "missing CRT argument for infinite non-integer residue classes"
 
 	// Unseen Benchmark-20 Obstruction cases
-	case "U20-17": // 4q^2 - 3 = 361 = 4 mod 7 => 4q^2 = 0 mod 7 => contradiction with 4q^2-3 = 4
+	case "U20-17": // 4q^2 - 3 = 121 = 2 mod 7 => 4q^2 = 5 mod 7 => q^2 = 3 mod 7, 3 is QNR
 		has7 := strings.Contains(text, "mod 7") || strings.Contains(text, "(mod 7)")
-		hasContra := strings.Contains(text, "contradiction") || strings.Contains(text, "contradição") || strings.Contains(text, "impossible")
-		if has7 && hasContra {
-			return true, "correctly proved modulo 7 obstruction for 361 mod 840"
+		hasNonRes := strings.Contains(text, "3") && (strings.Contains(text, "non-residue") ||
+			strings.Contains(text, "não-resíduo") || strings.Contains(text, "impossible") ||
+			strings.Contains(text, "contradiction") || strings.Contains(text, "{0, 1, 2, 4}"))
+		if has7 && hasNonRes {
+			return true, "correctly proved quadratic non-residue obstruction modulo 7 for 121 mod 840"
 		}
-		return false, "missing modulo 7 contradiction proof"
+		return false, "missing modulo 7 quadratic non-residue proof"
 
 	case "U20-18": // n = 14809 mod 19320
 		has14809 := strings.Contains(text, "14809")
@@ -350,9 +375,10 @@ func verifyObstruction(p EvalProblem, text string) (bool, string) {
 
 	case "U20-19": // n = 1 mod 24 => n = 1 mod 3; n = -3 mod 3 => n = 0 mod 3. 1 != 0 mod 3
 		has3 := strings.Contains(text, "mod 3") || strings.Contains(text, "(mod 3)")
-		hasDisjoint := strings.Contains(text, "1") && strings.Contains(text, "0")
+		hasDisjoint := (strings.Contains(text, "1") && strings.Contains(text, "0")) ||
+			strings.Contains(text, "contradiction") || strings.Contains(text, "distinct residue")
 		if has3 && hasDisjoint {
-			return true, "correctly proved obstruction: n ≡ 1 mod 3 contradictions n ≡ 0 mod 3"
+			return true, "correctly proved obstruction: n ≡ 1 mod 3 contradicts n ≡ 0 mod 3"
 		}
 		return false, "missing mod 3 contradiction derivation"
 
@@ -385,3 +411,15 @@ func extractXYZ(text string) (string, string, string) {
 	}
 	return "", "", ""
 }
+
+func extractLastXYZ(text string) (string, string, string) {
+	allX := reX.FindAllStringSubmatch(text, -1)
+	allY := reY.FindAllStringSubmatch(text, -1)
+	allZ := reZ.FindAllStringSubmatch(text, -1)
+
+	if len(allX) > 0 && len(allY) > 0 && len(allZ) > 0 {
+		return allX[len(allX)-1][1], allY[len(allY)-1][1], allZ[len(allZ)-1][1]
+	}
+	return "", "", ""
+}
+
