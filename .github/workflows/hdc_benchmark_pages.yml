@@ -52,7 +52,7 @@ jobs:
 
       - name: Generate Automated CI Benchmarks & Quality JSON
         run: |
-          go run experiments/hdc-csr/parse_bench.go experiments/hdc-csr/bench_output.txt experiments/hdc-csr/quality_output.json experiments/hdc-csr/multipath_quality.json
+          go run experiments/hdc-csr/parse_bench.go experiments/hdc-csr/bench_output.txt experiments/hdc-csr/quality_output.json experiments/hdc-csr/multipath_quality.json experiments/hdc-csr/paired_metrics.json
 
       - name: Build WebAssembly Module
         run: |
