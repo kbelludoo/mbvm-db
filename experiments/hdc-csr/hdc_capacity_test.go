@@ -110,6 +110,7 @@ type capacityRow struct {
 	SeparateBytes int `json:"separate_codewords_bytes"`
 	Superposed capacityMetric `json:"superposed_hdc"`
 	Separate capacityMetric `json:"separate_codewords"`
+	Repetition capacityMetric `json:"equal_budget_repetition_code"`
 }
 type capacityReport struct {
 	Schema string `json:"schema"`
@@ -118,6 +119,36 @@ type capacityReport struct {
 	CompositionTrainingLabels int `json:"composition_training_labels"`
 	Interpretation string `json:"interpretation"`
 	Results []capacityRow `json:"results"`
+}
+
+// Two bits per primitive and deterministic repetition over the SAME
+// 8192-bit storage budget. This is a conventional equal-size ECC control.
+func capacityRepeatEncode(program dynamicProgram) Hypervector {
+	var out Hypervector
+	logicalBits:=2*len(program)
+	for logical:=0;logical<logicalBits;logical++{
+		if program[logical/2]&(1<<uint(logical%2))==0 {continue}
+		start:=logical*VectorBits/logicalBits
+		end:=(logical+1)*VectorBits/logicalBits
+		for bit:=start;bit<end;bit++{
+			out[bit/64]|=uint64(1)<<uint(bit%64)
+		}
+	}
+	return out
+}
+func capacityRepeatDecode(v Hypervector,length int)dynamicProgram {
+	p:=make(dynamicProgram,length)
+	logicalBits:=2*length
+	for logical:=0;logical<logicalBits;logical++{
+		start:=logical*VectorBits/logicalBits
+		end:=(logical+1)*VectorBits/logicalBits
+		ones:=0
+		for bit:=start;bit<end;bit++{
+			if v[bit/64]&(uint64(1)<<uint(bit%64))!=0 {ones++}
+		}
+		if ones*2>=(end-start) {p[logical/2]|=1<<uint(logical%2)}
+	}
+	return p
 }
 
 func capacityEvaluate(expected, decoded dynamicProgram, metric *capacityMetric, fitted [compOps]compAffine) {
@@ -160,7 +191,7 @@ func TestHDCSuperpositionCapacityStress(t *testing.T){
 		ProgramCountPerLength:count,
 		CompositionsPreStored:0,
 		CompositionTrainingLabels:0,
-		Interpretation:"Stress test: fixed 1024-byte bundle does not imply arbitrarily recoverable depth. Query supplies operation IDs and executor is given. Compare to one unbundled 1024-byte codeword per step and an uncorrupted byte-list reference. Do not claim independent semantic planning.",
+		Interpretation:"Stress test: fixed 1024-byte bundle does not imply arbitrarily recoverable depth. Query supplies operation IDs and executor is given. Compare to equal-budget 1024-byte repetition ECC, unbundled codeword per step and uncorrupted byte list. No semantic planning is evaluated.",
 		Results:make([]capacityRow,0,len(lengths)*len(noises)*len(seeds)),
 	}
 	for _,seed:=range seeds {
@@ -168,7 +199,7 @@ func TestHDCSuperpositionCapacityStress(t *testing.T){
 		for _,length:=range lengths {
 			programs:=capacityPrograms(length,count,2026000+int64(length))
 			for _,noise:=range noises{
-				var hdc,separate capacityMetric
+				var hdc,separate,repetition capacityMetric
 				for i,p:=range programs {
 					// Encode once per query (never store the full sequence);
 					// each noise setting perturbs the same exact clean code.
@@ -177,8 +208,11 @@ func TestHDCSuperpositionCapacityStress(t *testing.T){
 					corrupted:=compCorrupt(bundle,noise,noiseSeed)
 					fromHDC:=book.decode(corrupted,length)
 					fromSeparate:=book.separate(p,noise,noiseSeed)
+					repeat:=capacityRepeatEncode(p)
+					fromRepetition:=capacityRepeatDecode(compCorrupt(repeat,noise,noiseSeed),length)
 					capacityEvaluate(p,fromHDC,&hdc,fitted)
 					capacityEvaluate(p,fromSeparate,&separate,fitted)
+					capacityEvaluate(p,fromRepetition,&repetition,fitted)
 				}
 				row:=capacityRow{
 					Seed:seed,Length:length,Noise:noise,
@@ -186,13 +220,14 @@ func TestHDCSuperpositionCapacityStress(t *testing.T){
 					SeparateBytes:length*WordsPerVector*8,
 					Superposed:capacityFinalize(hdc),
 					Separate:capacityFinalize(separate),
+					Repetition:capacityFinalize(repetition),
 				}
 				result.Results=append(result.Results,row)
-				t.Logf("seed=%d steps=%d flip=%2.0f%%: HDC step=%.1f%% complete=%.1f%% numeric=%.1f%%; separate step=%.1f%% complete=%.1f%%",
+				t.Logf("seed=%d steps=%d flip=%2.0f%%: HDC step=%.1f%% complete=%.1f%% numeric=%.1f%%; separate complete=%.1f%%; ECC1024 complete=%.1f%%",
 					seed,length,noise*100,
 					100*row.Superposed.StepAccuracy,100*row.Superposed.ExactProgramRate,
-					100*row.Superposed.AnswerAccuracy,100*row.Separate.StepAccuracy,
-					100*row.Separate.ExactProgramRate)
+					100*row.Superposed.AnswerAccuracy,100*row.Separate.ExactProgramRate,
+					100*row.Repetition.ExactProgramRate)
 				if noise==0 && length==3 && row.Superposed.ExactPrograms==0 {
 					t.Fatal("clean 3-step control failed completely")
 				}
