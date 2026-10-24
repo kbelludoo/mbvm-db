@@ -31,6 +31,14 @@ disk space; it is not a zero-disk-allocation operation.
 
 ### Windows Git archive I/O (post-326fb0f)
 
+Git for Windows may emit a POSIX PAX global header called
+`pax_global_header` (TAR type `'g'`, 103). The extractor now explicitly
+accepts `tar.TypeXGlobalHeader` and `tar.TypeXHeader` as metadata,
+skipping their extraction while continuing to reject links and special
+files. `TestExtractGitArchivePAXMetadata` verifies extraction using a
+real `git archive` and verifies that the metadata entry never appears
+as a file in the snapshot.
+
 The Git archive reader no longer mixes an application-owned
 `StdoutPipe` with `cmd.Wait`. It now uses `exec.CommandContext` and
 `cmd.Run` to write a bounded TAR stream to a **temporary regular file**,
