@@ -29,6 +29,7 @@ type BenchReport struct {
 	CompositionEvaluation   map[string]any    `json:"algebra_composition_evaluation,omitempty"`
 	DynamicCompositionEvaluation map[string]any `json:"dynamic_composition_evaluation,omitempty"`
 	HDCCapacityEvaluation map[string]any `json:"hdc_capacity_evaluation,omitempty"`
+	RealASTImpactEvaluation map[string]any `json:"real_ast_impact_evaluation,omitempty"`
 }
 
 func main() {
@@ -344,7 +345,27 @@ func main() {
 		os.Exit(1)
 	}
 
-	var pairedMetrics map[string]any
+	rawRealImpact, err := os.ReadFile("experiments/hdc-csr/real_world_impact_output.json")
+	if err != nil {
+		fmt.Printf("FALHA CRÍTICA NO CI: real_world_impact_output.json ausente: %v\n",err)
+		os.Exit(1)
+	}
+	var realImpact map[string]any
+	if err := json.Unmarshal(rawRealImpact,&realImpact);err!=nil{
+		fmt.Printf("FALHA CRÍTICA NO CI: real-world AST impact JSON inválido: %v\n",err)
+		os.Exit(1)
+	}
+	if realImpact["schema"]!="mbvm-real-world-ast-impact-v1" ||
+		realImpact["api_signature_changed"]!=true ||
+		realImpact["format_only_signature_stable"]!=true ||
+		realImpact["functional_counterexample_confirmed"]!=false ||
+		len(fmt.Sprint(realImpact["source_digest"]))!=64 ||
+		realImpact["name_resolved_call_edges"].(float64)<1 ||
+		realImpact["immediate_possible_callers"].(float64)<1 {
+		fmt.Println("FALHA CRÍTICA NO CI: relatório AST não atende aos controles de evidência")
+		os.Exit(1)
+	}
+	
 	rawPairedBytes, err := os.ReadFile(pairedFile)
 	if err == nil {
 		_ = json.Unmarshal(rawPairedBytes, &pairedMetrics)
@@ -371,6 +392,7 @@ func main() {
 		CompositionEvaluation: composition,
 		DynamicCompositionEvaluation: dynamic,
 		HDCCapacityEvaluation: hdcCapacity,
+		RealASTImpactEvaluation: realImpact,
 	}
 
 	outBytes, err := json.MarshalIndent(report, "", "  ")
