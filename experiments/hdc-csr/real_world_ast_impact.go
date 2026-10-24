@@ -7,7 +7,6 @@ import (
 	"go/format"
 	"go/parser"
 	"go/token"
-	"math"
 )
 
 // RealReverseCallsCSR contains REVERSED RelCall edges from the real
@@ -32,7 +31,7 @@ func BuildRealReverseCallsCSR(m *RealASTManifest) (*RealReverseCallsCSR,error) {
 	}
 	degrees:=make([]uint32,n)
 	for src:=0;src<n;src++ {
-		if m.Symbols[src].ID!=uint32(src) || m.Offsets[src]>m.Offsets[src+1]{
+		if m.Symbols[src].ID!=uint32(src) || m.Offsets[src]>m.Offsets[src+1] || int(m.Offsets[src+1])>len(m.Edges){
 			return nil,fmt.Errorf("bad symbol id or offset at %d",src)
 		}
 		for e:=m.Offsets[src];e<m.Offsets[src+1];e++ {
@@ -86,7 +85,7 @@ func (g *RealReverseCallsCSR) Impact(target int,s *RealImpactScratch)(RealImpact
 	var result RealImpactReach
 	if g==nil||s==nil||target<0||target>=g.Nodes||
 		len(s.seen)<g.Nodes||len(s.queue)<g.Nodes{return result,fmt.Errorf("invalid reverse query or scratch")}
-	if s.stamp==math.MaxUint32 {
+	if s.stamp==^uint32(0) {
 		clear(s.seen)
 		s.stamp=0
 	}
@@ -154,12 +153,13 @@ func RealMutationOfDeclaration(symbol RealASTSymbol)(RealContractMutation,error)
 	// preserves the declaration syntax after canonical printing.
 	formatted,err:=format.Source([]byte("package realimpact\n"+symbol.Text))
 	if err!=nil{return info,err}
-	parsed,err:=parser.ParseFile(token.NewFileSet(),"formatted.go",formatted,0)
+	formattedFset:=token.NewFileSet()
+	parsed,err:=parser.ParseFile(formattedFset,"formatted.go",formatted,0)
 	if err!=nil{return info,err}
 	if len(parsed.Decls)!=1{return info,fmt.Errorf("unexpected formatted declarations")}
 	ff,ok:=parsed.Decls[0].(*ast.FuncDecl)
 	if !ok{return info,fmt.Errorf("formatted declaration is not a function")}
-	afterFmt,err:=realTypeString(token.NewFileSet(),ff)
+	afterFmt,err:=realTypeString(formattedFset,ff)
 	if err!=nil{return info,err}
 	// No lexical guess about alpha-renaming. For arbitrary repository
 	// functions with dependencies, certifying alpha-equivalence requires
