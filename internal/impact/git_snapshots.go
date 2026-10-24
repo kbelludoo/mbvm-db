@@ -100,6 +100,10 @@ func extractGitTree(repo,ref,dest string)error{
   }
   output:=filepath.Join(dest,name)
   switch h.Typeflag {
+  case tar.TypeXGlobalHeader,tar.TypeXHeader:
+   // PAX metadata extends TAR headers; Go's tar.Reader has already
+   // parsed the record. It is metadata only: never create a file for it.
+   continue
   case tar.TypeDir:
    if err:=os.MkdirAll(output,0700);err!=nil{return err}
   case tar.TypeReg,tar.TypeRegA:
