@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+bun.lockb
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
+
+# Build
+dist/
+build/
+.cache/
+
+# Temp
+tmp/
+.tmp/
+*.tmp
+
+# Secrets / local env
+.env
+**/.env
+!.env.example
