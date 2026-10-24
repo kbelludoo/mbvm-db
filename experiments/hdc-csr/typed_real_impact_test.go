@@ -98,6 +98,49 @@ func realTypedSourceDigest(g *TypedRealGraph)(string,error){
  return hex.EncodeToString(h.Sum(nil)),nil
 }
 
+// Integration control for Go Modules resolution without network, GOPATH
+// archives, protobuf, x/tools or private dependency caches. The external
+// module is a local replace, but go list must resolve and compile its
+// archive through the module-aware Go build system.
+func TestTypedRealModuleAwareImportAndBreakage(t *testing.T){
+ root:=t.TempDir()
+ dep:=filepath.Join(root,"external")
+ pkg:=filepath.Join(root,"pkg")
+ if err:=os.MkdirAll(dep,0755);err!=nil{t.Fatal(err)}
+ if err:=os.MkdirAll(pkg,0755);err!=nil{t.Fatal(err)}
+ files:=map[string]string{
+  filepath.Join(root,"go.mod"):"module example.test/parent\n\ngo 1.23\n\nrequire example.test/external v0.0.0\nreplace example.test/external => ./external\n",
+  filepath.Join(dep,"go.mod"):"module example.test/external\n\ngo 1.23\n",
+  filepath.Join(dep,"types.go"):"package external\ntype Thing struct { X int }\nfunc Value(a Thing) int { return a.X }\n",
+  filepath.Join(pkg,"pkg.go"):"package pkg\nimport \"example.test/external\"\nfunc Resolve(v external.Thing) int { return external.Value(v) }\nfunc Consumer(v external.Thing) int { return Resolve(v) }\n",
+ }
+ for name,body:=range files{
+  if err:=os.WriteFile(name,[]byte(body),0600);err!=nil{t.Fatal(err)}
+ }
+ graph,err:=LoadTypedRealGraph(pkg,"example.test/parent/pkg")
+ if err!=nil{t.Fatalf("Go Modules import must resolve: %v",err)}
+ target,err:=SelectTypedMutationTarget(graph)
+ if err!=nil{t.Fatal(err)}
+ if graph.Nodes[target].Name!="Resolve"{t.Fatalf("wrong mutation target: %s",graph.Nodes[target].Name)}
+ result,err:=VerifyTypedSignatureBreakage(graph,target)
+ if err!=nil{t.Fatal(err)}
+ if result.ChangedPackageTypechecked||len(result.DirectCallersWithErrors)!=1||len(result.TypeErrors)<1{
+  t.Fatalf("Go Modules consumer compile-time breakage not verified: %+v",result)
+ }
+ if graph.Nodes[result.DirectCallersWithErrors[0]].Name!="Consumer"{
+  t.Fatalf("wrong direct breakage caller: %+v",result.DirectCallersWithErrors)
+ }
+}
+
+func TestTypedRealModuleImporterFailsClosedWithoutDependency(t *testing.T){
+ root:=t.TempDir()
+ path:=filepath.Join(root,"broken.go")
+ if err:=os.WriteFile(path,[]byte("package broken\nimport \"example.invalid/module/notinstalled\"\nfunc F() { notinstalled.Use() }\n"),0600);err!=nil{t.Fatal(err)}
+ if _,err:=LoadTypedRealGraph(root,"example.test/broken");err==nil{
+  t.Fatal("unresolved module import must fail instead of guessing/stubbing types")
+ }
+}
+
 func realTypedFixture(t testing.TB)(*TypedRealGraph,int){
  t.Helper()
  graph,err:=LoadTypedRealGraph("../../pkg/mbvmdb","github.com/kbelludoo/mbvm-db/pkg/mbvmdb")
