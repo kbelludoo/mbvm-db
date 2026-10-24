@@ -3,6 +3,7 @@ package realeval
 import (
 	"fmt"
 	"math/big"
+	"sort"
 	"strings"
 
 	erdosstraus "github.com/kbelludoo/mbvm-db/experiments/erdos_straus"
@@ -103,7 +104,10 @@ func verifyRefutation(p EvalProblem, text string) (bool, string) {
 				sol := &erdosstraus.Solution{X: xBig, Y: yBig, Z: zBig}
 				for _, pCand := range []*big.Int{big.NewInt(3), big.NewInt(5), big.NewInt(7)} {
 					if erdosstraus.VerifySolution(pCand, sol) == nil {
-						key := fmt.Sprintf("%s:%s,%s,%s", pCand.String(), m1, m2, m3)
+						// Normalize order of denominators (x <= y <= z) to prevent permutation false positives
+						sorted := []*big.Int{xBig, yBig, zBig}
+						sort.Slice(sorted, func(i, j int) bool { return sorted[i].Cmp(sorted[j]) < 0 })
+						key := fmt.Sprintf("%s:%s,%s,%s", pCand.String(), sorted[0].String(), sorted[1].String(), sorted[2].String())
 						distinctValid[key] = true
 					}
 				}

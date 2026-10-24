@@ -18,8 +18,8 @@ type RetrievalResult struct {
 
 // KnowledgeBase encapsulates standard and parameterized rules with CSR graph.
 type KnowledgeBase struct {
-	AllRules []*erdosstraus.Rule
-	CSRGraph *erdosstraus.MathCSRGraph
+	AllRules    []*erdosstraus.Rule
+	CSRGraph    *erdosstraus.MathCSRGraph
 	InvertedMap map[int64][]*erdosstraus.Rule // Modulus -> rules (conventional inverted index)
 }
 
@@ -64,7 +64,6 @@ func (kb *KnowledgeBase) RetrieveFlat() RetrievalResult {
 // RetrieveFiltered uses a conventional inverted index without graph chaining.
 func (kb *KnowledgeBase) RetrieveFiltered(n *big.Int) RetrievalResult {
 	if n == nil {
-		// Fallback for non-numeric problems: return universal divisor rule
 		for _, r := range kb.AllRules {
 			if r.ID == "RULE-MORDELL-DIVISOR" {
 				return RetrievalResult{
@@ -116,10 +115,9 @@ func (kb *KnowledgeBase) RetrieveFiltered(n *big.Int) RetrievalResult {
 	}
 }
 
-// RetrieveMBVMCSR uses CSR adjacency traversal to extract active subgraph and dependencies.
+// RetrieveMBVMCSR uses CSR adjacency traversal to extract active subgraph with semantic pruning.
 func (kb *KnowledgeBase) RetrieveMBVMCSR(n *big.Int) RetrievalResult {
 	if n == nil {
-		// Non-numeric problem: traverse from universal divisor theorem
 		idx, ok := kb.CSRGraph.IDToIdx["RULE-MORDELL-DIVISOR"]
 		if !ok {
 			return kb.RetrieveFiltered(n)
@@ -161,12 +159,20 @@ func (kb *KnowledgeBase) RetrieveMBVMCSR(n *big.Int) RetrievalResult {
 	ids := []string{primaryRule.ID}
 	tokens := primaryRule.TokenWeight
 
-	// 2. CSR graph traversal: follow outgoing edges (dependencies & generalizations)
+	// 2. CSR graph traversal with semantic prerequisite pruning:
+	// Prune outgoing branches whose modular preconditions are contradicted by n.
 	edges := kb.CSRGraph.Neighbors(primaryIdx)
 	pathSteps := []string{fmt.Sprintf("Root(%s)", primaryRule.ID)}
 
 	for _, e := range edges {
 		depRule := kb.AllRules[e.Target]
+
+		// Semantic Pruning: if dependency lemma has a modulus restriction that contradicts n,
+		// prune it to prevent polluting the context with irrelevant lemmas.
+		if depRule.Modulus > 0 && !depRule.Covers(n) {
+			continue
+		}
+
 		retrieved = append(retrieved, depRule)
 		ids = append(ids, depRule.ID)
 		tokens += depRule.TokenWeight

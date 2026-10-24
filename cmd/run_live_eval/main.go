@@ -52,6 +52,8 @@ func main() {
 		fmt.Printf("   • Problema: %s\n", result.ProblemID)
 		fmt.Printf("   • Sucesso: %v\n", result.Success)
 		fmt.Printf("   • Status de Verificação: %s\n", result.VerificationStatus)
+		fmt.Printf("   • Modelo Solicitado: %s\n", result.ModelRequested)
+		fmt.Printf("   • Modelo Retornado: %s\n", result.ModelVersion)
 		fmt.Printf("   • Tokens de Prompt Reais: %d\n", result.PromptTokensReal)
 		fmt.Printf("   • Tokens de Resposta Reais: %d\n", result.CompletionTokensReal)
 		fmt.Printf("   • Tokens de Raciocínio (Thoughts): %d\n", result.ReasoningTokensReal)
@@ -78,7 +80,11 @@ func main() {
 		fmt.Println("=== Resumo Comparativo das 4 Condições de Ablação (N=26881) ===")
 		for _, s := range summaries {
 			fmt.Printf("[%s]\n", s.Condition)
-			fmt.Printf("  • Acurácia: %d/%d (%.1f%%)\n", s.SolvedCount, s.TrialsCount, s.Accuracy*100)
+			fmt.Printf("  • Acurácia Matemática: %d/%d (%.1f%%)\n", s.SolvedCount, s.CompletedResponses, s.MathematicalAccuracy*100)
+			fmt.Printf("  • Disponibilidade de API: %d/%d (%.1f%%)\n", s.CompletedResponses, s.TrialsCount, s.AvailabilityRate*100)
+			if s.InfrastructureErrors > 0 {
+				fmt.Printf("  • Erros de Infraestrutura (HTTP 503/429): %d\n", s.InfrastructureErrors)
+			}
 			fmt.Printf("  • Tokens Médios de Prompt: %.1f\n", s.AvgPromptTokens)
 			fmt.Printf("  • Tokens Médios de Resposta: %.1f\n", s.AvgCompleteTokens)
 			fmt.Printf("  • Tokens Médios de Raciocínio: %.1f\n", s.AvgReasoningTok)
@@ -126,7 +132,11 @@ func printSummaries(summaries []realeval.BenchmarkSummary, reportPath string) {
 	fmt.Println("=== Resumo Comparativo Oficial das 4 Condições ===")
 	for _, s := range summaries {
 		fmt.Printf("[%s]\n", s.Condition)
-		fmt.Printf("  • Acurácia: %d/%d (%.1f%%)\n", s.SolvedCount, s.TotalProblems, s.Accuracy*100)
+		fmt.Printf("  • Acurácia Matemática: %d/%d (%.1f%%)\n", s.SolvedCount, s.CompletedResponses, s.Accuracy*100)
+		fmt.Printf("  • Disponibilidade de API: %d/%d (%.1f%%)\n", s.CompletedResponses, s.TotalProblems, s.AvailabilityRate*100)
+		if s.InfrastructureErrors > 0 {
+			fmt.Printf("  • Erros de Infraestrutura (HTTP 503/429): %d\n", s.InfrastructureErrors)
+		}
 		fmt.Printf("  • Tokens Médios de Prompt: %.1f\n", s.AvgPromptTokens)
 		fmt.Printf("  • Tokens Médios de Resposta: %.1f\n", s.AvgCompleteTokens)
 		fmt.Printf("  • Tokens Médios Totais: %.1f\n", s.AvgTotalTokens)

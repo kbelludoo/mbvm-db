@@ -72,16 +72,16 @@ func TestRetrievalFourConditions(t *testing.T) {
 	}
 
 	csr := kb.RetrieveMBVMCSR(n26881)
-	if len(csr.Rules) < 2 {
-		t.Fatalf("expected CSR to retrieve root rule + dependencies, got %d rules", len(csr.Rules))
+	if len(csr.Rules) != 2 {
+		t.Fatalf("expected CSR with semantic pruning to retrieve exactly 2 rules (root + universal divisor), got %d rules", len(csr.Rules))
 	}
-	if csr.Rules[0].ID != "RULE-HARD-840-RES1-P11" {
-		t.Fatalf("expected root of CSR to be RULE-HARD-840-RES1-P11, got %s", csr.Rules[0].ID)
+	if csr.Rules[0].ID != "RULE-HARD-840-RES1-P11" || csr.Rules[1].ID != "RULE-MORDELL-DIVISOR" {
+		t.Fatalf("unexpected rules in pruned CSR: %v", csr.RuleIDs)
 	}
 
 	t.Logf("Rules count: Flat=%d (Tokens %d) | Filtered=%d (Tokens %d) | CSR=%d (Tokens %d)",
 		len(flat.Rules), flat.TokenWeight, len(filtered.Rules), filtered.TokenWeight, len(csr.Rules), csr.TokenWeight)
-	t.Logf("CSR Path: %s", csr.Path)
+	t.Logf("Pruned CSR Path: %s", csr.Path)
 }
 
 func TestVerifierOracleNoKeywords(t *testing.T) {
@@ -180,6 +180,15 @@ func TestVerifierOracleRigorousRefutation(t *testing.T) {
 		t.Fatalf("U20-15 should reject keyword-only response!")
 	}
 
+	// Permutation of the same solution should NOT count as distinct
+	perm15 := "For prime n=3, 4/3 can be written as (1, 4, 12) and also (4, 1, 12)."
+	okPerm, reasonPerm := VerifyResponse(prob15, perm15)
+	if okPerm {
+		t.Fatalf("U20-15 must reject permutations of the same solution!")
+	}
+	t.Logf("PASS: U20-15 correctly rejected permutation: %s", reasonPerm)
+
+	// Genuinely distinct solutions for n=3: (1, 4, 12) and (1, 6, 6)
 	good15 := "For prime n=3, 4/3 can be written as (1, 4, 12) and also (1, 6, 6). Hence non-unique."
 	ok, details := VerifyResponse(prob15, good15)
 	if !ok {

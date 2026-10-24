@@ -16,6 +16,8 @@ import (
 type AblationTrialResult struct {
 	TrialIndex           int           `json:"trial_index"`
 	Condition            ConditionType `json:"condition"`
+	ModelRequested       string        `json:"model_requested"`
+	ModelVersion         string        `json:"model_version"`
 	PromptTokensReal     int           `json:"prompt_tokens_real"`
 	CompletionTokensReal int           `json:"completion_tokens_real"`
 	TotalTokensReal      int           `json:"total_tokens_real"`
@@ -24,7 +26,6 @@ type AblationTrialResult struct {
 	Success              bool          `json:"success"`
 	VerificationStatus   string        `json:"verification_status"`
 	ResponseText         string        `json:"response_text,omitempty"`
-	ModelVersion         string        `json:"model_version"`
 	RetrievalPath        string        `json:"retrieval_path"`
 	RulesRetrieved       []string      `json:"rules_retrieved"`
 	ErrorMessage         string        `json:"error_message,omitempty"`
@@ -32,15 +33,19 @@ type AblationTrialResult struct {
 
 // AblationSummary compiles comparative metrics across the ablation conditions.
 type AblationSummary struct {
-	Condition         ConditionType `json:"condition"`
-	TrialsCount       int           `json:"trials_count"`
-	SolvedCount       int           `json:"solved_count"`
-	Accuracy          float64       `json:"accuracy"`
-	AvgPromptTokens   float64       `json:"avg_prompt_tokens"`
-	AvgCompleteTokens float64       `json:"avg_complete_tokens"`
-	AvgTotalTokens    float64       `json:"avg_total_tokens"`
-	AvgReasoningTok   float64       `json:"avg_reasoning_tokens"`
-	AvgLatencyMs      float64       `json:"avg_latency_ms"`
+	Condition            ConditionType `json:"condition"`
+	TrialsCount          int           `json:"trials_count"`
+	CompletedResponses   int           `json:"completed_responses"`
+	InfrastructureErrors int           `json:"infrastructure_errors"`
+	SolvedCount          int           `json:"solved_count"`
+	MathFailuresCount    int           `json:"math_failures_count"`
+	MathematicalAccuracy float64       `json:"mathematical_accuracy"`
+	AvailabilityRate     float64       `json:"availability_rate"`
+	AvgPromptTokens      float64       `json:"avg_prompt_tokens"`
+	AvgCompleteTokens    float64       `json:"avg_complete_tokens"`
+	AvgTotalTokens       float64       `json:"avg_total_tokens"`
+	AvgReasoningTok      float64       `json:"avg_reasoning_tokens"`
+	AvgLatencyMs         float64       `json:"avg_latency_ms"`
 }
 
 // RunAblation26881 executes the 4-group controlled ablation on N=26881.
@@ -84,6 +89,7 @@ func (r *Runner) RunAblation26881(ctx context.Context, trialsPerCond int, output
 			res := AblationTrialResult{
 				TrialIndex:     globalTrialIdx,
 				Condition:      cond,
+				ModelRequested: r.Client.Model,
 				Latency:        latency,
 				RetrievalPath:  ret.Path,
 				RulesRetrieved: ret.RuleIDs,
@@ -148,17 +154,14 @@ func (r *Runner) buildAblationPrompt(cond ConditionType, prob EvalProblem) (stri
 
 	switch cond {
 	case ConditionAblationDirect:
-		// Group A: Gemini Direct baseline
 		return sysPrompt, prob.Prompt, ret
 
 	case ConditionAblationFormulaOnly:
-		// Group B: Conventional Filtered Index (Formula Only)
 		ret = r.KB.RetrieveFiltered(prob.N)
 		userPrompt := fmt.Sprintf("%s\n\nRelevant Theorem:\n%s", prob.Prompt, formatRules(ret.Rules))
 		return sysPrompt, userPrompt, ret
 
 	case ConditionAblationFormulaRecipe:
-		// Group C: Conventional Filtered Index + Instantiation Recipe (Ablating recipe prompt alone)
 		ret = r.KB.RetrieveFiltered(prob.N)
 		var sb strings.Builder
 		sb.WriteString(prob.Prompt)
@@ -168,7 +171,6 @@ func (r *Runner) buildAblationPrompt(cond ConditionType, prob EvalProblem) (stri
 		return sysPrompt, sb.String(), ret
 
 	case ConditionAblationCSRRecipe:
-		// Group D: MBVM-DB CSR Subgraph + Instantiation Recipe (Graph topology + Recipe)
 		ret = r.KB.RetrieveMBVMCSR(prob.N)
 		var sb strings.Builder
 		sb.WriteString(prob.Prompt)
@@ -200,7 +202,11 @@ func buildRecipeText(rules []*erdosstraus.Rule, n *big.Int) string {
 
 func computeAblationSummaries(results []AblationTrialResult) []AblationSummary {
 	type accum struct {
-		total, solved                int
+		totalRequested               int
+		completedResponses           int
+		infrastructureErrors         int
+		solved                       int
+		mathFailures                 int
 		promptTok, compTok, totalTok int
 		reasoningTok                 int
 		latency                      time.Duration
@@ -212,9 +218,16 @@ func computeAblationSummaries(results []AblationTrialResult) []AblationSummary {
 			a = &accum{}
 			acc[res.Condition] = a
 		}
-		a.total++
+		a.totalRequested++
+		if res.ErrorMessage != "" {
+			a.infrastructureErrors++
+			continue
+		}
+		a.completedResponses++
 		if res.Success {
 			a.solved++
+		} else {
+			a.mathFailures++
 		}
 		a.promptTok += res.PromptTokensReal
 		a.compTok += res.CompletionTokensReal
@@ -225,19 +238,40 @@ func computeAblationSummaries(results []AblationTrialResult) []AblationSummary {
 
 	summaries := make([]AblationSummary, 0, len(acc))
 	for cond, a := range acc {
-		if a.total == 0 {
+		if a.totalRequested == 0 {
 			continue
 		}
+		mathAcc := 0.0
+		availRate := float64(a.completedResponses) / float64(a.totalRequested)
+		avgPrompt := 0.0
+		avgComp := 0.0
+		avgTot := 0.0
+		avgReasoning := 0.0
+		avgLat := 0.0
+
+		if a.completedResponses > 0 {
+			mathAcc = float64(a.solved) / float64(a.completedResponses)
+			avgPrompt = float64(a.promptTok) / float64(a.completedResponses)
+			avgComp = float64(a.compTok) / float64(a.completedResponses)
+			avgTot = float64(a.totalTok) / float64(a.completedResponses)
+			avgReasoning = float64(a.reasoningTok) / float64(a.completedResponses)
+			avgLat = float64(a.latency.Milliseconds()) / float64(a.completedResponses)
+		}
+
 		summaries = append(summaries, AblationSummary{
-			Condition:         cond,
-			TrialsCount:       a.total,
-			SolvedCount:       a.solved,
-			Accuracy:          float64(a.solved) / float64(a.total),
-			AvgPromptTokens:   float64(a.promptTok) / float64(a.total),
-			AvgCompleteTokens: float64(a.compTok) / float64(a.total),
-			AvgTotalTokens:    float64(a.totalTok) / float64(a.total),
-			AvgReasoningTok:   float64(a.reasoningTok) / float64(a.total),
-			AvgLatencyMs:      float64(a.latency.Milliseconds()) / float64(a.total),
+			Condition:            cond,
+			TrialsCount:          a.totalRequested,
+			CompletedResponses:   a.completedResponses,
+			InfrastructureErrors: a.infrastructureErrors,
+			SolvedCount:          a.solved,
+			MathFailuresCount:    a.mathFailures,
+			MathematicalAccuracy: mathAcc,
+			AvailabilityRate:     availRate,
+			AvgPromptTokens:      avgPrompt,
+			AvgCompleteTokens:    avgComp,
+			AvgTotalTokens:       avgTot,
+			AvgReasoningTok:      avgReasoning,
+			AvgLatencyMs:         avgLat,
 		})
 	}
 	return summaries

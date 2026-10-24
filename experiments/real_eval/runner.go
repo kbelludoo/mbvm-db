@@ -65,6 +65,7 @@ func (r *Runner) RunSingleIntegrationTest(ctx context.Context) (*TrialResult, er
 	result := &TrialResult{
 		ProblemID:            testProb.ID,
 		Condition:            ConditionMBVMCSR,
+		ModelRequested:       r.Client.Model,
 		PromptTokensReal:     resp.UsageMetadata.PromptTokenCount,
 		CompletionTokensReal: resp.UsageMetadata.CandidatesTokenCount,
 		TotalTokensReal:      resp.UsageMetadata.TotalTokenCount,
@@ -93,7 +94,6 @@ func (r *Runner) RunBenchmarkWithProblems(ctx context.Context, problems []EvalPr
 	results := make([]TrialResult, 0, len(problems)*4)
 
 	for _, prob := range problems {
-		// Randomize condition order per problem to eliminate systemic order bias
 		conds := make([]ConditionType, len(allConditions))
 		copy(conds, allConditions)
 		r.RNG.Shuffle(len(conds), func(i, j int) { conds[i], conds[j] = conds[j], conds[i] })
@@ -108,6 +108,7 @@ func (r *Runner) RunBenchmarkWithProblems(ctx context.Context, problems []EvalPr
 			trial := TrialResult{
 				ProblemID:      prob.ID,
 				Condition:      cond,
+				ModelRequested: r.Client.Model,
 				Latency:        latency,
 				RetrievalPath:  ret.Path,
 				RulesRetrieved: ret.RuleIDs,
@@ -237,7 +238,10 @@ func formatRules(rules []*erdosstraus.Rule) string {
 
 func computeSummaries(results []TrialResult) []BenchmarkSummary {
 	type accum struct {
-		total, solved                int
+		totalRequested               int
+		completedResponses           int
+		infrastructureErrors         int
+		solved                       int
 		promptTok, compTok, totalTok int
 		latency                      time.Duration
 	}
@@ -248,7 +252,12 @@ func computeSummaries(results []TrialResult) []BenchmarkSummary {
 			a = &accum{}
 			acc[res.Condition] = a
 		}
-		a.total++
+		a.totalRequested++
+		if res.ErrorMessage != "" {
+			a.infrastructureErrors++
+			continue
+		}
+		a.completedResponses++
 		if res.Success {
 			a.solved++
 		}
@@ -260,18 +269,36 @@ func computeSummaries(results []TrialResult) []BenchmarkSummary {
 
 	summaries := make([]BenchmarkSummary, 0, len(acc))
 	for cond, a := range acc {
-		if a.total == 0 {
+		if a.totalRequested == 0 {
 			continue
 		}
+		accRate := 0.0
+		availRate := float64(a.completedResponses) / float64(a.totalRequested)
+		avgPrompt := 0.0
+		avgComp := 0.0
+		avgTot := 0.0
+		avgLat := 0.0
+
+		if a.completedResponses > 0 {
+			accRate = float64(a.solved) / float64(a.completedResponses)
+			avgPrompt = float64(a.promptTok) / float64(a.completedResponses)
+			avgComp = float64(a.compTok) / float64(a.completedResponses)
+			avgTot = float64(a.totalTok) / float64(a.completedResponses)
+			avgLat = float64(a.latency.Milliseconds()) / float64(a.completedResponses)
+		}
+
 		summaries = append(summaries, BenchmarkSummary{
-			Condition:         cond,
-			TotalProblems:     a.total,
-			SolvedCount:       a.solved,
-			Accuracy:          float64(a.solved) / float64(a.total),
-			AvgPromptTokens:   float64(a.promptTok) / float64(a.total),
-			AvgCompleteTokens: float64(a.compTok) / float64(a.total),
-			AvgTotalTokens:    float64(a.totalTok) / float64(a.total),
-			AvgLatencyMs:      float64(a.latency.Milliseconds()) / float64(a.total),
+			Condition:            cond,
+			TotalProblems:        a.totalRequested,
+			CompletedResponses:   a.completedResponses,
+			InfrastructureErrors: a.infrastructureErrors,
+			SolvedCount:          a.solved,
+			Accuracy:             accRate,
+			AvailabilityRate:     availRate,
+			AvgPromptTokens:      avgPrompt,
+			AvgCompleteTokens:    avgComp,
+			AvgTotalTokens:       avgTot,
+			AvgLatencyMs:         avgLat,
 		})
 	}
 	return summaries

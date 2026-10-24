@@ -57,6 +57,8 @@ type GeminiGenerateResponse struct {
 type TrialResult struct {
 	ProblemID            string        `json:"problem_id"`
 	Condition            ConditionType `json:"condition"`
+	ModelRequested       string        `json:"model_requested,omitempty"`
+	ModelVersion         string        `json:"model_version"`
 	PromptTokensReal     int           `json:"prompt_tokens_real"`
 	CompletionTokensReal int           `json:"completion_tokens_real"`
 	TotalTokensReal      int           `json:"total_tokens_real"`
@@ -65,7 +67,6 @@ type TrialResult struct {
 	Success              bool          `json:"success"`
 	VerificationStatus   string        `json:"verification_status"`
 	ResponseText         string        `json:"response_text,omitempty"`
-	ModelVersion         string        `json:"model_version"`
 	RetrievalPath        string        `json:"retrieval_path"`
 	RulesRetrieved       []string      `json:"rules_retrieved"`
 	ErrorMessage         string        `json:"error_message,omitempty"`
@@ -73,12 +74,15 @@ type TrialResult struct {
 
 // BenchmarkSummary compiles aggregate performance statistics for a condition group.
 type BenchmarkSummary struct {
-	Condition         ConditionType `json:"condition"`
-	TotalProblems     int           `json:"total_problems"`
-	SolvedCount       int           `json:"solved_count"`
-	Accuracy          float64       `json:"accuracy"`
-	AvgPromptTokens   float64       `json:"avg_prompt_tokens"`
-	AvgCompleteTokens float64       `json:"avg_complete_tokens"`
-	AvgTotalTokens    float64       `json:"avg_total_tokens"`
-	AvgLatencyMs      float64       `json:"avg_latency_ms"`
+	Condition            ConditionType `json:"condition"`
+	TotalProblems        int           `json:"total_problems"`
+	CompletedResponses   int           `json:"completed_responses"`
+	InfrastructureErrors int           `json:"infrastructure_errors"`
+	SolvedCount          int           `json:"solved_count"`
+	Accuracy             float64       `json:"accuracy"`          // SolvedCount / CompletedResponses (mathematical accuracy)
+	AvailabilityRate     float64       `json:"availability_rate"` // CompletedResponses / TotalProblems
+	AvgPromptTokens      float64       `json:"avg_prompt_tokens"` // averaged strictly over CompletedResponses
+	AvgCompleteTokens    float64       `json:"avg_complete_tokens"`
+	AvgTotalTokens       float64       `json:"avg_total_tokens"`
+	AvgLatencyMs         float64       `json:"avg_latency_ms"`
 }
