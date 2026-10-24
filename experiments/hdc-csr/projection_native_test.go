@@ -87,3 +87,19 @@ func TestNativeProjectionMiniLMFeatureInput(t *testing.T){
 	if err!=nil{t.Fatal(err)}
 	if len(vec)!=384||vec[0]!=1.5||vec[383]!=0{t.Fatal("feature parse mismatch")}
 }
+
+var nativeProjectionBenchmarkSink Hypervector
+
+func BenchmarkNativeProjection8K_384(b *testing.B) {
+	proj:=&NativeProjection8K{Weights:make([]float32,NativeProjectionInputDim*NativeProjectionOutputBits)}
+	x:=make([]float32,NativeProjectionInputDim)
+	for i:=range x {x[i]=float32(i%11-5)/10}
+	for i:=range proj.Weights{proj.Weights[i]=float32(i%17-8)/30}
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i:=0;i<b.N;i++{
+		v,err:=proj.ProjectNormalizedMiniLM384(x)
+		if err!=nil{b.Fatal(err)}
+		nativeProjectionBenchmarkSink=v
+	}
+}
