@@ -96,3 +96,77 @@ func BenchmarkPropagateHop1_1000Nodes(b *testing.B) {
 		_ = hdc.PropagateHop1(graph, orig)
 	}
 }
+
+
+// These benchmarks isolate graph-building costs from query costs.
+// The HDC full scan visits every candidate: it does NOT provide global O(1) retrieval.
+var benchmarkContextSink *ContextualMemory
+var benchmarkScoreSink int
+
+func BenchmarkPropagateHop2_1000Nodes(b *testing.B) {
+    f := buildMultipathFixture(8080,1000)
+    sys := NewHDCSystem(42)
+    hop1 := sys.PropagateHop1(f.graph,f.vectors)
+    b.ReportAllocs()
+    b.ResetTimer()
+    for i:=0;i<b.N;i++ {
+        benchmarkContextSink=sys.PropagateHop2(f.graph,hop1)
+    }
+}
+
+func BenchmarkCSR2HopSemantics_1000Nodes(b *testing.B) {
+    f := buildMultipathFixture(8080,1000)
+    target:=f.prototypes[1]
+    sum:=0
+    b.ReportAllocs()
+    b.ResetTimer()
+    for i:=0;i<b.N;i++ {
+        src:=i%1000
+        ids:=csrTwoHopCallTargets(f.graph,src)
+        // Exact CSR candidate set plus a semantic filter.
+        for _,id:=range ids {
+            if HammingDistance(target,f.vectors[id]) < 1500 { sum++ }
+        }
+    }
+    benchmarkScoreSink=sum
+}
+
+func BenchmarkHDC2HopMembership_1000Nodes(b *testing.B) {
+    f:=buildMultipathFixture(8080,1000)
+    sys:=NewHDCSystem(42)
+    hop2:=sys.PropagateHop2(f.graph,sys.PropagateHop1(f.graph,f.vectors))
+    cfg:=sys.RelConfigs[RelCall]
+    role:=Bind(RotL8K(cfg.RoleVector,cfg.Shift),cfg.RoleVector)
+    sum:=0
+    b.ReportAllocs()
+    b.ResetTimer()
+    for i:=0;i<b.N;i++ {
+        src:=i%1000
+        recovered:=RotR8K(Unbind(hop2.Contextual[src],role),cfg.Shift*2)
+        sum+=HammingDistance(recovered,f.vectors[(src+37)%1000])
+    }
+    benchmarkScoreSink=sum
+}
+
+func BenchmarkHDC2HopFullScan_1000Nodes(b *testing.B) {
+    f:=buildMultipathFixture(8080,1000)
+    sys:=NewHDCSystem(42)
+    hop2:=sys.PropagateHop2(f.graph,sys.PropagateHop1(f.graph,f.vectors))
+    cfg:=sys.RelConfigs[RelCall]
+    role:=Bind(RotL8K(cfg.RoleVector,cfg.Shift),cfg.RoleVector)
+    sum:=0
+    b.ReportAllocs()
+    b.ResetTimer()
+    for i:=0;i<b.N;i++ {
+        src:=i%1000
+        recovered:=RotR8K(Unbind(hop2.Contextual[src],role),cfg.Shift*2)
+        best:=VectorBits+1
+        for id:=0;id<1000;id++ {
+            if id==src { continue }
+            d:=HammingDistance(recovered,f.vectors[id])
+            if d<best { best=d }
+        }
+        sum+=best
+    }
+    benchmarkScoreSink=sum
+}
