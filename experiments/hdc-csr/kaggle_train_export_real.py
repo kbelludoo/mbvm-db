@@ -130,7 +130,7 @@ def main():
     encoder = SentenceTransformer(a.model, device=device)
     # Include the real Go function/type body; truncation is performed by the MiniLM tokenizer.
     texts = [
-        f'{row["package"]} {row["kind"]} {row["name"]} {row.get("signature", "")}\\n{row["text"]}'
+        f'{row["package"]} {row["kind"]} {row["name"]} {row.get("signature", "")}\n{row["text"]}'
         for row in manifest["symbols"]
     ]
     embs = encoder.encode(texts, batch_size=min(a.batch_size, 32),
