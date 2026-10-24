@@ -30,11 +30,21 @@ type CallSite struct{
  Callee int `json:"callee"`
  Position string `json:"position"`
 }
+
+// ImportedCall records a statically resolved call to a non-local Go
+// function or concrete method. Callee uses the declaring package path
+// and receiver-qualified name, not a method-name-only heuristic.
+type ImportedCall struct{
+ Caller int `json:"caller"`
+ Callee string `json:"callee"`
+ Position string `json:"position"`
+}
 type Graph struct{
  Dir string
  PackagePath string
  Symbols []Symbol
  Calls []CallSite
+ ImportedCalls []ImportedCall
  Offsets []uint32 // incoming CSR, len(Symbols)+1
  Callers []uint32
  ExcludedCalls int // interface, external or otherwise not declared in this package
@@ -98,9 +108,18 @@ func Load(dir string)(*Graph,error){
      return true
     }
    }
-   // Excluded: interface method, external package, function value,
-   // built-in or other call without a local concrete types.Func target.
-   g.ExcludedCalls++
+   // A resolved imported function/method may be linked only if the
+   // corresponding declaration is included in a later multi-package
+   // analysis. Interface dispatch is NEVER assigned to an implementation.
+   if obj!=nil&&obj.Pkg()!=nil&&obj.Pkg().Path()!=pkgPath&&!interfaceMethod(obj){
+    g.ImportedCalls=append(g.ImportedCalls,ImportedCall{
+     Caller:caller.ID,Callee:typedFuncKey(obj),
+     Position:fset.Position(expr.Pos()).String(),
+    })
+   }else{
+    // Includes interface dispatch, function values and built-ins.
+    g.ExcludedCalls++
+   }
    return true
   })
  }
@@ -129,4 +148,30 @@ func calledFunc(expr ast.Expr,info *types.Info)*types.Func{
  case *ast.IndexListExpr:return calledFunc(x.X,info)
  default:return nil
  }
+}
+
+// typedFuncKey agrees with Symbol.Qualified for the target package, even
+// though each package is typechecked in a distinct Go importer instance.
+func typedFuncKey(fn *types.Func)string{
+ if fn==nil||fn.Pkg()==nil{return ""}
+ packagePath:=fn.Pkg().Path()
+ sig,ok:=fn.Type().(*types.Signature)
+ if ok&&sig.Recv()!=nil{
+  qualifier:=func(p *types.Package)string{
+   if p==nil||p.Path()==packagePath{return ""}
+   return p.Path()
+  }
+  recv:=types.TypeString(sig.Recv().Type(),qualifier)
+  return packagePath+".("+recv+")."+fn.Name()
+ }
+ return packagePath+"."+fn.Name()
+}
+
+func interfaceMethod(fn *types.Func)bool{
+ sig,ok:=fn.Type().(*types.Signature)
+ if !ok||sig.Recv()==nil{return false}
+ recv:=types.Unalias(sig.Recv().Type())
+ if ptr,ok:=recv.(*types.Pointer);ok{recv=types.Unalias(ptr.Elem())}
+ _,isInterface:=recv.Underlying().(*types.Interface)
+ return isInterface
 }
