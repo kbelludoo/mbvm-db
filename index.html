@@ -176,6 +176,24 @@
         </tbody>
       </table>
 
+      <h3 style="font-size: 15px; margin-top: 18px; color: #fff;">⚖️ Benchmark Pareado E2E (Mesma Consulta, Mesmos Candidatos)</h3>
+      <table style="margin-top: 8px;">
+        <thead>
+          <tr>
+            <th>Motor Pareado</th>
+            <th>Recall@10</th>
+            <th>Precision@10</th>
+            <th>MRR</th>
+            <th>Latência p50</th>
+            <th>Latência p95</th>
+            <th>Throughput (QPS)</th>
+          </tr>
+        </thead>
+        <tbody id="ciPairedBody">
+          <tr><td colspan="7">Carregando métricas pareadas E2E do CI...</td></tr>
+        </tbody>
+      </table>
+
       <h3 style="font-size: 15px; margin-top: 18px; color: #fff;">🎯 Avaliação de Generalização Estrutural (Recall@10)</h3>
       <table style="margin-top: 8px;">
         <thead>
@@ -334,7 +352,29 @@
           </tr>
         `;
 
-        const q = data.quality_evaluation || {};
+        const paired = data.paired_e2e_evaluation || {};
+        const pairedEngines = paired.engines || [];
+        if (pairedEngines.length > 0) {
+          let pairedRows = "";
+          pairedEngines.forEach(eng => {
+            const isCsr = eng.name.includes("CSR");
+            const color = isCsr ? "#3fb950" : (eng.name.includes("HDC") ? "#58a6ff" : "#8b949e");
+            pairedRows += `
+              <tr>
+                <td><strong style="color: ${color};">${eng.name}</strong></td>
+                <td>${(eng.recall_at_10 * 100).toFixed(1)}%</td>
+                <td>${(eng.precision_at_10 * 100).toFixed(1)}%</td>
+                <td>${eng.mrr.toFixed(3)}</td>
+                <td class="metric-value">${eng.p50_latency_us.toFixed(2)} µs</td>
+                <td>${eng.p95_latency_us.toFixed(2)} µs</td>
+                <td>${eng.queries_per_sec.toFixed(0)} QPS</td>
+              </tr>
+            `;
+          });
+          document.getElementById("ciPairedBody").innerHTML = pairedRows;
+        } else {
+          document.getElementById("ciPairedBody").innerHTML = `<tr><td colspan="7">Dados pareados não disponíveis neste commit.</td></tr>`;
+        }
         const qA = (q.experiment_a_pure_semantic_recall10 !== undefined) ? q.experiment_a_pure_semantic_recall10 : 0.0;
         const qB = (q.experiment_b_hdc_1hop_unbinding_recall10 !== undefined) ? q.experiment_b_hdc_1hop_unbinding_recall10 : 50.0;
         const qC = (q.experiment_c_hdc_2hop_composite_recall10 !== undefined) ? q.experiment_c_hdc_2hop_composite_recall10 : 100.0;

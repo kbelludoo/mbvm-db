@@ -1,32 +1,34 @@
 {
   "project": "MBVM-DB",
   "module": "experiments/hdc-csr",
-  "commit_sha": "afea0eed19a71e2547400d5ee67443b05873909c",
+  "commit_sha": "354d55818a9d02e7a927eb5867d256b7a2797682",
   "baseline_reference_commit": "116ec92",
-  "generated_at_utc": "2026-10-24T04:25:52Z",
+  "generated_at_utc": "2026-10-24T04:35:40Z",
   "environment": {
     "compiler": "go version go1.27.3 linux/amd64",
-    "cpu": "INTEL(R) XEON(R) PLATINUM 8573C",
+    "cpu": "AMD EPYC 7763 64-Core Processor",
     "execution_mode": "Single-Core (-cpu 1, GOMAXPROCS=1)",
     "os": "Linux"
   },
   "metrics": {
     "allocs_per_op_critical_path": 0,
-    "bind_8k_ns": 59.52,
+    "bind_8k_ns": 77.55,
     "bytes_per_op_critical_path": 0,
     "csr_1000nodes_allocs_per_op": 3,
     "csr_1000nodes_bytes_per_op": 1025104,
     "csr_1000nodes_hop2_allocs_per_op": 607,
     "csr_1000nodes_hop2_bytes_per_op": 1086816,
-    "csr_1000nodes_propagate_hop2_ms": 175.339073,
-    "csr_1000nodes_propagate_ms": 2.531853,
-    "csr_hybrid_query_1000nodes_ns": 1808,
-    "hamming_8k_ns": 58.52,
-    "hdc_fullscan_query_1000nodes_ns": 98238,
-    "hdc_membership_query_1000nodes_ns": 562.4,
-    "majority3_8k_ns": 161,
+    "csr_1000nodes_propagate_hop2_ms": 195.465594,
+    "csr_1000nodes_propagate_ms": 3.248238,
+    "csr_hybrid_query_1000nodes_ns": 2415,
+    "e2e_csr_ns": 1869,
+    "e2e_hdc_ns": 547231,
+    "e2e_semantic_ns": 284970,
+    "hamming_8k_ns": 116.1,
+    "hdc_membership_query_1000nodes_ns": 697.5,
+    "majority3_8k_ns": 276.1,
     "memory_per_node_bytes": 1024,
-    "rotl_8k_ns": 291.9
+    "rotl_8k_ns": 366.2
   },
   "quality_evaluation": {
     "experiment_a_pure_semantic_recall10": 0,
@@ -48,5 +50,48 @@
     "semantic_only_mrr": 0.1837491666178191,
     "semantic_only_recall_at_10": 0.2324024346580737,
     "skipped_no_relevant": 17
+  },
+  "paired_e2e_evaluation": {
+    "engines": [
+      {
+        "avg_false_positives": 1,
+        "mean_latency_us": 2.9680800000000005,
+        "mrr": 0.865,
+        "name": "CSR_Local_Semantic",
+        "p50_latency_us": 2.885,
+        "p95_latency_us": 3.927,
+        "p99_latency_us": 17.273,
+        "precision_at_10": 1,
+        "queries_per_sec": 336918.1423681302,
+        "recall_at_10": 1
+      },
+      {
+        "avg_false_positives": 9.96,
+        "mean_latency_us": 290.34286,
+        "mrr": 0.008083333333333333,
+        "name": "Pure_Semantic_Scan",
+        "p50_latency_us": 281.065,
+        "p95_latency_us": 350.956,
+        "p99_latency_us": 466.181,
+        "precision_at_10": 0.008,
+        "queries_per_sec": 3444.2038629777226,
+        "recall_at_10": 0.008
+      },
+      {
+        "avg_false_positives": 7.97,
+        "mean_latency_us": 565.7922300000001,
+        "mrr": 0.29083333333333317,
+        "name": "HDC_Hybrid_Scan",
+        "p50_latency_us": 563.082,
+        "p95_latency_us": 578.771,
+        "p99_latency_us": 879.282,
+        "precision_at_10": 0.40599999999999925,
+        "queries_per_sec": 1767.4332501879705,
+        "recall_at_10": 0.40599999999999925
+      }
+    ],
+    "k": 10,
+    "total_nodes": 1000,
+    "total_queries": 100
   }
 }
