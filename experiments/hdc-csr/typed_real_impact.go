@@ -4,7 +4,6 @@ import (
  "fmt"
  "go/ast"
  "go/build"
- "go/importer"
  "go/parser"
  "go/token"
  "go/types"
@@ -40,11 +39,12 @@ type TypedRealGraph struct {
  Nodes []TypedRealSymbol
  CallSites []TypedRealCallSite
  Reverse *RealReverseCallsCSR
+ moduleImporter types.Importer
 }
 
-// One-package, non-CGO, Go-source type resolution; Go build tags select
-// the same source files as the current GOOS/GOARCH. Imports must be
-// resolvable with the Go standard go/importer. No code is written to disk.
+// One-package, non-CGO, Go-source type resolution. Go build tags select
+// source files for the current GOOS/GOARCH. Modules are resolved by go list
+// and the gc export-data importer, not GOPATH/pkg. Go code is not modified.
 func LoadTypedRealGraph(dir,packagePath string)(*TypedRealGraph,error){
  abs,err:=filepath.Abs(dir);if err!=nil{return nil,err}
  pkg,err:=build.Default.ImportDir(abs,0)
@@ -66,11 +66,13 @@ func LoadTypedRealGraph(dir,packagePath string)(*TypedRealGraph,error){
   Uses:make(map[*ast.Ident]types.Object),
   Selections:make(map[*ast.SelectorExpr]*types.Selection),
  }
- cfg:=types.Config{Importer:importer.Default(),Sizes:types.SizesFor("gc",runtime.GOARCH)}
+ moduleImporter,err:=newModuleAwareImporter(abs,fset,parsed)
+ if err!=nil{return nil,fmt.Errorf("module-aware import resolution: %w",err)}
+ cfg:=types.Config{Importer:moduleImporter,Sizes:types.SizesFor("gc",runtime.GOARCH)}
  if _,err=cfg.Check(packagePath,fset,parsed,info);err!=nil{
   return nil,fmt.Errorf("baseline Go typecheck: %w",err)
  }
- result:=&TypedRealGraph{Fset:fset,Files:parsed,PackagePath:packagePath}
+ result:=&TypedRealGraph{Fset:fset,Files:parsed,PackagePath:packagePath,moduleImporter:moduleImporter}
  byObject:=make(map[*types.Func]int)
  for _,file:=range parsed{
   for _,decl:=range file.Decls{
@@ -200,7 +202,7 @@ func VerifyTypedSignatureBreakage(g *TypedRealGraph,target int)(TypedRealBreakag
 
  var diagnostics []types.Error
  cfg:=types.Config{
-  Importer:importer.Default(),
+  Importer:g.moduleImporter,
   Sizes:types.SizesFor("gc",runtime.GOARCH),
   Error:func(err error){if e,ok:=err.(types.Error);ok{diagnostics=append(diagnostics,e)}},
  }
