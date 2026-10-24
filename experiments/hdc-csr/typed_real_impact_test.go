@@ -103,6 +103,9 @@ func realTypedSourceDigest(g *TypedRealGraph)(string,error){
 // module is a local replace, but go list must resolve and compile its
 // archive through the module-aware Go build system.
 func TestTypedRealModuleAwareImportAndBreakage(t *testing.T){
+ t.Setenv("GOPROXY","off")
+ t.Setenv("GOSUMDB","off")
+ t.Setenv("GOWORK","off")
  root:=t.TempDir()
  dep:=filepath.Join(root,"external")
  pkg:=filepath.Join(root,"pkg")
@@ -133,6 +136,9 @@ func TestTypedRealModuleAwareImportAndBreakage(t *testing.T){
 }
 
 func TestTypedRealModuleImporterFailsClosedWithoutDependency(t *testing.T){
+ t.Setenv("GOPROXY","off")
+ t.Setenv("GOSUMDB","off")
+ t.Setenv("GOWORK","off")
  root:=t.TempDir()
  path:=filepath.Join(root,"broken.go")
  if err:=os.WriteFile(path,[]byte("package broken\nimport \"example.invalid/module/notinstalled\"\nfunc F() { notinstalled.Use() }\n"),0600);err!=nil{t.Fatal(err)}
