@@ -179,3 +179,44 @@ go run ./experiments/hdc-csr/cmd/audit_supreme_structure \
 
 This does not require weights W and does not change the current trained
 index. It assumes the V4 writer's chunk order is unchanged.
+
+## Direct no-training lexical Top-1 control on the identical 160 V4 queries
+
+The CLI now publishes `lexical_holdout` alongside `block_holdout`
+whenever `-synthetic-v4-layout -block-holdout-queries 160` is set.
+
+The lexical control reconstructs V4 source texts from the **exact V4
+generator template and eight static domain/keyword tuples**. It tokenizes
+the source text into lowercase words, drops numeric ID tokens, computes
+Jaccard similarity of unique-token sets, and searches the exact same
+9,750 candidate IDs per query, excluding the same 250-symbol source
+block. Shared function `blockHoldoutQueryID` guarantees matching query
+IDs and domain-balanced coverage across HDC and lexical arms.
+
+**Caution:** this source is reconstructed from the inspected trainer;
+neither the bit-vector index nor its checksum cryptographically proves
+the producer text. If V4 provenance is wrong, this lexical baseline is
+not applicable to the actual index.
+
+The V4 text contains domain name, title and comma-separated domain tags
+literally. After removing ID numbers, all source records from one
+synthetic domain have identical word sets. Consequently the lexical
+baseline is expected to classify **160/160 (100%) by construction**,
+even when its source block is excluded. This is not a trained classifier
+or a fair latency benchmark, but it establishes that an inexpensive
+non-neural text representation is sufficient for this narrow objective.
+
+The observed user-provided HDC result was `156/160 (97.5%)`; a direct
+side-by-side report therefore implies **-2.5 percentage points** for
+HDC relative to the lexical baseline on domain Top-1, **conditional on
+the exact V4 template and reported HDC result**. These are not
+measurements of semantic code understanding, retrieval latency or
+high-dimensional memory superiority. The neural model might still add
+value on a different task, but it needs an independently defined
+behavioral benchmark and a saved projection checkpoint W.
+
+A practical next evaluation must obscure domain keywords, hold out
+entire template families and test actual unseen Go code against
+independently verified behavior labels. These counterfactual
+transformations **cannot be embedded by the original model** without
+the saved weights W and a compatible MiniLM encoder.
