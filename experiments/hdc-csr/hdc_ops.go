@@ -14,6 +14,15 @@ const (
 // Hypervector representa um vetor binário denso de 8.192 bits alinhado em 128 palavras uint64.
 type Hypervector [WordsPerVector]uint64
 
+// GenerateRandomHypervector gera um hipervetor determinístico a partir de uma fonte de números pseudo-aleatórios.
+func GenerateRandomHypervector(rng interface{ Uint64() uint64 }) Hypervector {
+	var v Hypervector
+	for i := 0; i < WordsPerVector; i++ {
+		v[i] = rng.Uint64()
+	}
+	return v
+}
+
 // Bind executa o vínculo composicional entre dois hipervetores: A ⊕ B.
 func Bind(a, b Hypervector) Hypervector {
 	var out Hypervector

@@ -71,21 +71,21 @@ func NewHDCSystem(seed int64) *HDCSystem {
 
 	configs := make(map[EdgeRelation]RelationConfig)
 	configs[RelCall] = RelationConfig{
-		RoleVector: generateRandomHypervector(rng),
+		RoleVector: GenerateRandomHypervector(rng),
 		Shift:      13, // Deslocamento circular para chamada
 	}
 	configs[RelRevCall] = RelationConfig{
-		RoleVector: generateRandomHypervector(rng),
+		RoleVector: GenerateRandomHypervector(rng),
 		Shift:      47, // Deslocamento circular para chamada inversa
 	}
 	configs[RelMemberOf] = RelationConfig{
-		RoleVector: generateRandomHypervector(rng),
+		RoleVector: GenerateRandomHypervector(rng),
 		Shift:      79, // Deslocamento circular para membro
 	}
 
 	return &HDCSystem{
 		RelConfigs: configs,
-		TieBreaker: generateRandomHypervector(rng),
+		TieBreaker: GenerateRandomHypervector(rng),
 	}
 }
 
