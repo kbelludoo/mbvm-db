@@ -128,7 +128,21 @@ func validateUnseenDefinitions(problems []EvalProblem) error {
 		return fmt.Errorf("U20-13 counterexample q=9 failed: n=%d", n13)
 	}
 
-	// 3. Certification of U20-18 progression: 529 mod 840 and -3 mod 23 => 14809 mod 19320
+	// 3. Certification of U20-16 counterexample n=49:
+	// n=49 = 1 mod 12 (49 = 4*12 + 1). x = (49+3)/4 = 13.
+	// t = 49*13 = 637 = 7^2 * 13.
+	// Both prime factors 7 and 13 are = 1 mod 3, so all divisors of t^2 are 1 mod 3.
+	// Condition requires d = -t mod 3 = -1 = 2 mod 3, which is impossible.
+	n16 := int64(49)
+	if n16%12 != 1 {
+		return fmt.Errorf("U20-16 counterexample n=49 fails 1 mod 12")
+	}
+	t16 := n16 * ((n16 + 3) / 4) // 49 * 13 = 637
+	if (7%3 != 1) || (13%3 != 1) || (t16%3 != 1) {
+		return fmt.Errorf("U20-16 prime factor obstruction fails for 49*13")
+	}
+
+	// 4. Certification of U20-18 progression: 529 mod 840 and -3 mod 23 => 14809 mod 19320
 	if 14809%840 != 529 || 14809%23 != (23-3)%23 {
 		return fmt.Errorf("U20-18 progression 14809 fails: %d mod 840, %d mod 23", 14809%840, 14809%23)
 	}

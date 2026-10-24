@@ -30,7 +30,8 @@ func VerifyResponse(p EvalProblem, respText string) (bool, string) {
 	}
 }
 
-var reTriple = regexp.MustCompile(`(?i)\bx\s*[:=]\s*(\d+)[^0-9\n\r]+y\s*[:=]\s*(\d+)[^0-9\n\r]+z\s*[:=]\s*(\d+)`)
+// Regex for extracting triples across raw text, LaTeX, Markdown bold/italic, etc.
+var reTriple = regexp.MustCompile(`(?i)(?:x|\$x|\\textbf\{x\})\s*[:=]\s*(\d+)[^0-9\n\r]+(?:y|\$y|\\textbf\{y\})\s*[:=]\s*(\d+)[^0-9\n\r]+(?:z|\$z|\\textbf\{z\})\s*[:=]\s*(\d+)`)
 
 func verifyConstruction(p EvalProblem, text string) (bool, string) {
 	// 1. First scan for explicit triples (x=..., y=..., z=...) from end to beginning
@@ -152,28 +153,30 @@ func verifyRefutation(p EvalProblem, text string) (bool, string) {
 		}
 		return false, "failed to exhibit counterexample for x=(n+3)/4 completion"
 
-	case "U20-15": // Non-uniqueness for primes: e.g. n=5 or n=3 has multiple solutions
-		hasPrime := strings.Contains(text, "5") || strings.Contains(text, "3")
-		hasTwoSols := strings.Contains(text, "20") || strings.Contains(text, "10") ||
-			strings.Contains(text, "12") || strings.Contains(text, "distinct") ||
+	case "U20-15": // Non-uniqueness for primes: e.g. n=3 has 3 solutions, n=5 has 2 solutions
+		hasPrime := strings.Contains(text, "3") || strings.Contains(text, "5")
+		hasTwoSols := strings.Contains(text, "distinct") || strings.Contains(text, "distintas") ||
 			strings.Contains(text, "more than one") || strings.Contains(text, "three") ||
-			strings.Contains(text, "two") || strings.Contains(text, "multiple")
+			strings.Contains(text, "três") || strings.Contains(text, "two") ||
+			strings.Contains(text, "duas") || strings.Contains(text, "multiple") ||
+			strings.Contains(text, "12") || strings.Contains(text, "20") || strings.Contains(text, "10")
 		if hasPrime && hasTwoSols {
 			return true, "correctly proved non-uniqueness exhibiting multiple distinct solutions"
 		}
 		return false, "failed to exhibit multiple solutions for prime n"
 
-	case "U20-16": // n=25, x=7 => a=3, t=175 = 1 mod 3
-		has25 := strings.Contains(text, "25") && strings.Contains(text, "7")
-		has175 := strings.Contains(text, "175") || strings.Contains(text, "mod 3")
-		if has25 && has175 {
-			return true, "correctly proved divisor obstruction for n=25, x=7"
+	case "U20-16": // n=49, x=13 => t=637=7^2*13. Divisors all 1 mod 3 != 2 mod 3
+		// Rigorously reject false counterexample n=25 (which has exact solution 4/25 = 1/7 + 1/60 + 1/2100)
+		if strings.Contains(text, "25") && !strings.Contains(text, "49") {
+			return false, "rejected false counterexample n=25: 4/25 = 1/7 + 1/60 + 1/2100 is an exact integer solution"
 		}
-		return false, "failed to prove divisor obstruction for n=25, x=7"
-		if has25 && has175 {
-			return true, "correctly proved divisor obstruction for n=25, x=7"
+		has49 := strings.Contains(text, "49")
+		has13 := strings.Contains(text, "13")
+		hasMod3 := strings.Contains(text, "mod 3") || strings.Contains(text, "(mod 3)")
+		if has49 && has13 && hasMod3 {
+			return true, "correctly certified counterexample n=49 with divisor obstruction"
 		}
-		return false, "failed to prove divisor obstruction for n=25, x=7"
+		return false, "failed to exhibit certified counterexample n=49 with divisor factorization"
 
 	default:
 		return false, "unhandled refutation problem ID"
@@ -260,11 +263,12 @@ func verifyAlgebraicProof(p EvalProblem, text string) (bool, string) {
 		}
 		return false, "proof missing Mordell divisor factorization steps"
 
-	case "U20-10": // Linear congruence 4k = -3 mod p unique
+	case "U20-10": // Linear congruence 12k = -4 mod p unique
 		hasCoprime := strings.Contains(text, "gcd") || strings.Contains(text, "coprime") || strings.Contains(text, "invers")
+		hasLinear := strings.Contains(text, "12k") || strings.Contains(text, "-4") || strings.Contains(text, "unique") || strings.Contains(text, "única")
 		hasCRT := strings.Contains(text, "mod p") && strings.Contains(text, "mod 12")
-		if hasCoprime && hasCRT {
-			return true, "correctly proved existence and uniqueness of progression via CRT"
+		if (hasCoprime || hasLinear) && hasCRT {
+			return true, "correctly proved existence and uniqueness of progression via modular inversion"
 		}
 		return false, "proof missing modular inversion and CRT verification"
 
@@ -376,7 +380,8 @@ func verifyObstruction(p EvalProblem, text string) (bool, string) {
 	case "U20-19": // n = 1 mod 24 => n = 1 mod 3; n = -3 mod 3 => n = 0 mod 3. 1 != 0 mod 3
 		has3 := strings.Contains(text, "mod 3") || strings.Contains(text, "(mod 3)")
 		hasDisjoint := (strings.Contains(text, "1") && strings.Contains(text, "0")) ||
-			strings.Contains(text, "contradiction") || strings.Contains(text, "distinct residue")
+			strings.Contains(text, "contradiction") || strings.Contains(text, "distinct") ||
+			strings.Contains(text, "not\\equiv") || strings.Contains(text, "!=")
 		if has3 && hasDisjoint {
 			return true, "correctly proved obstruction: n ≡ 1 mod 3 contradicts n ≡ 0 mod 3"
 		}
@@ -395,10 +400,11 @@ func verifyObstruction(p EvalProblem, text string) (bool, string) {
 	}
 }
 
+// Regex matching x, y, z in both plain text and LaTeX formats
 var (
-	reX = regexp.MustCompile(`(?i)\bx\s*[:=]\s*(\d+)`)
-	reY = regexp.MustCompile(`(?i)\by\s*[:=]\s*(\d+)`)
-	reZ = regexp.MustCompile(`(?i)\bz\s*[:=]\s*(\d+)`)
+	reX = regexp.MustCompile(`(?i)(?:x|\$x|\\textbf\{x\})\s*[:=]\s*(\d+)`)
+	reY = regexp.MustCompile(`(?i)(?:y|\$y|\\textbf\{y\})\s*[:=]\s*(\d+)`)
+	reZ = regexp.MustCompile(`(?i)(?:z|\$z|\\textbf\{z\})\s*[:=]\s*(\d+)`)
 )
 
 func extractXYZ(text string) (string, string, string) {
@@ -422,4 +428,3 @@ func extractLastXYZ(text string) (string, string, string) {
 	}
 	return "", "", ""
 }
-

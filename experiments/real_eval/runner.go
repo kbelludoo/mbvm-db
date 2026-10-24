@@ -45,7 +45,7 @@ func (r *Runner) RunSingleIntegrationTest(ctx context.Context) (*TrialResult, er
 	}
 
 	retrieval := r.KB.RetrieveMBVMCSR(testProb.N)
-	sysPrompt := "You are a mathematical theorem prover. State: x = <val>, y = <val>, z = <val>."
+	sysPrompt := "You are an expert mathematician and theorem prover. Always justify your steps rigorously. For constructions, state x = <val>, y = <val>, z = <val>."
 	userPrompt := fmt.Sprintf("%s\n\nContext:\n%s", testProb.Prompt, formatRules(retrieval.Rules))
 
 	start := time.Now()
@@ -151,8 +151,11 @@ func (r *Runner) RunBenchmarkWithProblems(ctx context.Context, problems []EvalPr
 			Results:   results,
 		}
 		data, err := json.MarshalIndent(payload, "", "  ")
-		if err == nil {
-			_ = os.WriteFile(r.ReportPath, data, 0644)
+		if err != nil {
+			return results, summaries, fmt.Errorf("failed to marshal benchmark report: %w", err)
+		}
+		if writeErr := os.WriteFile(r.ReportPath, data, 0644); writeErr != nil {
+			return results, summaries, fmt.Errorf("failed to write report to %s: %w", r.ReportPath, writeErr)
 		}
 	}
 
@@ -213,7 +216,7 @@ func (r *Runner) buildPrompt(cond ConditionType, prob EvalProblem) (string, stri
 
 	case ConditionMBVMCSR:
 		ret = r.KB.RetrieveMBVMCSR(prob.N)
-		userPrompt := fmt.Sprintf("%s\n\nMBVM-DB Smart Sliced Lemma Graph:\n%s", prob.Prompt, formatRules(ret.Rules))
+		userPrompt := fmt.Sprintf("%s\n\nMBVM-DB Smart Sliced Lemma Graph:\n%s", prob.Prompt, formatCSRRules(ret.Rules, prob.N))
 		return sysPrompt, userPrompt, ret
 
 	default:
@@ -231,6 +234,26 @@ func formatRules(rules []*erdosstraus.Rule) string {
 			i+1, r.ID, r.BibSource, strings.Join(r.Hypotheses, "; "), r.Conclusion))
 	}
 	return sb.String()
+}
+
+func formatCSRRules(rules []*erdosstraus.Rule, n *big.Int) string {
+	base := formatRules(rules)
+	if n == nil || len(rules) == 0 {
+		return base
+	}
+
+	// Add the Topological Execution Recipe if a rule in the active graph covers n
+	for _, r := range rules {
+		if r.Covers(n) {
+			var sb strings.Builder
+			sb.WriteString(base)
+			sb.WriteString(fmt.Sprintf("\nTopological Instantiation Recipe for n = %s:\n", n.String()))
+			sb.WriteString(fmt.Sprintf("  • Active Root Lemma: %s (%s)\n", r.ID, r.BibSource))
+			sb.WriteString(fmt.Sprintf("  • Substitution Formula: %s\n", r.Conclusion))
+			return sb.String()
+		}
+	}
+	return base
 }
 
 func computeSummaries(results []TrialResult) []BenchmarkSummary {
