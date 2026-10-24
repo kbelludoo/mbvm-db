@@ -30,6 +30,7 @@ type BenchReport struct {
 	DynamicCompositionEvaluation map[string]any `json:"dynamic_composition_evaluation,omitempty"`
 	HDCCapacityEvaluation map[string]any `json:"hdc_capacity_evaluation,omitempty"`
 	RealASTImpactEvaluation map[string]any `json:"real_ast_impact_evaluation,omitempty"`
+	TypedRealBreakageEvaluation map[string]any `json:"typed_real_breakage_evaluation,omitempty"`
 }
 
 func main() {
@@ -136,6 +137,25 @@ func main() {
 				metrics["e2e_semantic_ns"] = nsOp
 			case strings.Contains(name, "E2E_HDC"):
 				metrics["e2e_hdc_ns"] = nsOp
+			case strings.Contains(name, "TypedRealWorldImpact/"):
+				base := ""
+				switch {
+				case strings.Contains(name, "/IngestTypecheckAndBuild"):
+					base = "typed_real_ingest_typecheck_graph"
+				case strings.Contains(name, "/CachedTypedReverseCSR"):
+					base = "typed_real_cached_reverse_csr"
+				case strings.Contains(name, "/MutationAndFullPackageTypecheck"):
+					base = "typed_real_mutation_package_typecheck"
+				}
+				if base != "" {
+					metrics[base+"_ns"] = nsOp
+					if len(matches)>=6 && matches[4]!="" {
+						bytesOp,_:=strconv.Atoi(matches[4])
+						allocsOp,_:=strconv.Atoi(matches[5])
+						metrics[base+"_bytes_per_op"]=bytesOp
+						metrics[base+"_allocs_per_op"]=allocsOp
+					}
+				}
 			case strings.Contains(name, "RealWorldASTImpact/"):
 				// Distinguish ingestion, real-graph build, mutation and cached
 				// query; the cached query alone excludes parsing/ingestion.
@@ -366,6 +386,27 @@ func main() {
 		os.Exit(1)
 	}
 	
+	rawTyped, err := os.ReadFile("experiments/hdc-csr/typed_real_impact_output.json")
+	if err!=nil{
+		fmt.Printf("FALHA CRÍTICA NO CI: typed_real_impact_output.json ausente: %v\n",err)
+		os.Exit(1)
+	}
+	var typedImpact map[string]any
+	if err=json.Unmarshal(rawTyped,&typedImpact);err!=nil{
+		fmt.Printf("FALHA CRÍTICA NO CI: typed_real_impact_output.json inválido: %v\n",err)
+		os.Exit(1)
+	}
+	if typedImpact["schema"]!="mbvm-real-typed-breakage-v1" ||
+		typedImpact["baseline_typechecked"]!=true ||
+		typedImpact["mutated_package_typechecked"]!=false ||
+		typedImpact["source_files_unmodified"]!=true ||
+		typedImpact["runtime_behavior_verified"]!=false ||
+		typedImpact["go_types_compile_errors"].(float64)<1 ||
+		typedImpact["direct_callers_with_type_errors"].(float64)<1 {
+		fmt.Println("FALHA CRÍTICA NO CI: evidência typed Go incorreta")
+		os.Exit(1)
+	}
+
 	rawPairedBytes, err := os.ReadFile(pairedFile)
 	if err == nil {
 		_ = json.Unmarshal(rawPairedBytes, &pairedMetrics)
@@ -393,6 +434,7 @@ func main() {
 		DynamicCompositionEvaluation: dynamic,
 		HDCCapacityEvaluation: hdcCapacity,
 		RealASTImpactEvaluation: realImpact,
+		TypedRealBreakageEvaluation: typedImpact,
 	}
 
 	outBytes, err := json.MarshalIndent(report, "", "  ")
