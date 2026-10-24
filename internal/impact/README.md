@@ -85,3 +85,29 @@ For a follow-up step, compare before/after checkouts of a real
 change and compile all downstream packages; only after establishing
 a stable impact result contract should `MBVM8K2` persistence be
 considered.
+
+## Compare real versions (Stage 2, initial scope)
+
+The CLI also includes `impact-diff`. It compares **two independently
+well-typed versions of the same Go package**, using the typed caller
+identity and reverse graph from the old snapshot.
+
+```bash
+# Two existing checkouts/directories
+go run ./cmd/mbvm-db impact-diff \
+  -old ../previous/pkg/mbvmdb -new ./pkg/mbvmdb -json
+
+# Git refs already present in the local repository, NO checkout mutation
+go run ./cmd/mbvm-db impact-diff \
+  -repo . -old-ref HEAD~1 -new-ref HEAD \
+  -package pkg/mbvmdb -json
+```
+
+When a function's typed signature changes, it attempts a conservative
+compatibility check: old consumers rechecked with the new signature
+transplanted to an old-package AST **in memory**. Only those old direct
+callers with actual `go/types` diagnostics are reported under
+`broken_old_direct_callers`. It is not full cross-package compilation.
+
+See [DIFF.md](DIFF.md) for scope, the failure/unknown boundary, Git
+archive extraction limits and security considerations.
