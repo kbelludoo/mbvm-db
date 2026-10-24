@@ -38,7 +38,7 @@ jobs:
         env:
           CGO_ENABLED: '0'
         run: |
-          go test -count=1 -timeout=120s -v -run 'Test(BoundedArchiveWriter|ExtractGitArchivePAXMetadata|CompareGitRefsCommittedTreesOnly|ImpactDiffGitRevisionFlags|CompareDirs|ImpactDiffCommand)' ./internal/impact ./cmd/mbvm-db
+          go test -count=1 -timeout=120s -v -run 'Test(BoundedArchiveWriter|ExtractArchiveDeterministicPAXAndRejectLinks|ExtractGitArchivePAXMetadata|CompareGitRefsCommittedTreesOnly|ImpactDiffGitRevisionFlags|CompareDirs|ImpactDiffCommand)' ./internal/impact ./cmd/mbvm-db
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Production impact integration tests (Windows)
