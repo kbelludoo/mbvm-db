@@ -169,6 +169,9 @@ func RealMutationOfDeclaration(symbol RealASTSymbol)(RealContractMutation,error)
 	// Introduce one *required* int parameter, a syntactic contract change.
 	// Never call it a behavioral witness or a validated compile failure.
 	for _,p:=range fn.Type.Params.List {
+		if _,variadic:=p.Type.(*ast.Ellipsis);variadic{
+			return info,fmt.Errorf("cannot append a required parameter after variadic")
+		}
 		for _,n:=range p.Names {
 			if n.Name=="__mbvm_contract_probe"{
 				return info,fmt.Errorf("contract probe name collides")
