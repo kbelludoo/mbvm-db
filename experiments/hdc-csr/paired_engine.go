@@ -23,6 +23,23 @@ type UnifiedEngine interface {
 	QueryTopK(req QueryRequest) []QueryResult
 }
 
+// ScoreSemanticOnly calcula a similaridade normalizada [0..1] baseada em Hamming puro.
+func ScoreSemanticOnly(query Hypervector, target Hypervector) float64 {
+	dist := HammingDistance(query, target)
+	return 1.0 - (float64(dist) / float64(VectorBits))
+}
+
+// ScoreCombined calcula a similaridade combinada semântica e contextual.
+func ScoreCombined(queryOrig, queryCtx, targetOrig, targetCtx Hypervector, hasTargetCtx bool, alpha float64) float64 {
+	semScore := ScoreSemanticOnly(queryOrig, targetOrig)
+	if !hasTargetCtx {
+		return semScore
+	}
+	ctxDist := HammingDistance(queryCtx, targetCtx)
+	ctxScore := 1.0 - (float64(ctxDist) / float64(VectorBits))
+	return (1.0-alpha)*semScore + alpha*ctxScore
+}
+
 // ---------------------------------------------------------
 // 1. Motor CSR + Filtro Semântico (Baseline Estrutural Exato)
 // ---------------------------------------------------------
@@ -52,7 +69,7 @@ func (e *CSREngine) QueryTopK(req QueryRequest) []QueryResult {
 		u := e.graph.Edges[eV]
 		if u != source && !visited[u] {
 			visited[u] = true
-			score := scoreSemanticOnly(req.Semantic, e.origVec[u])
+			score := ScoreSemanticOnly(req.Semantic, e.origVec[u])
 			candidates = append(candidates, QueryResult{NodeID: u, Score: score})
 		}
 
@@ -62,7 +79,7 @@ func (e *CSREngine) QueryTopK(req QueryRequest) []QueryResult {
 			w := e.graph.Edges[eU]
 			if w != source && !visited[w] {
 				visited[w] = true
-				score := scoreSemanticOnly(req.Semantic, e.origVec[w])
+				score := ScoreSemanticOnly(req.Semantic, e.origVec[w])
 				candidates = append(candidates, QueryResult{NodeID: w, Score: score})
 			}
 		}
@@ -102,7 +119,7 @@ func (e *PureSemanticEngine) QueryTopK(req QueryRequest) []QueryResult {
 		if id == req.SourceID {
 			continue
 		}
-		score := scoreSemanticOnly(req.Semantic, e.origVec[id])
+		score := ScoreSemanticOnly(req.Semantic, e.origVec[id])
 		candidates = append(candidates, QueryResult{NodeID: id, Score: score})
 	}
 
@@ -148,7 +165,7 @@ func (e *HDCHybridEngine) QueryTopK(req QueryRequest) []QueryResult {
 		if id == req.SourceID {
 			continue
 		}
-		score := scoreCombined(req.Semantic, sourceCtx, e.origVec[id], e.contextMem.Contextual[id], e.contextMem.HasContext[id], e.alpha)
+		score := ScoreCombined(req.Semantic, sourceCtx, e.origVec[id], e.contextMem.Contextual[id], e.contextMem.HasContext[id], e.alpha)
 		candidates = append(candidates, QueryResult{NodeID: id, Score: score})
 	}
 
