@@ -88,7 +88,13 @@ func extractGitTree(repo,ref,dest string)error{
   return fmt.Errorf("git archive failed: %w: %s",err,strings.TrimSpace(stderr.String()))
  }
  if _,err:=tmp.Seek(0,io.SeekStart);err!=nil{return err}
- reader:=tar.NewReader(tmp)
+ return extractArchiveEntries(tmp,dest)
+}
+
+// extractArchiveEntries is separated for deterministic PAX regression tests
+// across OSes, independently of which TAR headers Git chooses to emit.
+func extractArchiveEntries(src io.Reader,dest string)error{
+ reader:=tar.NewReader(src)
  var total int64
  for{
   h,err:=reader.Next()
