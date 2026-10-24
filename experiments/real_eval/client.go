@@ -46,7 +46,7 @@ func NewGeminiClient(model string) (*GeminiClient, error) {
 
 // GenerateContent sends prompt to Gemini API and returns the full response including real usage metadata.
 func (c *GeminiClient) GenerateContent(ctx context.Context, systemPrompt, userPrompt string) (*GeminiGenerateResponse, error) {
-	url := fmt.Sprintf("%s/%s:generateContent?key=%s", GeminiAPIBaseURL, c.Model, c.APIKey)
+	url := fmt.Sprintf("%s/%s:generateContent", GeminiAPIBaseURL, c.Model)
 
 	payload := map[string]any{
 		"contents": []map[string]any{
@@ -73,6 +73,7 @@ func (c *GeminiClient) GenerateContent(ctx context.Context, systemPrompt, userPr
 		return nil, fmt.Errorf("failed to create http request: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("x-goog-api-key", c.APIKey)
 
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
