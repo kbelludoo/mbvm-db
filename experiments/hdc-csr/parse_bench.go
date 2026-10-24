@@ -102,6 +102,14 @@ func main() {
 					metrics["csr_1000nodes_bytes_per_op"] = bOp
 					metrics["csr_1000nodes_allocs_per_op"] = allocsOp
 				}
+			case strings.Contains(name, "PropagateHop2_1000Nodes_Paired"):
+				metrics["paired_full_rebuild_1000nodes_ms"] = nsOp / 1000000.0
+				if len(matches) >= 6 && matches[4] != "" {
+					bOp, _ := strconv.Atoi(matches[4])
+					allocsOp, _ := strconv.Atoi(matches[5])
+					metrics["paired_full_rebuild_bytes_per_op"] = bOp
+					metrics["paired_full_rebuild_allocs_per_op"] = allocsOp
+				}
 			case strings.Contains(name, "PropagateHop2_1000Nodes"):
 				metrics["csr_1000nodes_propagate_hop2_ms"] = nsOp / 1000000.0
 				if len(matches) >= 6 && matches[4] != "" {
@@ -122,6 +130,14 @@ func main() {
 				metrics["e2e_semantic_ns"] = nsOp
 			case strings.Contains(name, "E2E_HDC"):
 				metrics["e2e_hdc_ns"] = nsOp
+			case strings.Contains(name, "IncrementalUpdate_1000Nodes_Paired"):
+				metrics["paired_incremental_cached_reverse_1000nodes_ms"] = nsOp / 1000000.0
+				if len(matches) >= 6 && matches[4] != "" {
+					bOp, _ := strconv.Atoi(matches[4])
+					allocsOp, _ := strconv.Atoi(matches[5])
+					metrics["paired_incremental_bytes_per_op"] = bOp
+					metrics["paired_incremental_allocs_per_op"] = allocsOp
+				}
 			case strings.Contains(name, "IncrementalUpdate_1000Nodes"):
 				metrics["incremental_update_1000nodes_ms"] = nsOp / 1000000.0
 				if len(matches) >= 6 && matches[4] != "" {
@@ -134,7 +150,7 @@ func main() {
 		}
 	}
 
-	requiredBenchmarks := []string{"hamming_8k_ns", "bind_8k_ns", "rotl_8k_ns", "majority3_8k_ns", "csr_1000nodes_propagate_ms"}
+	requiredBenchmarks := []string{"hamming_8k_ns", "bind_8k_ns", "rotl_8k_ns", "majority3_8k_ns", "csr_1000nodes_propagate_ms", "paired_full_rebuild_1000nodes_ms", "paired_incremental_cached_reverse_1000nodes_ms"}
 	for _, req := range requiredBenchmarks {
 		if _, ok := metrics[req]; !ok {
 			fmt.Printf("FALHA CRÍTICA NO CI: Métrica obrigatória '%s' ausente na saída do benchmark!\n", req)
@@ -142,6 +158,11 @@ func main() {
 		}
 	}
 
+	if full, ok := metrics["paired_full_rebuild_1000nodes_ms"].(float64); ok {
+		if inc, ok := metrics["paired_incremental_cached_reverse_1000nodes_ms"].(float64); ok && inc > 0 {
+			metrics["paired_incremental_speedup_x"] = full / inc
+		}
+	}
 	metrics["allocs_per_op_critical_path"] = 0
 	metrics["bytes_per_op_critical_path"] = 0
 	metrics["memory_per_node_bytes"] = 1024
