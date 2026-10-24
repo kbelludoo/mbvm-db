@@ -1,0 +1,46 @@
+{
+  "schema": "mbvm-semantic-sensitivity-v1",
+  "description": "Independent Go code pairs with functional differences verified on enumerated integer inputs; output labels must not be inferred from Hamming distance.",
+  "cases": [
+    {
+      "id": "sum",
+      "original": "func Sum(a, b int) int { return a + b }",
+      "equivalent": "func Sum(x, y int) int { return x + y }",
+      "changed": "func Sum(a, b int) int { return a - b }",
+      "transformation": "alpha_rename",
+      "functional_change": "operator_plus_to_minus"
+    },
+    {
+      "id": "product",
+      "original": "func Product(a, b int) int { return a * b }",
+      "equivalent": "func Product(x, y int) int { return (x * y) }",
+      "changed": "func Product(a, b int) int { return a + b }",
+      "transformation": "alpha_rename_parentheses",
+      "functional_change": "multiply_to_add"
+    },
+    {
+      "id": "weighted",
+      "original": "func Weighted(a, b int) int { return a + (b * 2) }",
+      "equivalent": "func Weighted(x, y int) int { return (2 * y) + x }",
+      "changed": "func Weighted(a, b int) int { return a + (b * 3) }",
+      "transformation": "algebraic_reorder",
+      "functional_change": "constant_two_to_three"
+    },
+    {
+      "id": "choice",
+      "original": "func Choose(a, b int) int { if a > b { return a }; return b }",
+      "equivalent": "func Choose(x, y int) int { if y < x { return x }; return y }",
+      "changed": "func Choose(a, b int) int { if a < b { return a }; return b }",
+      "transformation": "compare_reversal",
+      "functional_change": "comparison_inverted"
+    },
+    {
+      "id": "difference",
+      "original": "func Difference(a, b int) int { return a - b }",
+      "equivalent": "func Difference(x, y int) int { return x + (-y) }",
+      "changed": "func Difference(a, b int) int { return b - a }",
+      "transformation": "subtraction_to_add_negative",
+      "functional_change": "operand_order_reversal"
+    }
+  ]
+}
