@@ -136,3 +136,22 @@ keeps a typed function-value assignment incompatible with the changed
 signature in the provider, to verify that the external result remains
 inconclusive rather than falsely confirmed. This is a hypothetical
 signature mutation, not a real Git version diff.
+
+### Opt-in real MBVM-DB acceptance gate
+
+The core fixture tests run by default. To test the full repository
+and require compiler witnesses for **every known direct consumer** of
+`pkg/mbvmdb.New`, run this separate, slower test on a matching Go
+toolchain and populated module cache:
+
+```powershell
+$env:CGO_ENABLED = "0"
+$env:MBVM_RUN_REAL_OVERLAY = "1"
+go test -count=1 -timeout=10m -v -run '^TestRealModuleSelfConsistentNewOverlay$' ./internal/impact
+```
+
+The test fails if the virtual provider does not compile or any
+known consumer remains inconclusive. The expected number is derived
+from the actual module graph, **not hardcoded as five**. This real
+gate is opt-in to keep the default unit/CI run bounded. The source
+hash assertions cover all selected packages.
