@@ -1,0 +1,125 @@
+package impact
+
+import (
+ "os"
+ "os/exec"
+ "path/filepath"
+ "strings"
+ "testing"
+)
+
+const realDiffTarget="example.test/realdiff/api.Run"
+func realModuleFixture(t *testing.T,oldAPI,newAPI,oldClient,newClient string)(string,string){
+ t.Helper()
+ root:=t.TempDir()
+ oldRoot:=filepath.Join(root,"old")
+ newRoot:=filepath.Join(root,"new")
+ for _,r:=range []string{oldRoot,newRoot}{
+  for _,p:=range []string{"api","client"}{
+   if err:=os.MkdirAll(filepath.Join(r,p),0755);err!=nil{t.Fatal(err)}
+  }
+  if err:=os.WriteFile(filepath.Join(r,"go.mod"),[]byte("module example.test/realdiff\n\ngo 1.23\n"),0600);err!=nil{t.Fatal(err)}
+ }
+ for _,x:=range [][2]string{
+  {filepath.Join(oldRoot,"api","api.go"),oldAPI},
+  {filepath.Join(newRoot,"api","api.go"),newAPI},
+  {filepath.Join(oldRoot,"client","client.go"),oldClient},
+  {filepath.Join(newRoot,"client","client.go"),newClient},
+ }{
+  if err:=os.WriteFile(x[0],[]byte(x[1]),0600);err!=nil{t.Fatal(err)}
+ }
+ return oldRoot,newRoot
+}
+func setRealDiffOffline(t *testing.T){
+ t.Helper()
+ t.Setenv("GOWORK","off")
+ t.Setenv("GOPROXY","off")
+ t.Setenv("GOSUMDB","off")
+ t.Setenv("CGO_ENABLED","0")
+}
+func TestRealModuleDiffOldConsumerBreaksOnNewContract(t *testing.T){
+ setRealDiffOffline(t)
+ oldRoot,newRoot:=realModuleFixture(t,
+  "package api\nfunc Run(x int) int{return x}\n",
+  "package api\nfunc Run(x,y int) int{return x+y}\n",
+  "package client\nimport \"example.test/realdiff/api\"\nfunc Use() int{return api.Run(2)}\n",
+  "package client\nimport \"example.test/realdiff/api\"\nfunc Use() int{return api.Run(2,3)}\n",
+ )
+ report,err:=CompareRealModuleDirs(oldRoot,newRoot,realDiffTarget)
+ if err!=nil{t.Fatal(err)}
+ if report.Schema!="mbvm-real-module-diff-v1"||!report.ContractChanged||
+  !report.ProviderBaselinePassed||!report.SourceFilesUnmodified||
+  len(report.ConfirmedBrokenConsumers)!=1||len(report.InconclusiveConsumers)!=0{
+  t.Fatalf("real compiler diff should identify old caller break: %+v",report)
+ }
+ c:=report.Consumers[0]
+ if !c.OldBaselinePassed||!c.NewBaselinePassed||c.OldClientWithNewProviderPassed||
+  c.Status!="broken"||len(c.ConfirmedCompileErrors)!=1{
+  t.Fatalf("missing old-client compiler witness %+v",c)
+ }
+ t.Logf("old client/new real provider: %v",c.ConfirmedCompileErrors)
+}
+func TestRealModuleDiffCompatibleOldClient(t *testing.T){
+ setRealDiffOffline(t)
+ oldRoot,newRoot:=realModuleFixture(t,
+  "package api\nfunc Run(x int) int{return x}\n",
+  "package api\nfunc Run(x any) int{return 2}\n",
+  "package client\nimport \"example.test/realdiff/api\"\nfunc Use() int{return api.Run(2)}\n",
+  "package client\nimport \"example.test/realdiff/api\"\nfunc Use() int{return api.Run(2)}\n",
+ )
+ result,err:=CompareRealModuleDirs(oldRoot,newRoot,realDiffTarget)
+ if err!=nil{t.Fatal(err)}
+ if !result.ContractChanged||len(result.CompatibleInTest)!=1||
+  len(result.ConfirmedBrokenConsumers)!=0||result.Consumers[0].Status!="compatible_in_test"{
+  t.Fatalf("compatible old client misclassified: %+v",result)
+ }
+}
+func TestRealModuleDiffFileSetChangeInconclusive(t *testing.T){
+ setRealDiffOffline(t)
+ oldRoot,newRoot:=realModuleFixture(t,
+  "package api\nfunc Run(x int) int{return x}\n",
+  "package api\nfunc Run(x,y int) int{return x+y}\n",
+  "package client\nimport \"example.test/realdiff/api\"\nfunc Use() int{return api.Run(2)}\n",
+  "package client\nimport \"example.test/realdiff/api\"\nfunc Use() int{return api.Run(2,3)}\n",
+ )
+ if err:=os.WriteFile(filepath.Join(newRoot,"client","extra.go"),
+  []byte("package client\nfunc Extra(){}\n"),0600);err!=nil{t.Fatal(err)}
+ r,err:=CompareRealModuleDirs(oldRoot,newRoot,realDiffTarget)
+ if err!=nil{t.Fatal(err)}
+ if len(r.InconclusiveConsumers)!=1||len(r.ConfirmedBrokenConsumers)!=0||
+  !strings.Contains(r.Consumers[0].Reason,"file sets differ"){
+  t.Fatalf("file set drift must fail closed: %+v",r)
+ }
+}
+func TestRealModuleGitRefsCompilerEvidenceNoCheckout(t *testing.T){
+ setRealDiffOffline(t)
+ if _,err:=exec.LookPath("git");err!=nil{t.Skip("git executable missing")}
+ oldRoot,newRoot:=realModuleFixture(t,
+  "package api\nfunc Run(x int) int{return x}\n",
+  "package api\nfunc Run(x,y int) int{return x+y}\n",
+  "package client\nimport \"example.test/realdiff/api\"\nfunc Use() int{return api.Run(2)}\n",
+  "package client\nimport \"example.test/realdiff/api\"\nfunc Use() int{return api.Run(2,3)}\n",
+ )
+ repo:=t.TempDir()
+ gitFixtureRun(t,repo,"init")
+ for n,source:=range []string{oldRoot,newRoot}{
+  for _,rel:=range []string{"go.mod","api/api.go","client/client.go"}{
+   from,err:=os.ReadFile(filepath.Join(source,filepath.FromSlash(rel)));if err!=nil{t.Fatal(err)}
+   target:=filepath.Join(repo,filepath.FromSlash(rel))
+   if err:=os.MkdirAll(filepath.Dir(target),0755);err!=nil{t.Fatal(err)}
+   if err:=os.WriteFile(target,from,0600);err!=nil{t.Fatal(err)}
+  }
+  gitFixtureRun(t,repo,"add",".")
+  gitFixtureRun(t,repo,"-c","user.name=MBVM Test","-c","user.email=test@example.invalid","commit","-m",string(rune('1'+n)))
+ }
+ dirt:=filepath.Join(repo,"dirty.txt")
+ if err:=os.WriteFile(dirt,[]byte("unchanged"),0600);err!=nil{t.Fatal(err)}
+ result,err:=CompareRealModuleGitRefs(repo,"HEAD~1","HEAD",realDiffTarget)
+ if err!=nil{t.Fatal(err)}
+ if !result.SourceFilesUnmodified||len(result.ConfirmedBrokenConsumers)!=1{
+  t.Fatalf("real Git ref compiler witness: %+v",result)
+ }
+ if got,err:=os.ReadFile(dirt);err!=nil||string(got)!="unchanged"{
+  t.Fatal("Git comparison changed untracked file")
+ }
+}
