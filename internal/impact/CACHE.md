@@ -101,9 +101,40 @@ go test -run '^$' -bench '^BenchmarkLoadModuleFixture$' `
 ```
 
 The warm benchmark measures **query + full fingerprint** in a
-dependency-free two-package module; it does not demonstrate the same
-latency on the 24-package real repository. Measure that separately on
-the target Windows CPU before claiming <10 ms or a particular speedup.
+dependency-free two-package module. To measure the full MBVM-DB source
+tree with its real package and symbol counts:
+
+```powershell
+$env:MBVM_BENCH_REAL_MODULE = "1"
+go test -run '^
+Test outcomes and benchmarks are not presumed successful until run in
+Go 1.27 on the target environment.
+
+## Relation to MBVM8K2
+
+This cache does NOT define a persistent graph binary format. Keeping
+compiled Go AST/type objects inside a process is distinct from safely
+serializing stable symbol identities, edges and CSR. MBVM8K2 remains
+a later, separately versioned storage design.
+ -bench '^BenchmarkModuleCacheWarmImpactReal
+Test outcomes and benchmarks are not presumed successful until run in
+Go 1.27 on the target environment.
+
+## Relation to MBVM8K2
+
+This cache does NOT define a persistent graph binary format. Keeping
+compiled Go AST/type objects inside a process is distinct from safely
+serializing stable symbol identities, edges and CSR. MBVM8K2 remains
+a later, separately versioned storage design.
+ `
+    -benchtime=20x -count=5 -benchmem ./internal/impact
+Remove-Item Env:MBVM_BENCH_REAL_MODULE
+```
+
+The real benchmark is opt-in because it initializes a full module load.
+Compare it to `BenchmarkLoadModuleReal` on the same Go build-cache
+state. A <10 ms warm target is a hypothesis, not a performance
+guarantee, until measured on the actual Windows machine.
 Test outcomes and benchmarks are not presumed successful until run in
 Go 1.27 on the target environment.
 
