@@ -81,6 +81,10 @@ func LoadModule(root string)(*ModuleGraph,error){
  m:=&ModuleGraph{Root:abs,PackageDirs:map[string]string{},Symbols:[]string{},Edges:[]ModuleEdge{}}
  bySymbol:=map[string]int{}
  for _,pkg:=range pkgs{
+  rel,err:=filepath.Rel(abs,pkg.Dir)
+  if err!=nil||(!filepath.IsLocal(rel)&&rel!="."){
+   return nil,fmt.Errorf("package %s lives outside the selected module root: %s",pkg.ImportPath,pkg.Dir)
+  }
   g,err:=loadWithPackagePath(pkg.Dir,pkg.ImportPath)
   if err!=nil{return nil,fmt.Errorf("load module package %s: %w",pkg.ImportPath,err)}
   m.Packages=append(m.Packages,g)
@@ -168,8 +172,8 @@ func (m *ModuleGraph) FindSymbol(query string)(*Graph,int,error){
  return nil,-1,fmt.Errorf("symbol not found: %s",query)
 }
 
-// ModuleImportPaths returns only the packages known to make static calls
-// to the requested target, optionally filtered by the caller's package.
+// DirectConsumerPackages returns packages containing statically linked
+// cross-package calls to the target. It does not guess dynamic dispatch.
 func (m *ModuleGraph) DirectConsumerPackages(target string)[]string{
  unique:=map[string]bool{}
  for _,e:=range m.Edges{
