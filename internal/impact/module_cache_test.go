@@ -178,3 +178,26 @@ func TestModuleCacheFingerprintGoEnvAndEmbedProtection(t *testing.T){
   t.Fatalf("embed assets not protected from stale cache: %+v %v",embedded,err)
  }
 }
+
+func BenchmarkModuleCacheWarmImpactReal(b *testing.B){
+ if os.Getenv("MBVM_BENCH_REAL_MODULE")!="1"{
+  b.Skip("set MBVM_BENCH_REAL_MODULE=1 to benchmark the real module cache")
+ }
+ cache:=NewModuleCache(1)
+ const root="../.."
+ const target="github.com/kbelludoo/mbvm-db/pkg/mbvmdb.New"
+ if _,_,err:=cache.Impact(root,target);err!=nil{b.Fatal(err)}
+ b.ReportAllocs()
+ b.ResetTimer()
+ var last ModuleCacheQueryStats
+ for n:=0;n<b.N;n++{
+  _,stats,err:=cache.Impact(root,target)
+  if err!=nil{b.Fatal(err)}
+  if !stats.CacheHit{b.Fatal("full-module warm cache unexpectedly missed")}
+  last=stats
+ }
+ b.StopTimer()
+ b.ReportMetric(float64(last.GoListCalls),"go-list/op")
+ b.ReportMetric(float64(last.Symbols),"symbols/op")
+ b.ReportMetric(float64(last.Edges),"edges/op")
+}
