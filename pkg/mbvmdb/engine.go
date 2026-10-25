@@ -375,6 +375,19 @@ func (db *DB) ProjectPureMBVM() string {
 	return db.ProjectSlice(db.symbols)
 }
 
+// Lookup retrieves a SymbolRecord by name, package.name, or alias.
+func (db *DB) Lookup(name string) *SymbolRecord {
+	db.mu.RLock()
+	defer db.mu.RUnlock()
+	if rec, exists := db.indexByName[name]; exists {
+		return rec
+	}
+	if rec, exists := db.indexByName[strings.ToLower(name)]; exists {
+		return rec
+	}
+	return nil
+}
+
 // TotalSymbols returns count of indexed symbols.
 func (db *DB) TotalSymbols() int {
 	db.mu.RLock()

@@ -192,7 +192,7 @@ func sanitizeIdent(s string) string {
 	for _, r := range s {
 		if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') || r == '_' {
 			sb.WriteRune(r)
-		} else if r == ' ' || r == '-' {
+		} else if r == ' ' || r == '-' || r == '.' || r == ':' || r == '/' {
 			sb.WriteRune('_')
 		}
 	}
