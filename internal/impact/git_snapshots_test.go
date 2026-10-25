@@ -123,8 +123,15 @@ func TestExtractGitArchivePAXMetadata(t *testing.T){
   t.Fatalf("git PAX archive extraction failed: %v",err)
  }
  restored,err:=os.ReadFile(filepath.Join(dest,"example.go"))
- if err!=nil||string(restored)!="package example\nfunc Test(){}\n"{
-  t.Fatalf("real source not correctly extracted: %q %v",restored,err)
+ if err!=nil{t.Fatalf("read extracted file: %v",err)}
+ // Compare against the COMMITTED blob, not the working-tree bytes:
+ // core.autocrlf can normalize line endings on Windows. The archive
+ // must match git show byte-for-byte without concealing corruption.
+ wantCmd:=exec.Command("git","-C",repo,"show","HEAD:example.go")
+ want,err:=wantCmd.Output()
+ if err!=nil{t.Fatalf("read committed blob: %v",err)}
+ if !bytes.Equal(restored,want){
+  t.Fatalf("archive content differs from committed Git blob: got=%q want=%q",restored,want)
  }
  if _,err:=os.Stat(filepath.Join(dest,"pax_global_header"));!os.IsNotExist(err){
   t.Fatalf("PAX global metadata must never be written as a file: %v",err)
