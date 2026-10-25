@@ -40,8 +40,11 @@ cache.Clear() // free all cached module graphs
 ```
 
 The `ModuleCacheQueryStats` fields include `cache_hit`,
-`cache_bypassed_reason`, `fingerprint_ms`, `total_ms`,
-`go_list_calls`, `packages`, `symbols`, and `edges`.
+`cache_bypassed_reason`, `fingerprint_ms`, `impact_ms`,
+`total_ms`, `go_list_calls`, `packages`, `symbols`,
+and `edges`. The `impact_ms` field measures ONLY the typed
+CSR reachability/report construction; `total_ms - fingerprint_ms`
+is **not** a reliable direct measurement of traversal cost.
 A cache **hit** makes no `go list` subprocess; it still reads and
 SHA-256 hashes local source files on every query. A cold read delegates
 to the existing single-go-list shared importer from Phase 3.1.
@@ -132,7 +135,57 @@ Remove-Item Env:MBVM_BENCH_REAL_MODULE
 ```
 
 The real benchmark is opt-in because it initializes a full module load.
-Compare it to `BenchmarkLoadModuleReal` on the same Go build-cache
+To isolate the *fingerprint alone*, run:
+
+```powershell
+$env:MBVM_BENCH_REAL_MODULE = "1"
+go test -run '^
+Test outcomes and benchmarks are not presumed successful until run in
+Go 1.27 on the target environment.
+
+## Relation to MBVM8K2
+
+This cache does NOT define a persistent graph binary format. Keeping
+compiled Go AST/type objects inside a process is distinct from safely
+serializing stable symbol identities, edges and CSR. MBVM8K2 remains
+a later, separately versioned storage design.
+ `
+  -bench '^BenchmarkModule(FingerprintOnlyReal|CacheWarmImpactReal)
+Test outcomes and benchmarks are not presumed successful until run in
+Go 1.27 on the target environment.
+
+## Relation to MBVM8K2
+
+This cache does NOT define a persistent graph binary format. Keeping
+compiled Go AST/type objects inside a process is distinct from safely
+serializing stable symbol identities, edges and CSR. MBVM8K2 remains
+a later, separately versioned storage design.
+ `
+  -benchtime=20x -count=5 -benchmem ./internal/impact
+Remove-Item Env:MBVM_BENCH_REAL_MODULE
+```
+
+### Streaming fingerprint optimization (follow-up)
+
+The Windows baseline supplied for the previous implementation was
+25.27 ms/op on warm full-module queries, including 19.08 ms reported
+by the `fingerprintModule` stage and around 3.96 MB/op allocations.
+Those are measurements from the **previous** `io.ReadAll` design.
+
+The new fingerprint streams source bytes directly into SHA-256 using a
+reusable 32 KiB buffer. For Go files, a scanner verifies actual
+`go:embed` directive lines while a `TeeReader` hashes exact input
+bytes, including CRLF. Large unsupported scanner tokens safely
+disable caching, preserving the ordinary fresh loader. This should
+reduce temporary allocations, but the directory walk and physical
+source reads remain on each cache hit.
+
+The 6.19 ms difference between previous total and fingerprint timings
+was *residual overhead*, **not** a directly measured CSR traversal.
+Use the new `impact_ms` field and the standalone fingerprint
+benchmark for exact attribution.
+
+Compare against `BenchmarkLoadModuleReal` on the same Go build-cache
 state. A <10 ms warm target is a hypothesis, not a performance
 guarantee, until measured on the actual Windows machine.
 Test outcomes and benchmarks are not presumed successful until run in
