@@ -155,6 +155,9 @@ func fingerprintModule(root string) (moduleFingerprint, error) {
 		return result, err
 	}
 	sort.Strings(filenames)
+	// One reusable buffer for every file. A former io.ReadAll allocated
+	// a new full-sized []byte per source file on each warm cache hit.
+	fileBuffer := make([]byte, 32<<10)
 	for _, path := range filenames {
 		rel, err := filepath.Rel(root, path)
 		if err != nil {
@@ -166,21 +169,37 @@ func fingerprintModule(root string) (moduleFingerprint, error) {
 		if err != nil {
 			return result, err
 		}
-		// Compiler embed directives depend on non-Go files that are not
-		// enumerated by this source-only hash. In that case, always reload.
-		// Read as bytes while hashing, without evaluating arbitrary patterns.
-		contents, readErr := io.ReadAll(f)
+		// Stream source bytes into the hash without materializing every Go
+		// file as an allocated []byte. Scanner preserves the conservative
+		// line-based embed check while TeeReader hashes the exact raw bytes,
+		// including whitespace, line endings and final newline.
+		var readErr error
+		embedded := false
+		if strings.HasSuffix(path, ".go") {
+			scanner := bufio.NewScanner(io.TeeReader(f, digest))
+			scanner.Buffer(fileBuffer, 8<<20)
+			for scanner.Scan() {
+				line := bytes.TrimSpace(scanner.Bytes())
+				if bytes.HasPrefix(line, []byte("//go:embed ")) ||
+					bytes.HasPrefix(line, []byte("/*go:embed ")) {
+					embedded = true
+					break
+				}
+			}
+			readErr = scanner.Err()
+		} else {
+			_, readErr = io.CopyBuffer(digest, f, fileBuffer)
+		}
 		closeErr := f.Close()
 		if readErr != nil {
-			return result, readErr
+			return result, fmt.Errorf("stream and hash %s: %w", path, readErr)
 		}
 		if closeErr != nil {
 			return result, closeErr
 		}
-		if strings.HasSuffix(path, ".go") && containsGoEmbedDirective(contents) {
+		if embedded {
 			return disable("go:embed assets are not tracked by this Go-source-only cache")
 		}
-		digest.Write(contents)
 		digest.Write([]byte{0})
 	}
 	result.hash = hex.EncodeToString(digest.Sum(nil))
