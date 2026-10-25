@@ -119,12 +119,14 @@ func (c *RuleComposer) ComposeCRT(r1, r2 *Rule) (*ComposedCandidate, error) {
 		batch := make([]CSRNamedEdge, 0, 2*len(candidate.ParentIDs))
 		for sourceIdx, sourceID := range c.Graph.RuleIDs {
 			invalidTarget := -1
+			invalidFound := false
 			c.Graph.ForEachNeighbor(sourceIdx, func(target int, rel RelationType) bool {
 				if rel != RelComposition {
 					return true
 				}
 				if target < 0 || target >= len(c.Graph.RuleIDs) {
 					invalidTarget = target
+					invalidFound = true
 					return false
 				}
 				batch = append(batch, CSRNamedEdge{
@@ -132,7 +134,7 @@ func (c *RuleComposer) ComposeCRT(r1, r2 *Rule) (*ComposedCandidate, error) {
 				})
 				return true
 			})
-			if invalidTarget >= 0 {
+			if invalidFound {
 				return nil, fmt.Errorf("invalid existing composition target %d for %s: %w",
 					invalidTarget, sourceID, ErrInvalidInput)
 			}
