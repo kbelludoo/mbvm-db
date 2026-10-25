@@ -44,4 +44,28 @@ func TestImpactModuleCLIAndCompilerWitness(t *testing.T){
  if err:=runImpactModule([]string{"-root",root,"-symbol","example.test/cliimpact/api.Run","-simulate-add-param","string"},&out);err==nil{
   t.Fatal("unsupported contract mutation accepted")
  }
+ out.Reset()
+ profiled:=append(append([]string(nil),args...),"-profile")
+ if err:=runImpactModule(profiled,&out);err!=nil{t.Fatal(err)}
+ var measured struct {
+  LoadProfile *struct{
+   GoListCalls int `json:"go_list_calls"`
+   Packages int `json:"packages"`
+   Symbols int `json:"symbols"`
+   Edges int `json:"edges"`
+   TotalMilliseconds float64 `json:"total_ms"`
+  } `json:"load_profile"`
+ }
+ if err:=json.Unmarshal(out.Bytes(),&measured);err!=nil{t.Fatal(err)}
+ if measured.LoadProfile==nil||measured.LoadProfile.GoListCalls!=1||
+  measured.LoadProfile.Packages!=2||measured.LoadProfile.TotalMilliseconds<=0{
+  t.Fatalf("missing or invalid one-process module profile %+v",measured)
+ }
+ out.Reset()
+ if err:=runImpactModule([]string{"-root",root,"-symbol","example.test/cliimpact/api.Run","-json"},&out);err!=nil{t.Fatal(err)}
+ var raw map[string]json.RawMessage
+ if err:=json.Unmarshal(out.Bytes(),&raw);err!=nil{t.Fatal(err)}
+ if _,exists:=raw["load_profile"];exists{
+  t.Fatal("optional profiling changed default CLI JSON")
+ }
 }
