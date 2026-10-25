@@ -1,13 +1,8 @@
 package impact
 
 import (
- "bytes"
  "context"
- "encoding/json"
  "fmt"
- "go/ast"
- "go/format"
- "go/types"
  "os"
  "os/exec"
  "path/filepath"
@@ -29,56 +24,15 @@ type CrossPackageBreakage struct{
  Symbol string `json:"symbol"`
  SourceFilesUnmodified bool `json:"source_files_unmodified"`
  Mode string `json:"mode"`
+ ProviderBaselineBuildPassed bool `json:"provider_baseline_build_passed"`
+ ProviderOverlayBuildPassed bool `json:"provider_overlay_build_passed"`
+ AdaptedInternalCallSites int `json:"adapted_internal_call_sites"`
+ ProviderDiagnostics []string `json:"provider_diagnostics"`
+ ProviderReason string `json:"provider_reason,omitempty"`
  Consumers []ConsumerBuildWitness `json:"consumers"`
  ConfirmedBrokenConsumers []string `json:"confirmed_broken_consumers"`
  InconclusiveConsumers []string `json:"inconclusive_consumers"`
  Warnings []string `json:"warnings"`
-}
-
-// Write a virtual replacement of ONE parsed source file to a temporary
-// directory and use Go's -overlay flag. The original file is never edited.
-func (m *ModuleGraph) contractOverlay(g *Graph,id int,tmp string)(string,error){
- sym:=g.Symbols[id]
- sig,ok:=sym.object.Type().(*types.Signature)
- if !ok||sig.Variadic(){return "",fmt.Errorf("variadic/unknown function signature unsupported")}
- original:=sym.decl.Type.Params.List
- collision:=false
- ast.Inspect(sym.decl,func(node ast.Node)bool{
-  if identifier,ok:=node.(*ast.Ident);ok&&identifier.Name=="__mbvm_cross_package_probe"{collision=true}
-  return true
- })
- if collision{return "",fmt.Errorf("reserved parameter collides with existing identifier")}
- changed:=append([]*ast.Field(nil),original...)
- changed=append(changed,&ast.Field{
-  Names:[]*ast.Ident{ast.NewIdent("__mbvm_cross_package_probe")},
-  Type:ast.NewIdent("int"),
- })
- filename:=g.fset.Position(sym.decl.Pos()).Filename
- var formatted bytes.Buffer
- found:=false
- sym.decl.Type.Params.List=changed
- // Restore AST before any subprocess is run or return is taken.
- for _,node:=range g.files{
-  if g.fset.Position(node.Pos()).Filename!=filename{continue}
-  found=true
-  err:=format.Node(&formatted,g.fset,node)
-  sym.decl.Type.Params.List=original
-  if err!=nil{return "",fmt.Errorf("format virtual source: %w",err)}
-  break
- }
- if !found{
-  sym.decl.Type.Params.List=original
-  return "",fmt.Errorf("source file for %s not found in analyzed AST",sym.Qualified())
- }
- sourcePath:=filepath.Join(tmp,"replaced.go")
- if err:=os.WriteFile(sourcePath,formatted.Bytes(),0600);err!=nil{return "",err}
- overlayPath:=filepath.Join(tmp,"overlay.json")
- raw,err:=json.Marshal(struct{
-  Replace map[string]string `json:"Replace"`
- }{Replace:map[string]string{filename:sourcePath}})
- if err!=nil{return "",err}
- if err:=os.WriteFile(overlayPath,raw,0600);err!=nil{return "",err}
- return overlayPath,nil
 }
 
 func (m *ModuleGraph) buildConsumer(ctx context.Context,pkgPath,output string,overlay string)(bool,[]string,error){
@@ -129,11 +83,14 @@ func (m *ModuleGraph) CheckCrossPackageBuild(target string)(CrossPackageBreakage
  result:=CrossPackageBreakage{
   Schema:"mbvm-cross-package-breakage-v1",Symbol:target,
   Mode:"go build -mod=readonly -overlay (CGO_ENABLED=0)",
-  Consumers:[]ConsumerBuildWitness{},ConfirmedBrokenConsumers:[]string{},
+  Consumers:[]ConsumerBuildWitness{},ProviderDiagnostics:[]string{},
+  ConfirmedBrokenConsumers:[]string{},
   InconclusiveConsumers:[]string{},
   Warnings:[]string{
    "Only direct statically linked consumers in loaded Go packages are checked.",
-   "The baseline must compile; changed builds with only target-package diagnostics are inconclusive.",
+   "The baseline provider and self-consistent overlay provider must compile before consumer verification.",
+   "Only typed local provider calls are adapted (synthetic int argument 0); original consumer calls are never adapted.",
+   "Compiler errors are attributed to consumers only at known static target call-site lines.",
    "Go build may update the compiler build cache and writes its binary only to temporary files.",
    "Interface dispatch, reflection, function values and alternate build tags are not covered.",
   },
@@ -158,8 +115,48 @@ func (m *ModuleGraph) CheckCrossPackageBuild(target string)(CrossPackageBreakage
  tmp,err:=os.MkdirTemp("","mbvm-cross-compile-")
  if err!=nil{return result,err}
  defer os.RemoveAll(tmp)
- overlay,err:=m.contractOverlay(g,id,tmp)
- if err!=nil{return result,err}
+ prepared,err:=m.PrepareContractOverlay(g,id,tmp)
+ if err!=nil{return result,fmt.Errorf("prepare self-consistent contract overlay: %w",err)}
+ result.AdaptedInternalCallSites=prepared.AdaptedInternalCalls
+ // Validate the provider before its consumers. This prevents a failure in
+ // a dependency from masquerading as a confirmed downstream breakage.
+ providerInconclusive:=func(reason string,diagnostics []string)(CrossPackageBreakage,error){
+  result.ProviderReason=reason
+  result.ProviderDiagnostics=diagnostics
+  for _,pkg:=range consumers{
+   result.Consumers=append(result.Consumers,ConsumerBuildWitness{
+    Package:pkg,Diagnostics:[]string{},Reason:"provider build inconclusive: "+reason,
+   })
+   result.InconclusiveConsumers=append(result.InconclusiveConsumers,pkg)
+  }
+  for pkgGraph,before:=range originalHashes{
+   after,err:=pkgGraph.SourceSHA256()
+   if err!=nil{return result,err}
+   if before!=after{return result,fmt.Errorf("Go source changed in package %s",pkgGraph.PackagePath)}
+  }
+  result.SourceFilesUnmodified=true
+  return result,nil
+ }
+ ctx,cancel:=context.WithTimeout(context.Background(),2*time.Minute)
+ providerBaseline,providerBaselineDiagnostics,providerBaselineErr:=m.buildConsumer(
+  ctx,g.PackagePath,filepath.Join(tmp,"provider-baseline"),"")
+ cancel()
+ result.ProviderBaselineBuildPassed=providerBaseline
+ if providerBaselineErr!=nil||!providerBaseline{
+  reason:="baseline provider package does not compile"
+  if providerBaselineErr!=nil{reason+=": "+providerBaselineErr.Error()}
+  return providerInconclusive(reason,providerBaselineDiagnostics)
+ }
+ ctx,cancel=context.WithTimeout(context.Background(),2*time.Minute)
+ providerOK,providerDiag,providerErr:=m.buildConsumer(
+  ctx,g.PackagePath,filepath.Join(tmp,"provider-overlay"),prepared.Path)
+ cancel()
+ result.ProviderOverlayBuildPassed=providerOK
+ if providerErr!=nil||!providerOK{
+  reason:="self-consistent virtual provider does not compile"
+  if providerErr!=nil{reason+=": "+providerErr.Error()}
+  return providerInconclusive(reason,providerDiag)
+ }
  for idx,pkg:=range consumers{
   check:=ConsumerBuildWitness{Package:pkg,Diagnostics:[]string{}}
   ctx,cancel:=context.WithTimeout(context.Background(),2*time.Minute)
@@ -175,18 +172,18 @@ func (m *ModuleGraph) CheckCrossPackageBuild(target string)(CrossPackageBreakage
    continue
   }
   ctx,cancel=context.WithTimeout(context.Background(),2*time.Minute)
-  passed,diagnostics,changedErr:=m.buildConsumer(ctx,pkg,filepath.Join(tmp,fmt.Sprintf("changed-%d",idx)),overlay)
+  passed,diagnostics,changedErr:=m.buildConsumer(ctx,pkg,filepath.Join(tmp,fmt.Sprintf("changed-%d",idx)),prepared.Path)
   cancel()
   check.ChangedBuildPassed=passed
   check.Diagnostics=diagnostics
   if changedErr!=nil{
    check.Reason="mutated Go build could not complete: "+changedErr.Error()
    result.InconclusiveConsumers=append(result.InconclusiveConsumers,pkg)
-  }else if !passed&&containsConsumerDiagnostic(diagnostics,m.PackageDirs[pkg],m.Root){
+  }else if !passed&&m.matchesTargetCallDiagnostic(pkg,target,diagnostics){
    check.ConfirmedConsumerError=true
    result.ConfirmedBrokenConsumers=append(result.ConfirmedBrokenConsumers,pkg)
   }else if !passed{
-   check.Reason="mutated build failed without a consumer-package diagnostic"
+   check.Reason="mutated build failed without a diagnostic at a known typed target call site in this consumer"
    result.InconclusiveConsumers=append(result.InconclusiveConsumers,pkg)
   }
   result.Consumers=append(result.Consumers,check)
