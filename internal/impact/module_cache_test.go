@@ -193,6 +193,7 @@ func BenchmarkModuleCacheWarmImpact(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	var last ModuleCacheQueryStats
+	var fingerprints, traversals float64
 	for n := 0; n < b.N; n++ {
 		_, stats, err := cache.Impact(root, target)
 		if err != nil {
@@ -271,11 +272,15 @@ func BenchmarkModuleCacheWarmImpactReal(b *testing.B) {
 			b.Fatal("full-module warm cache unexpectedly missed")
 		}
 		last = stats
+		fingerprints += stats.FingerprintMilliseconds
+		traversals += stats.ImpactMilliseconds
 	}
 	b.StopTimer()
 	b.ReportMetric(float64(last.GoListCalls), "go-list/op")
 	b.ReportMetric(float64(last.Symbols), "symbols/op")
 	b.ReportMetric(float64(last.Edges), "edges/op")
+	b.ReportMetric(fingerprints/float64(b.N), "fingerprint-ms/op")
+	b.ReportMetric(traversals/float64(b.N), "impact-ms/op")
 }
 
 func TestModuleCacheStreamingFingerprintLongLinesCRLF(t *testing.T) {
@@ -322,4 +327,23 @@ func TestModuleCacheMeasuresActualImpactTraversal(t *testing.T) {
  }
  t.Logf("warm cache: fingerprint=%.3f ms, impact-only=%.3f ms, total=%.3f ms",
   stats.FingerprintMilliseconds,stats.ImpactMilliseconds,stats.TotalMilliseconds)
+}
+
+func BenchmarkModuleFingerprintOnlyReal(b *testing.B) {
+ if os.Getenv("MBVM_BENCH_REAL_MODULE") != "1" {
+  b.Skip("set MBVM_BENCH_REAL_MODULE=1 to measure the real Go source fingerprint")
+ }
+ root:="../.."
+ first,err:=fingerprintModule(root)
+ if err!=nil{b.Fatal(err)}
+ if !first.cacheable{b.Fatalf("module cache disabled: %s",first.reason)}
+ b.ReportAllocs()
+ b.ResetTimer()
+ for n:=0;n<b.N;n++ {
+  fp,err:=fingerprintModule(root)
+  if err!=nil{b.Fatal(err)}
+  if !fp.cacheable||fp.hash!=first.hash{
+   b.Fatalf("unexpected source changes during fingerprint benchmark: %+v",fp)
+  }
+ }
 }
