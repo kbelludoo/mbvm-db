@@ -277,3 +277,49 @@ func BenchmarkModuleCacheWarmImpactReal(b *testing.B) {
 	b.ReportMetric(float64(last.Symbols), "symbols/op")
 	b.ReportMetric(float64(last.Edges), "edges/op")
 }
+
+func TestModuleCacheStreamingFingerprintLongLinesCRLF(t *testing.T) {
+ root:=cacheFixture(t)
+ source:=filepath.Join(root,"api","large.go")
+ // Test beyond the 32 KiB streaming buffer without materializing a
+ // package-size byte slice on every warm cache lookup.
+ contents:="package api\r\n// "+strings.Repeat("x",96<<10)+"\r\nfunc Streamed() int { return 1 }\r\n"
+ if err:=os.WriteFile(source,[]byte(contents),0600);err!=nil{t.Fatal(err)}
+ initial,err:=fingerprintModule(root)
+ if err!=nil||!initial.cacheable{t.Fatalf("initial fingerprint: %+v %v",initial,err)}
+ again,err:=fingerprintModule(root)
+ if err!=nil||again.hash!=initial.hash{t.Fatalf("identical source bytes changed hash: %+v %+v %v",initial,again,err)}
+ stat,err:=os.Stat(source);if err!=nil{t.Fatal(err)}
+ changed:=strings.Replace(contents,"return 1","return 2",1)
+ if len(changed)!=len(contents){t.Fatal("fixture must keep original size")}
+ if err:=os.WriteFile(source,[]byte(changed),0600);err!=nil{t.Fatal(err)}
+ if err:=os.Chtimes(source,stat.ModTime(),stat.ModTime());err!=nil{t.Fatal(err)}
+ updated,err:=fingerprintModule(root)
+ if err!=nil||!updated.cacheable||updated.hash==initial.hash{
+  t.Fatalf("same-size, same-mtime source edit escaped SHA-256: before=%+v after=%+v err=%v",initial,updated,err)
+ }
+ // An embed directive after a long scanner line must still force a
+ // conservative bypass, including Windows CRLF line endings.
+ changed+="//go:embed some-assets/*\r\n"
+ if err:=os.WriteFile(source,[]byte(changed),0600);err!=nil{t.Fatal(err)}
+ disabled,err:=fingerprintModule(root)
+ if err!=nil||disabled.cacheable||!strings.Contains(disabled.reason,"embed"){
+  t.Fatalf("long-line embed detection lost: %+v %v",disabled,err)
+ }
+}
+
+func TestModuleCacheMeasuresActualImpactTraversal(t *testing.T) {
+ root:=cacheFixture(t)
+ cache:=NewModuleCache(1)
+ if _,_,err:=cache.Impact(root,cacheTestSymbol);err!=nil{t.Fatal(err)}
+ _,stats,err:=cache.Impact(root,cacheTestSymbol)
+ if err!=nil{t.Fatal(err)}
+ if !stats.CacheHit||stats.GoListCalls!=0||stats.ImpactMilliseconds<0||
+  stats.FingerprintMilliseconds<0||stats.TotalMilliseconds<=0||
+  stats.ImpactMilliseconds>stats.TotalMilliseconds||
+  stats.FingerprintMilliseconds>stats.TotalMilliseconds{
+  t.Fatalf("independent impact/fingerprint timings invalid: %+v",stats)
+ }
+ t.Logf("warm cache: fingerprint=%.3f ms, impact-only=%.3f ms, total=%.3f ms",
+  stats.FingerprintMilliseconds,stats.ImpactMilliseconds,stats.TotalMilliseconds)
+}
