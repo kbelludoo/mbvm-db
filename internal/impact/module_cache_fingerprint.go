@@ -192,6 +192,11 @@ func fingerprintModule(root string) (moduleFingerprint, error) {
 		}
 		closeErr := f.Close()
 		if readErr != nil {
+			if strings.Contains(readErr.Error(), "token too long") {
+				// Rare generated Go files can contain giant single lines.
+				// Preserve correctness by rebuilding without caching them.
+				return disable("Go source line exceeds streaming fingerprint limit")
+			}
 			return result, fmt.Errorf("stream and hash %s: %w", path, readErr)
 		}
 		if closeErr != nil {
