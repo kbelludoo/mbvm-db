@@ -112,3 +112,19 @@ The next Phase 3.2 should introduce an optional immutable snapshot
 cache only after defining precise invalidation across Go sources,
 `go.mod`/`go.sum`, `GOOS`, `GOARCH`, build tags, toolchain version,
 CGO and workspace context.
+
+## Phase 3.2 — Explicit immutable-report graph cache
+
+`NewModuleCache(capacity).Impact(root, symbol)` caches a typed
+module graph **only for repeated read-only queries within one process**.
+On a warm cache hit it fingerprints current Go sources/configuration
+using SHA-256 and does not invoke `go list`; on a miss it delegates to
+the shared-importer `LoadModuleWithStats`.
+
+The existing `LoadModule` and one-shot `mbvm-db impact-module`
+remain fresh and uncached. A cache hit still scans all selected Go
+source files. External workspaces/replaces/vendor/embed source
+dependencies intentionally bypass caching.
+
+See [CACHE.md](CACHE.md) for source and environment invalidation,
+concurrency, Windows regression tests and small/real module benchmarks.
