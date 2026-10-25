@@ -134,3 +134,30 @@ func TestKnownTargetCallLineDiagnosticAttribution(t *testing.T){
   }
  }
 }
+
+func TestRealModuleSelfConsistentNewOverlay(t *testing.T){
+ // Full compilation is opt-in: large on CI runners and requires the Go
+ // version/module export cache matching this repository.
+ if os.Getenv("MBVM_RUN_REAL_OVERLAY")!="1"{
+  t.Skip("set MBVM_RUN_REAL_OVERLAY=1 to compile the real module's consumers")
+ }
+ module,err:=LoadModule("../..")
+ if err!=nil{t.Fatal(err)}
+ const symbol="github.com/kbelludoo/mbvm-db/pkg/mbvmdb.New"
+ consumers:=module.DirectConsumerPackages(symbol)
+ if len(consumers)==0{t.Fatal("no real cross-package consumers of New")}
+ result,err:=module.CheckCrossPackageBuild(symbol)
+ if err!=nil{t.Fatal(err)}
+ t.Logf("real New overlay: provider baseline=%v overlay=%v adapted local calls=%d confirmed=%v inconclusive=%v provider reason=%s",
+  result.ProviderBaselineBuildPassed,result.ProviderOverlayBuildPassed,
+  result.AdaptedInternalCallSites,result.ConfirmedBrokenConsumers,
+  result.InconclusiveConsumers,result.ProviderReason)
+ if !result.SourceFilesUnmodified||!result.ProviderBaselineBuildPassed||
+  !result.ProviderOverlayBuildPassed{
+  t.Fatalf("real provider did not satisfy the self-consistent overlay gate: %+v",result)
+ }
+ if len(result.ConfirmedBrokenConsumers)!=len(consumers)||
+  len(result.InconclusiveConsumers)!=0{
+  t.Fatalf("not all known real cross-package consumers have compiler evidence: %+v",result)
+ }
+}
