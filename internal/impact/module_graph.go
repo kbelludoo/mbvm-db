@@ -4,7 +4,7 @@ import (
  "bytes"
  "encoding/json"
  "fmt"
- "os"
+ "io"
  "os/exec"
  "path/filepath"
  "sort"
@@ -59,9 +59,12 @@ func discoverModulePackages(root string)([]goListPackage,error){
  }
  decoder:=json.NewDecoder(bytes.NewReader(stdout.Bytes()))
  out:=[]goListPackage{}
- for decoder.More(){
+ for{
   var pkg goListPackage
-  if err:=decoder.Decode(&pkg);err!=nil{return nil,fmt.Errorf("decode go list: %w",err)}
+  if err:=decoder.Decode(&pkg);err!=nil{
+   if err==io.EOF{break}
+   return nil,fmt.Errorf("decode go list: %w",err)
+  }
   if pkg.Error!=nil{return nil,fmt.Errorf("package %s: %s",pkg.ImportPath,pkg.Error.Err)}
   if pkg.Dir==""||pkg.ImportPath==""{return nil,fmt.Errorf("go list missing package identity")}
   out=append(out,pkg)
