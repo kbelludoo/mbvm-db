@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"hash/crc32"
-	"reflect"
 	"testing"
 )
 
@@ -54,14 +53,15 @@ func TestV2EmptyAndDeterministicRoundtrip(t *testing.T) {
 		snapshot.Symbols[2].Qualified!="pkg.Z" {
 		t.Fatalf("unstable symbols or lost edges: %+v",snapshot)
 	}
-	if !reflect.DeepEqual(snapshot.Edges[2],snapshot.Edges[3]) {
-		// Multiple identical caller/callee pairs must survive. The order
-		// is deterministic but not necessarily adjacent at this index.
-		var matches int
-		for _,e:=range snapshot.Edges{
-			if e.Caller==2 && e.Callee==0 && e.Position=="a.go:10" {matches++}
+	// Duplicate call-site edges are intentional and must not be folded.
+	duplicates := 0
+	for _,e := range snapshot.Edges {
+		if e.Caller==2 && e.Callee==0 && e.Position=="a.go:10" && !e.CrossPackage {
+			duplicates++
 		}
-		if matches!=2{t.Fatalf("lost duplicate call-site edges: %+v",snapshot.Edges)}
+	}
+	if duplicates!=2 {
+		t.Fatalf("wanted exactly two duplicate call-site edges, got %d: %+v",duplicates,snapshot.Edges)
 	}
 	for i:=0;i<20;i++ {
 		if b:=encodeFixture(t,input);!bytes.Equal(b,raw){t.Fatal("nondeterministic v2 encoding")}
