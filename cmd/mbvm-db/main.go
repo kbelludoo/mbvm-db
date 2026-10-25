@@ -17,6 +17,12 @@ func main() {
 
 	cmd := os.Args[1]
 	switch cmd {
+	case "impact-module":
+		if err := runImpactModule(os.Args[2:],os.Stdout);err!=nil{
+			fmt.Fprintf(os.Stderr,"mbvm-db impact-module: %v\n",err)
+			os.Exit(1)
+		}
+
 	case "impact-diff":
 		if err := runImpactDiff(os.Args[2:],os.Stdout);err!=nil{
 			fmt.Fprintf(os.Stderr,"mbvm-db impact-diff: %v\n",err)
@@ -248,6 +254,7 @@ func printUsage() {
 	fmt.Println()
 	fmt.Println("COMANDOS:")
 	fmt.Println("  mbvm-db impact -dir <pacote> -symbol <funcao> [-simulate-add-param int] [-json]  Analisa impacto tipado")
+	fmt.Println("  mbvm-db impact-module -root <modulo> -symbol <identidade> [-simulate-add-param int] [-json]  Grafo multi-pacote")
 	fmt.Println("  mbvm-db impact-diff -old <pacote_v1> -new <pacote_v2> [-json]           Compara contratos entre versões")
 	fmt.Println("  mbvm-db impact-diff -repo . -old-ref <rev1> -new-ref <rev2> -package <pacote> [-json]  Compara revisões Git")
 	fmt.Println("  mbvm-db build <dir> [arquivo.mbvmdb]             Compila AST para banco binário indexado persistente")
