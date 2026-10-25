@@ -39,24 +39,37 @@ go run ./cmd/mbvm-db impact-module \
 ```
 
 For a target function with statically linked consumers in other
-packages, the tool:
+packages, the self-consistent verification proceeds as follows:
 
-1. Creates a Go source replacement in a temporary folder, adding one
-   required `__mbvm_cross_package_probe int` parameter to the target
-   declaration **in a virtual source file**, never touching checked-in
-   Go source.
-2. Uses the standard Go `-overlay` mechanism and executes a
-   baseline `go build -mod=readonly` for each direct consumer package
-   before trying a mutated build. Both commands run with
-   `CGO_ENABLED=0`.
-3. Reports a confirmed consumer compilation break only when the
-   baseline compiled, the overlay build failed, and the resulting
-   compiler diagnostics point to the consumer's source directory.
-   Failures limited to the callee package (or a failed baseline) are
-   marked **inconclusive** rather than misattributed.
-4. Checks the original analyzed Go source files' SHA-256 after
-   processing, removes all temporary overlays/binaries, and never
-   checks out Git revisions.
+1. `PrepareContractOverlay` reparses only selected provider Go sources
+   with `parser.ParseComments` (preserving build tags and compiler
+   directives), creates an in-memory signature mutation, and appends a
+   synthetic integer `0` **only** to local call sites already proven
+   by `types.Func` identity in the original typed graph. Changed
+   provider files are formatted to temporary replacements and declared
+   in one Go overlay JSON; original source/AST is never modified.
+2. Compile the original **provider baseline** using
+   `go build -mod=readonly`. If it fails, every external consumer is
+   marked inconclusive.
+3. Compile the **changed virtual provider** with `-overlay`. If this
+   self-consistent provider does not compile, all consumers stay
+   inconclusive; no downstream breakages are invented.
+4. For each cross-package direct consumer, compile its unmodified
+   baseline followed by its unmodified sources against the **same
+   changed provider overlay**. Promote to confirmed breakage only when
+   baseline passed and Go reports `not enough arguments in call to
+   <target>` at a file/line previously linked as that target's actual
+   call site. Unrelated compiler errors remain inconclusive.
+5. Hash all selected Go sources across the module before and after,
+   remove temporary files and never touch original Git content.
+
+The JSON reports `provider_baseline_build_passed`,
+`provider_overlay_build_passed`,
+`adapted_internal_call_sites`, optional
+`provider_diagnostics` and `provider_reason`, in addition to the
+existing per-consumer evidence. Compiler baselines and overlays may
+update the Go build cache but do not execute application/test code.
+
 
 The output envelope includes `impact` and the optional
 `cross_package_breakage` field using the
@@ -78,8 +91,8 @@ deadline.
   a nonvariadic function. Target signatures must be parseable and
   the original module packages must type-check.
 - A failed overlay compilation is evidence of an observed compiler
-  error, not necessarily a full proof of which semantic change caused
-  an error, unless it is localized to the consumer source.
+  error. A consumer is marked confirmed only for the known target-call
+  source line and matching callee name; all other errors remain unknown.
 - A missing compiler diagnostic or baseline build failure is
   **unknown**, not compatible or incompatible.
 - Loading/checking entire modules and compiler overlay builds cost
@@ -106,3 +119,20 @@ interface dispatch exclusion, baseline compilation, a hypothetical
 changed-API compilation failure, and exact source-file integrity.
 The real-module regression verifies that the existing MBVM-DB CLI has
 statically resolved calls to its own library package.
+
+## Acceptance regression for a provider with internal calls
+
+```bash
+CGO_ENABLED=0 go test -count=1 -timeout=180s -v \\
+  -run 'Test(PrepareContractOverlay|SelfConsistentProvider|ProviderOverlayFailure|KnownTargetCallLine)' \\
+  ./internal/impact
+```
+
+The test fixture gives the provider an internal caller in a separate
+file and an external client in another package. The provider must
+compile after its type-resolved internal calls are adapted virtually;
+its original client must fail at the known call site. Another fixture
+keeps a typed function-value assignment incompatible with the changed
+signature in the provider, to verify that the external result remains
+inconclusive rather than falsely confirmed. This is a hypothetical
+signature mutation, not a real Git version diff.
