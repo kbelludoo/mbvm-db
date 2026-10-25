@@ -1,7 +1,6 @@
 package erdosstraus
 
 import (
-	"fmt"
 	"slices"
 )
 
@@ -122,43 +121,9 @@ func (g *MathCSRGraph) Neighbors(ruleIdx int) []GraphEdge {
 	return edges
 }
 
-// AddEdge dynamically appends a new edge (used during composition).
+// AddEdge appends a single relation, preserving the original API.
+// When inserting multiple edges, prefer AddEdges to avoid rebuilding
+// the CSR layout once per edge.
 func (g *MathCSRGraph) AddEdge(sourceID, targetID string, rel RelationType) error {
-	src, okSrc := g.IDToIdx[sourceID]
-	tgt, okTgt := g.IDToIdx[targetID]
-	if !okSrc || !okTgt {
-		return fmt.Errorf("cannot link %s -> %s: %w", sourceID, targetID, ErrInvalidInput)
-	}
-
-	// Reconstruct adjacency, add edge, repack
-	n := len(g.RuleIDs)
-	adj := make([][]GraphEdge, n)
-	for i := 0; i < n; i++ {
-		adj[i] = g.Neighbors(i)
-	}
-	adj[src] = append(adj[src], GraphEdge{Target: tgt, Rel: rel})
-
-	totalEdges := 0
-	for _, edges := range adj {
-		totalEdges += len(edges)
-	}
-	rowOffsets := make([]int, n+1)
-	colIndices := make([]int, totalEdges)
-	relTypes := make([]RelationType, totalEdges)
-
-	edgeIdx := 0
-	for i := 0; i < n; i++ {
-		rowOffsets[i] = edgeIdx
-		for _, e := range adj[i] {
-			colIndices[edgeIdx] = e.Target
-			relTypes[edgeIdx] = e.Rel
-			edgeIdx++
-		}
-	}
-	rowOffsets[n] = totalEdges
-
-	g.RowOffsets = rowOffsets
-	g.ColIndices = colIndices
-	g.RelTypes = relTypes
-	return nil
+	return g.AddEdges([]CSRNamedEdge{{SourceID: sourceID, TargetID: targetID, Rel: rel}})
 }
