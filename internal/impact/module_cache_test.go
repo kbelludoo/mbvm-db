@@ -154,17 +154,17 @@ func TestModuleCacheFingerprintGoEnvAndEmbedProtection(t *testing.T){
  root:=cacheFixture(t)
  config:=filepath.Join(t.TempDir(),"go-env")
  t.Setenv("GOENV",config)
- if err:=os.WriteFile(config,[]byte("GOFLAGS=-tags=first\\n"),0600);err!=nil{t.Fatal(err)}
+ if err:=os.WriteFile(config,[]byte("GOFLAGS=-tags=first\n"),0600);err!=nil{t.Fatal(err)}
  first,err:=fingerprintModule(root)
  if err!=nil||!first.cacheable{t.Fatalf("initial config: %+v %v",first,err)}
- if err:=os.WriteFile(config,[]byte("GOFLAGS=-tags=other\\n"),0600);err!=nil{t.Fatal(err)}
+ if err:=os.WriteFile(config,[]byte("GOFLAGS=-tags=other\n"),0600);err!=nil{t.Fatal(err)}
  second,err:=fingerprintModule(root)
  if err!=nil||!second.cacheable||first.hash==second.hash{
   t.Fatalf("go env -w settings changed without cache invalidation %+v %+v %v",first,second,err)
  }
  t.Setenv("GOENV","off")
  t.Setenv("GOWORK","")
- if err:=os.WriteFile(filepath.Join(root,"go.work"),[]byte("go 1.23\\n"),0600);err!=nil{t.Fatal(err)}
+ if err:=os.WriteFile(filepath.Join(root,"go.work"),[]byte("go 1.23\n"),0600);err!=nil{t.Fatal(err)}
  workspace,err:=fingerprintModule(root)
  if err!=nil||workspace.cacheable||!strings.Contains(workspace.reason,"workspace"){
   t.Fatalf("workspace inputs must bypass: %+v %v",workspace,err)
@@ -172,7 +172,7 @@ func TestModuleCacheFingerprintGoEnvAndEmbedProtection(t *testing.T){
  t.Setenv("GOWORK","off")
  if err:=os.Remove(filepath.Join(root,"go.work"));err!=nil{t.Fatal(err)}
  file:=filepath.Join(root,"api","embedded.go")
- if err:=os.WriteFile(file,[]byte("package api\\nimport _ \\"embed\\"\\n//go:embed asset.txt\\nvar asset string\\n"),0600);err!=nil{t.Fatal(err)}
+ if err:=os.WriteFile(file,[]byte("package api\nimport _ \"embed\"\n//go:embed asset.txt\nvar asset string\n"),0600);err!=nil{t.Fatal(err)}
  embedded,err:=fingerprintModule(root)
  if err!=nil||embedded.cacheable||!strings.Contains(embedded.reason,"embed"){
   t.Fatalf("embed assets not protected from stale cache: %+v %v",embedded,err)
