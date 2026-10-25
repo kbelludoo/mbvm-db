@@ -9,6 +9,7 @@ import (
  "path/filepath"
  "sort"
  "strings"
+ "time"
 )
 
 // ModuleGraph merges separately typechecked local Go packages using stable,
@@ -75,27 +76,45 @@ func discoverModulePackages(root string)([]goListPackage,error){
 }
 
 func LoadModule(root string)(*ModuleGraph,error){
- abs,err:=filepath.Abs(root);if err!=nil{return nil,err}
- pkgs,err:=discoverModulePackages(abs);if err!=nil{return nil,err}
- if len(pkgs)==0{return nil,fmt.Errorf("no Go packages found in %s",abs)}
+ m,_,err:=LoadModuleWithStats(root)
+ return m,err
+}
+
+// LoadModuleWithStats measures discovery, source typechecking and CSR
+// assembly without changing the graph or its existing JSON schema.
+func LoadModuleWithStats(root string)(*ModuleGraph,ModuleLoadStats,error){
+ stats:=ModuleLoadStats{}
+ start:=time.Now()
+ abs,err:=filepath.Abs(root)
+ if err!=nil{return nil,stats,err}
+ // ONE go list for all compiler exports and selected ./... packages.
+ stats.GoListCalls=1
+ resolved,err:=loadModuleExports(abs)
+ if err!=nil{return nil,stats,err}
+ stats.DiscoveryMilliseconds=durationMillis(time.Since(start))
+ stats.ExportArchives=len(resolved.files)
+ pkgs:=resolved.packages
  m:=&ModuleGraph{Root:abs,PackageDirs:map[string]string{},Symbols:[]string{},Edges:[]ModuleEdge{}}
+ typesStart:=time.Now()
  bySymbol:=map[string]int{}
  for _,pkg:=range pkgs{
   rel,err:=filepath.Rel(abs,pkg.Dir)
   if err!=nil||(!filepath.IsLocal(rel)&&rel!="."){
-   return nil,fmt.Errorf("package %s lives outside the selected module root: %s",pkg.ImportPath,pkg.Dir)
+   return nil,stats,fmt.Errorf("package %s lives outside the selected module root: %s",pkg.ImportPath,pkg.Dir)
   }
-  g,err:=loadWithPackagePath(pkg.Dir,pkg.ImportPath)
-  if err!=nil{return nil,fmt.Errorf("load module package %s: %w",pkg.ImportPath,err)}
+  g,err:=loadWithSharedImporter(pkg.Dir,pkg.ImportPath,resolved.importer,resolved.fset)
+  if err!=nil{return nil,stats,fmt.Errorf("load module package %s: %w",pkg.ImportPath,err)}
   m.Packages=append(m.Packages,g)
   m.PackageDirs[pkg.ImportPath]=pkg.Dir
   for _,symbol:=range g.Symbols{
    key:=symbol.Qualified()
-   if _,ok:=bySymbol[key];ok{return nil,fmt.Errorf("duplicate qualified function identity %s",key)}
+   if _,ok:=bySymbol[key];ok{return nil,stats,fmt.Errorf("duplicate qualified function identity %s",key)}
    bySymbol[key]=len(m.Symbols)
    m.Symbols=append(m.Symbols,key)
   }
  }
+ stats.TypecheckMilliseconds=durationMillis(time.Since(typesStart))
+ linkStart:=time.Now()
  add:=func(caller,callee,position string,cross bool)error{
   _,a:=bySymbol[caller];_,b:=bySymbol[callee]
   if !a||!b{return fmt.Errorf("internal error: unresolved local edge %s to %s",caller,callee)}
@@ -106,11 +125,11 @@ func LoadModule(root string)(*ModuleGraph,error){
  }
  for _,g:=range m.Packages{
   for _,call:=range g.Calls{
-   if err:=add(g.Symbols[call.Caller].Qualified(),g.Symbols[call.Callee].Qualified(),call.Position,false);err!=nil{return nil,err}
+   if err:=add(g.Symbols[call.Caller].Qualified(),g.Symbols[call.Callee].Qualified(),call.Position,false);err!=nil{return nil,stats,err}
   }
   for _,call:=range g.ImportedCalls{
    if _,found:=bySymbol[call.Callee];found{
-    if err:=add(g.Symbols[call.Caller].Qualified(),call.Callee,call.Position,true);err!=nil{return nil,err}
+    if err:=add(g.Symbols[call.Caller].Qualified(),call.Callee,call.Position,true);err!=nil{return nil,stats,err}
    }else{m.UnlinkedImports++}
   }
  }
@@ -125,7 +144,12 @@ func LoadModule(root string)(*ModuleGraph,error){
   m.Callers[cursors[target]]=uint32(bySymbol[edge.Caller])
   cursors[target]++
  }
- return m,nil
+ stats.LinkMilliseconds=durationMillis(time.Since(linkStart))
+ stats.TotalMilliseconds=durationMillis(time.Since(start))
+ stats.Packages=len(m.Packages)
+ stats.Symbols=len(m.Symbols)
+ stats.Edges=len(m.Edges)
+ return m,stats,nil
 }
 
 func (m *ModuleGraph) Impact(query string)(ModuleImpact,error){
