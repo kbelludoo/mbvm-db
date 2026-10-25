@@ -1,9 +1,5 @@
 package erdosstraus
 
-import (
-	"slices"
-)
-
 // RelationType categorizes edges in the mathematical CSR graph.
 type RelationType uint8
 
@@ -48,31 +44,8 @@ func NewMathCSRGraph(rules []*Rule) *MathCSRGraph {
 		}
 	}
 
-	// Detect residue subsumptions (e.g. MOD24-17 specializes MOD4-1 etc.)
-	for i, r1 := range rules {
-		if r1.Modulus <= 0 {
-			continue
-		}
-		for j, r2 := range rules {
-			if i == j || r2.Modulus <= 0 {
-				continue
-			}
-			if r1.Modulus%r2.Modulus == 0 {
-				// Check if r1 residues are contained in r2 mod r2.Modulus
-				subsumed := true
-				for _, res1 := range r1.Residues {
-					m2res := res1 % r2.Modulus
-					if !slices.Contains(r2.Residues, m2res) {
-						subsumed = false
-						break
-					}
-				}
-				if subsumed && len(r1.Residues) > 0 {
-					adj[i] = append(adj[i], GraphEdge{Target: j, Rel: RelGeneralizes})
-				}
-			}
-		}
-	}
+	// Index compatible modulus/residue candidates without pairwise N^2 scanning.
+	appendIndexedGeneralizationEdges(rules, adj)
 
 	// Pack into CSR representation
 	totalEdges := 0
