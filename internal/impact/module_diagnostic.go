@@ -31,9 +31,17 @@ func sameDiagnosticSource(expected,actual string)bool{
 // an actual cross-package CALL SITE that go/types linked to this target.
 // A different error elsewhere in the consumer must remain inconclusive.
 func (m *ModuleGraph) matchesTargetCallDiagnostic(consumer,target string,lines []string)bool{
+ targetName:=target[strings.LastIndex(target,".")+1:]
  for _,line:=range lines{
   file,number,message,ok:=diagnosticLocation(line)
-  if !ok||!strings.Contains(message,"not enough arguments in call"){continue}
+  if !ok{continue}
+  const prefix="not enough arguments in call to "
+  if !strings.HasPrefix(message,prefix){continue}
+  renderedCallee:=strings.TrimSpace(strings.TrimPrefix(message,prefix))
+  if renderedCallee!=targetName&&!strings.HasSuffix(renderedCallee,"."+targetName){
+   // A different call on the same line does not certify a break.
+   continue
+  }
   for _,edge:=range m.Edges{
    if !edge.CrossPackage||edge.Callee!=target||
     !strings.HasPrefix(edge.Caller,consumer+"."){continue}
