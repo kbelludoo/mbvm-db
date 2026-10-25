@@ -57,7 +57,13 @@ type Graph struct{
 // Load checks a single build-selected package using go/types and a
 // module-aware export importer. Dynamic calls and external consumers
 // are not guessed to match a local function.
-func Load(dir string)(*Graph,error){
+func Load(dir string)(*Graph,error){return loadWithPackagePath(dir,"")}
+
+// loadWithPackagePath resolves no-import packages using the path reported
+// by the module loader, rather than an invented typed.local name.
+// Imported packages are checked for path consistency; never retag an
+// already typechecked imported package with a conflicting identity.
+func loadWithPackagePath(dir,expected string)(*Graph,error){
  abs,err:=filepath.Abs(dir);if err!=nil{return nil,err}
  selected,err:=build.Default.ImportDir(abs,0)
  if err!=nil{return nil,fmt.Errorf("select Go files: %w",err)}
@@ -77,6 +83,12 @@ func Load(dir string)(*Graph,error){
  }
  imp,pkgPath,err:=moduleImporter(abs,fset,files,selected.Name)
  if err!=nil{return nil,err}
+ if expected!=""{
+  if pkgPath!="typed.local/"+selected.Name&&pkgPath!=expected{
+   return nil,fmt.Errorf("Go package path mismatch: importer=%s module=%s",pkgPath,expected)
+  }
+  pkgPath=expected
+ }
  info:=&types.Info{Defs:map[*ast.Ident]types.Object{},Uses:map[*ast.Ident]types.Object{},Selections:map[*ast.SelectorExpr]*types.Selection{}}
  cfg:=types.Config{Importer:imp,Sizes:types.SizesFor("gc",runtime.GOARCH)}
  if _,err=cfg.Check(pkgPath,fset,files,info);err!=nil{return nil,fmt.Errorf("baseline Go types: %w",err)}
