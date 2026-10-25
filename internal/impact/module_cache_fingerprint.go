@@ -85,6 +85,25 @@ func fingerprintModule(root string)(moduleFingerprint,error){
  write("runtime.GOARCH",runtime.GOARCH)
  write("go-executable",goPath)
  write("go-executable-stat",fmt.Sprintf("%d/%d",goStat.Size(),goStat.ModTime().UnixNano()))
+ // Go loads defaults from GOENV even when Go-specific variables are
+ // absent from the current process environment. Fingerprint that file
+ // so 'go env -w GOFLAGS=...' cannot return an obsolete graph.
+ goConfig:=os.Getenv("GOENV")
+ if goConfig!="off"{
+  if goConfig==""{
+   base,err:=os.UserConfigDir()
+   if err!=nil{return disable("Go user config directory could not be resolved")}
+   goConfig=filepath.Join(base,"go","env")
+  }
+  write("go-env-file",goConfig)
+  config,err:=os.ReadFile(goConfig)
+  if err==nil{
+   io.WriteString(digest,"go-env-bytes")
+   digest.Write([]byte{0})
+   digest.Write(config)
+   digest.Write([]byte{0})
+  }else if !os.IsNotExist(err){return disable("Go toolchain environment file could not be read")}
+ }
  for _,key:=range []string{
   "GOOS","GOARCH","GOAMD64","GOARM","GOARM64","GO386","GOEXPERIMENT",
   "GOFLAGS","CGO_ENABLED","CC","CXX","GOWORK","GOTOOLCHAIN",
@@ -129,10 +148,17 @@ func fingerprintModule(root string)(moduleFingerprint,error){
   digest.Write([]byte{0})
   f,err:=os.Open(path)
   if err!=nil{return result,err}
-  _,readErr:=io.Copy(digest,f)
+  // Compiler embed directives depend on non-Go files that are not
+  // enumerated by this source-only hash. In that case, always reload.
+  // Read as bytes while hashing, without evaluating arbitrary patterns.
+  contents,readErr:=io.ReadAll(f)
   closeErr:=f.Close()
   if readErr!=nil{return result,readErr}
   if closeErr!=nil{return result,closeErr}
+  if strings.HasSuffix(path,".go")&&strings.Contains(string(contents),"//go:embed"){
+   return disable("go:embed assets are not tracked by this Go-source-only cache")
+  }
+  digest.Write(contents)
   digest.Write([]byte{0})
  }
  result.hash=hex.EncodeToString(digest.Sum(nil))
