@@ -38,7 +38,8 @@ func fingerprintModule(root string)(moduleFingerprint,error){
  scanner:=bufio.NewScanner(mod)
  for scanner.Scan(){
   line:=strings.TrimSpace(strings.SplitN(scanner.Text(),"//",2)[0])
-  if strings.HasPrefix(line,"replace ")||line=="replace("||line=="replace ("{
+  if fields:=strings.Fields(line);len(fields)>0&&
+   (fields[0]=="replace"||strings.HasPrefix(fields[0],"replace(")){
    mod.Close()
    return disable("local or remote replace directives require a fresh module load")
   }
@@ -85,25 +86,11 @@ func fingerprintModule(root string)(moduleFingerprint,error){
  write("runtime.GOARCH",runtime.GOARCH)
  write("go-executable",goPath)
  write("go-executable-stat",fmt.Sprintf("%d/%d",goStat.Size(),goStat.ModTime().UnixNano()))
- // Go loads defaults from GOENV even when Go-specific variables are
- // absent from the current process environment. Fingerprint that file
- // so 'go env -w GOFLAGS=...' cannot return an obsolete graph.
- goConfig:=os.Getenv("GOENV")
- if goConfig!="off"{
-  if goConfig==""{
-   base,err:=os.UserConfigDir()
-   if err!=nil{return disable("Go user config directory could not be resolved")}
-   goConfig=filepath.Join(base,"go","env")
-  }
-  write("go-env-file",goConfig)
-  config,err:=os.ReadFile(goConfig)
-  if err==nil{
-   io.WriteString(digest,"go-env-bytes")
-   digest.Write([]byte{0})
-   digest.Write(config)
-   digest.Write([]byte{0})
-  }else if !os.IsNotExist(err){return disable("Go toolchain environment file could not be read")}
- }
+ // The subprocess loads persisted Go settings, including flags absent
+ // from the parent environment. Reject external overlays/modfiles/workspaces.
+ goEnvState,err:=fingerprintGoEnv()
+ if err!=nil{return disable("cannot fingerprint persistent Go environment: "+err.Error())}
+ write("go-env-file",goEnvState)
  for _,key:=range []string{
   "GOOS","GOARCH","GOAMD64","GOARM","GOARM64","GO386","GOEXPERIMENT",
   "GOFLAGS","CGO_ENABLED","CC","CXX","GOWORK","GOTOOLCHAIN",
