@@ -69,6 +69,16 @@ jobs:
           go test -count=1 -timeout=300s -v -run 'Test(SharedModuleImporter|ImpactModuleCLI)' ./internal/impact ./cmd/mbvm-db
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
+      - name: Phase 3.2 module cache invalidation and concurrency (Windows)
+        shell: pwsh
+        env:
+          CGO_ENABLED: '0'
+          GOPROXY: 'off'
+          GOSUMDB: 'off'
+        run: |
+          go test -count=1 -timeout=300s -v -run '^TestModuleCache' ./internal/impact
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
       - name: Production impact integration tests (Windows)
         shell: pwsh
         env:
