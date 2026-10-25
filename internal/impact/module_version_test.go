@@ -123,3 +123,34 @@ func TestRealModuleGitRefsCompilerEvidenceNoCheckout(t *testing.T){
   t.Fatal("Git comparison changed untracked file")
  }
 }
+
+func TestRealModuleDiffReturnTypeChangeRemainsInconclusive(t *testing.T){
+ setRealDiffOffline(t)
+ oldRoot,newRoot:=realModuleFixture(t,
+  "package api\nfunc Run(x int) int{return x}\n",
+  "package api\nfunc Run(x int) string{return \"new\"}\n",
+  "package client\nimport \"example.test/realdiff/api\"\nfunc Use() int{return api.Run(2)}\n",
+  "package client\nimport \"example.test/realdiff/api\"\nfunc Use() string{return api.Run(2)}\n",
+ )
+ result,err:=CompareRealModuleDirs(oldRoot,newRoot,realDiffTarget)
+ if err!=nil{t.Fatal(err)}
+ if !result.ContractChanged||len(result.InconclusiveConsumers)!=1||
+  len(result.ConfirmedBrokenConsumers)!=0||result.Consumers[0].Status!="inconclusive"{
+  t.Fatalf("unsupported return-type error must not be overclaimed: %+v",result)
+ }
+}
+func TestRealModuleDiffUnchangedContractNotReportedAsBreak(t *testing.T){
+ setRealDiffOffline(t)
+ oldRoot,newRoot:=realModuleFixture(t,
+  "package api\nfunc Run(x int) int{return x}\n",
+  "package api\nfunc Run(x int) int{return x+1}\n",
+  "package client\nimport \"example.test/realdiff/api\"\nfunc Use() int{return api.Run(2)}\n",
+  "package client\nimport \"example.test/realdiff/api\"\nfunc Use() int{return api.Run(2)}\n",
+ )
+ result,err:=CompareRealModuleDirs(oldRoot,newRoot,realDiffTarget)
+ if err!=nil{t.Fatal(err)}
+ if result.ContractChanged||len(result.ConfirmedBrokenConsumers)!=0||
+  len(result.InconclusiveConsumers)!=0||!result.SourceFilesUnmodified{
+  t.Fatalf("body-only change incorrectly reported as signature break: %+v",result)
+ }
+}
