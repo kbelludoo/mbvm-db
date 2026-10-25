@@ -42,13 +42,12 @@ func (m *ModuleGraph) contractOverlay(g *Graph,id int,tmp string)(string,error){
  sig,ok:=sym.object.Type().(*types.Signature)
  if !ok||sig.Variadic(){return "",fmt.Errorf("variadic/unknown function signature unsupported")}
  original:=sym.decl.Type.Params.List
- for _,f:=range original{
-  for _,name:=range f.Names{
-   if name.Name=="__mbvm_cross_package_probe"{
-    return "",fmt.Errorf("reserved mutation parameter already exists")
-   }
-  }
- }
+ collision:=false
+ ast.Inspect(sym.decl,func(node ast.Node)bool{
+  if identifier,ok:=node.(*ast.Ident);ok&&identifier.Name=="__mbvm_cross_package_probe"{collision=true}
+  return true
+ })
+ if collision{return "",fmt.Errorf("reserved parameter collides with existing identifier")}
  changed:=append([]*ast.Field(nil),original...)
  changed=append(changed,&ast.Field{
   Names:[]*ast.Ident{ast.NewIdent("__mbvm_cross_package_probe")},
@@ -140,9 +139,19 @@ func (m *ModuleGraph) CheckCrossPackageBuild(target string)(CrossPackageBreakage
   },
  }
  g,id,err:=m.FindSymbol(target);if err!=nil{return result,err}
- before,err:=g.SourceSHA256();if err!=nil{return result,err}
+ originalHashes:=map[*Graph]string{}
+ for _,pkgGraph:=range m.Packages{
+  hash,err:=pkgGraph.SourceSHA256()
+  if err!=nil{return result,err}
+  originalHashes[pkgGraph]=hash
+ }
  consumers:=m.DirectConsumerPackages(target)
  if len(consumers)==0{
+  for pkgGraph,before:=range originalHashes{
+   after,err:=pkgGraph.SourceSHA256()
+   if err!=nil{return result,err}
+   if before!=after{return result,fmt.Errorf("Go source changed in package %s",pkgGraph.PackagePath)}
+  }
   result.SourceFilesUnmodified=true
   return result,nil
  }
@@ -182,8 +191,11 @@ func (m *ModuleGraph) CheckCrossPackageBuild(target string)(CrossPackageBreakage
   }
   result.Consumers=append(result.Consumers,check)
  }
- after,err:=g.SourceSHA256();if err!=nil{return result,err}
- if before!=after{return result,fmt.Errorf("original Go source changed during overlay compilation")}
+ for pkgGraph,before:=range originalHashes{
+  after,err:=pkgGraph.SourceSHA256()
+  if err!=nil{return result,err}
+  if before!=after{return result,fmt.Errorf("Go source changed during overlay compilation in package %s",pkgGraph.PackagePath)}
+ }
  result.SourceFilesUnmodified=true
  sort.Strings(result.ConfirmedBrokenConsumers)
  sort.Strings(result.InconclusiveConsumers)
