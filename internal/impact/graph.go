@@ -64,6 +64,20 @@ func Load(dir string)(*Graph,error){return loadWithPackagePath(dir,"")}
 // Imported packages are checked for path consistency; never retag an
 // already typechecked imported package with a conflicting identity.
 func loadWithPackagePath(dir,expected string)(*Graph,error){
+ return loadWithSharedImporter(dir,expected,nil,nil)
+}
+
+// loadWithSharedImporter keeps the single-package Load behavior unchanged,
+// but allows LoadModule to reuse ONE compiler export importer and one
+// FileSet across the entire module, without invoking go list per package.
+// Shared FileSet/Importer are sequential and must not be used concurrently.
+func loadWithSharedImporter(dir,expected string,sharedImporter types.Importer,sharedFileSet *token.FileSet)(*Graph,error){
+ if (sharedImporter==nil)!=(sharedFileSet==nil){
+  return nil,fmt.Errorf("shared importer and file set must be supplied together")
+ }
+ if sharedImporter!=nil&&expected==""{
+  return nil,fmt.Errorf("shared importer requires an explicit package import path")
+ }
  abs,err:=filepath.Abs(dir);if err!=nil{return nil,err}
  selected,err:=build.Default.ImportDir(abs,0)
  if err!=nil{return nil,fmt.Errorf("select Go files: %w",err)}
@@ -71,7 +85,8 @@ func loadWithPackagePath(dir,expected string)(*Graph,error){
  if len(selected.GoFiles)==0{return nil,fmt.Errorf("no build-selected Go files in %s",abs)}
  names:=append([]string(nil),selected.GoFiles...)
  sort.Strings(names)
- fset:=token.NewFileSet()
+ fset:=sharedFileSet
+ if fset==nil{fset=token.NewFileSet()}
  files:=make([]*ast.File,0,len(names))
  sources:=make([]string,0,len(names))
  for _,name:=range names{
@@ -81,8 +96,11 @@ func loadWithPackagePath(dir,expected string)(*Graph,error){
   files=append(files,node)
   sources=append(sources,filename)
  }
- imp,pkgPath,err:=moduleImporter(abs,fset,files,selected.Name)
- if err!=nil{return nil,err}
+ imp,pkgPath:=sharedImporter,expected
+ if imp==nil{
+  imp,pkgPath,err=moduleImporter(abs,fset,files,selected.Name)
+  if err!=nil{return nil,err}
+ }
  if expected!=""{
   if pkgPath!="typed.local/"+selected.Name&&pkgPath!=expected{
    return nil,fmt.Errorf("Go package path mismatch: importer=%s module=%s",pkgPath,expected)
