@@ -128,7 +128,7 @@ func CompareRealModuleDirs(oldRoot,newRoot,symbol string)(result RealModuleDiff,
       }else{
        ctx,cancel=context.WithTimeout(context.Background(),2*time.Minute)
        passed,diags,buildErr:=newBuild.buildConsumer(ctx,pkg,
-        filepath.Join(tmp,fmt.Sprintf("mixed-%d",index)),overlay)
+        filepath.Join(tmp,fmt.Sprintf("mixed-%d",index)),overlay.Path)
        cancel()
        witness.OldClientWithNewProviderPassed=passed
        witness.Diagnostics=diags
@@ -137,7 +137,7 @@ func CompareRealModuleDirs(oldRoot,newRoot,symbol string)(result RealModuleDiff,
        }else if passed{
         witness.Status="compatible_in_test"
        }else{
-        witness.ConfirmedCompileErrors=oldClientTargetErrors(oldModule,pkg,symbol,newRoot,diags)
+        witness.ConfirmedCompileErrors=oldClientTargetErrors(oldModule,pkg,symbol,newRoot,overlay,diags)
         if len(witness.ConfirmedCompileErrors)>0{
          witness.Status="broken"
         }else{
