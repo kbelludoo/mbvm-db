@@ -47,6 +47,12 @@ Snapshots are discarded after comparison.
 6. Create a Go `-overlay` whose **new consumer file paths** resolve to
    exact bytes from the **old consumer source**. The provider and other
    packages remain exactly as they were in the real new revision.
+   Retain the exact reverse map from **physical replacement paths** to
+   **logical Go source paths** for diagnostic attribution. Depending on
+   the Go toolchain and OS, compiler messages may name either path.
+   Windows-relative physical paths are recognized only when their
+   suffix includes the unique temporary run directory, overlay folder
+   and replacement filename, not a bare matching filename.
 7. Run `go build -mod=readonly -overlay ...` in the new module.
    A consumer is **broken** only if the build fails and a diagnostic
    of `not enough arguments in call to <function>` corresponds to a
@@ -97,6 +103,8 @@ go test -count=1 -timeout=240s -v `
 ```
 
 Tests cover real changed signature causing an old-client compile error,
+reverse mapping of physical, logical and Windows-relative overlay
+locations, rejection of unrelated file/callee/line diagnostics,
 a changed signature still accepting an old caller, divergent source
 file sets treated as inconclusive, comparison between two actual local
 Git commits without touching dirty working-tree files, and CLI JSON
