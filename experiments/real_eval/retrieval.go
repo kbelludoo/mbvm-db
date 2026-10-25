@@ -122,9 +122,13 @@ func (kb *KnowledgeBase) RetrieveMBVMCSR(n *big.Int) RetrievalResult {
 		if !ok {
 			return kb.RetrieveFiltered(n)
 		}
-		edges := kb.CSRGraph.Neighbors(idx)
+		edgeCount := 0
+		kb.CSRGraph.ForEachNeighbor(idx, func(int, erdosstraus.RelationType) bool {
+			edgeCount++
+			return true
+		})
 		rule := kb.AllRules[idx]
-		path := fmt.Sprintf("CSR-Traversal:Root(%s)->Neighbors(%d)", rule.ID, len(edges))
+		path := fmt.Sprintf("CSR-Traversal:Root(%s)->Neighbors(%d)", rule.ID, edgeCount)
 		return RetrievalResult{
 			Rules:       []*erdosstraus.Rule{rule},
 			Path:        path,
@@ -161,23 +165,22 @@ func (kb *KnowledgeBase) RetrieveMBVMCSR(n *big.Int) RetrievalResult {
 
 	// 2. CSR graph traversal with semantic prerequisite pruning:
 	// Prune outgoing branches whose modular preconditions are contradicted by n.
-	edges := kb.CSRGraph.Neighbors(primaryIdx)
 	pathSteps := []string{fmt.Sprintf("Root(%s)", primaryRule.ID)}
 
-	for _, e := range edges {
-		depRule := kb.AllRules[e.Target]
+	kb.CSRGraph.ForEachNeighbor(primaryIdx, func(target int, rel erdosstraus.RelationType) bool {
+		depRule := kb.AllRules[target]
 
-		// Semantic Pruning: if dependency lemma has a modulus restriction that contradicts n,
-		// prune it to prevent polluting the context with irrelevant lemmas.
+		// Semantic pruning must match the earlier allocating API exactly.
 		if depRule.Modulus > 0 && !depRule.Covers(n) {
-			continue
+			return true
 		}
 
 		retrieved = append(retrieved, depRule)
 		ids = append(ids, depRule.ID)
 		tokens += depRule.TokenWeight
-		pathSteps = append(pathSteps, fmt.Sprintf("Edge[Rel=%d]->%s", e.Rel, depRule.ID))
-	}
+		pathSteps = append(pathSteps, fmt.Sprintf("Edge[Rel=%d]->%s", rel, depRule.ID))
+		return true
+	})
 
 	return RetrievalResult{
 		Rules:       retrieved,
