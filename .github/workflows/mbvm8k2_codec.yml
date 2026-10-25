@@ -1,0 +1,43 @@
+name: MBVM8K2 Codec Validation
+
+on:
+  push:
+    branches:
+      - feature/mbvm8k2-codec-v2
+    paths:
+      - 'internal/mbvm8k2/**'
+      - '.github/workflows/mbvm8k2_codec.yml'
+  pull_request:
+    paths:
+      - 'internal/mbvm8k2/**'
+      - '.github/workflows/mbvm8k2_codec.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  codec:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Validate v2 codec (isolated from preexisting CLI build failures)
+        run: go test -count=1 -v ./internal/mbvm8k2
+        env:
+          CGO_ENABLED: '0'
+      - name: Vet v2 codec
+        run: go vet ./internal/mbvm8k2
+      - name: Race detector (Linux)
+        if: runner.os == 'Linux'
+        run: go test -race -count=1 ./internal/mbvm8k2
+      - name: Smoke fuzz corpus
+        run: go test -count=1 -run '^TestV2' ./internal/mbvm8k2
