@@ -100,8 +100,8 @@ CGO_ENABLED=0 go test -count=1 -timeout=180s \
   ./internal/impact ./cmd/mbvm-db
 ```
 
-The offline fixture covers two modules' methods with identical
-spelling, a caller across package boundaries, a transitive caller,
+The offline fixture covers two packages in one module, with methods
+of identical spelling, and callers across package boundaries, a transitive caller,
 interface dispatch exclusion, baseline compilation, a hypothetical
 changed-API compilation failure, and exact source-file integrity.
 The real-module regression verifies that the existing MBVM-DB CLI has
