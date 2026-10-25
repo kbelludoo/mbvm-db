@@ -254,7 +254,7 @@ func printUsage() {
 	fmt.Println()
 	fmt.Println("COMANDOS:")
 	fmt.Println("  mbvm-db impact -dir <pacote> -symbol <funcao> [-simulate-add-param int] [-json]  Analisa impacto tipado")
-	fmt.Println("  mbvm-db impact-module -root <modulo> -symbol <identidade> [-simulate-add-param int] [-json]  Grafo multi-pacote")
+	fmt.Println("  mbvm-db impact-module -root <modulo> -symbol <identidade> [-simulate-add-param int] [-json] [-profile]  Grafo multi-pacote")
 	fmt.Println("  mbvm-db impact-diff -old <pacote_v1> -new <pacote_v2> [-json]           Compara contratos entre versões")
 	fmt.Println("  mbvm-db impact-diff -repo . -old-ref <rev1> -new-ref <rev2> -package <pacote> [-json]  Compara revisões Git")
 	fmt.Println("  mbvm-db impact-diff -module -repo . -old-ref <rev1> -new-ref <rev2> -symbol <simbolo> [-json]  Compila consumidores antigos com API real nova")
