@@ -129,3 +129,21 @@ breaking signature change and adjusted new callers, verified old
 caller diagnostic, added and removed functions, body-only changes,
 method name collisions, formatting-only changes, and two actual
 committed Git revisions with an unchanged dirty worktree.
+
+## Real-version module compatibility mode
+
+The `impact-diff` CLI also supports `-module -symbol <fully-qualified>`
+with either `-old/-new` **module roots** or `-old-ref/-new-ref`
+local Git revisions. This invokes the REAL provider code from the new
+snapshot and overlays the original old consumer source files onto the
+new snapshot. The mode does not create a synthetic signature and does
+not alter the old consumers to accommodate it.
+
+The separate JSON schema is `mbvm-real-module-diff-v1` and preserves
+the original `mbvm-version-impact-v1` output for existing users.
+The first release checks one explicitly named symbol and confirms only
+compiler diagnostics for insufficient arguments at old typed call sites;
+other real ABI/API incompatibilities remain inconclusive.
+
+See [REAL_DIFF.md](REAL_DIFF.md) for the exact evidence procedure,
+Git CLI examples, safety checks and acceptance tests.
