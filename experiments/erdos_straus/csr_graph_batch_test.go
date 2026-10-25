@@ -45,6 +45,16 @@ func TestCSRAddEdgesEqualsSequentialWithInterleavedSources(t *testing.T) {
 		!slices.Equal(oneByOne.RelTypes, allAtOnce.RelTypes) {
 		t.Fatalf("batch changed edge order or relation types:\nsequential=%+v\nbatch=%+v", oneByOne, allAtOnce)
 	}
+	// Independent expected layout: tests against the intended edge sequence,
+	// not merely two code paths sharing the same AddEdges implementation.
+	if !slices.Equal(allAtOnce.RowOffsets, []int{0, 4, 6, 6, 7}) ||
+		!slices.Equal(allAtOnce.ColIndices, []int{1, 2, 3, 2, 2, 3, 0}) ||
+		!slices.Equal(allAtOnce.RelTypes, []RelationType{
+			RelDependency, RelComposition, RelGeneralizes, RelComposition,
+			RelGeneralizes, RelComposition, RelDependency,
+		}) {
+		t.Fatalf("batch has incorrect independently expected CSR arrays: %+v", allAtOnce)
+	}
 	for row := range allAtOnce.RuleIDs {
 		want := oneByOne.Neighbors(row)
 		got := allAtOnce.Neighbors(row)
