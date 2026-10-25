@@ -127,6 +127,7 @@ func TestKnownTargetCallLineDiagnosticAttribution(t *testing.T){
   {"client\\client.go:9:34: not enough arguments in call to api.Run"},
   {"api\\api.go:7:34: not enough arguments in call to Run"},
   {"client\\client.go:7:34: unrelated type mismatch"},
+  {"client\\client.go:7:34: not enough arguments in call to other.RunElse"},
  }{
   if m.matchesTargetCallDiagnostic(caller,target,bad){
    t.Fatalf("unrelated diagnostic incorrectly attributed: %v",bad)
