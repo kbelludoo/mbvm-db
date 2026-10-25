@@ -23,8 +23,14 @@ func runImpactDiff(args []string,out io.Writer)error{
  newRef:=flags.String("new-ref","","new local Git branch/tag/commit (revision mode)")
  packageRel:=flags.String("package",".","repository-relative Go package path (revision mode)")
  jsonOutput:=flags.Bool("json",false,"emit machine-readable JSON")
+ moduleMode:=flags.Bool("module",false,"compare real module API changes and old cross-package callers")
+ symbol:=flags.String("symbol","","fully qualified function or method (required with -module)")
  if err:=flags.Parse(args);err!=nil{return fmt.Errorf("impact-diff flags: %w",err)}
  if len(flags.Args())!=0{return fmt.Errorf("unexpected arguments: %s",strings.Join(flags.Args()," "))}
+ if *moduleMode{
+  return realDiffDispatch(*oldDir,*newDir,*gitRepo,*oldRef,*newRef,*packageRel,*symbol,out,*jsonOutput)
+ }
+ if *symbol!=""{return fmt.Errorf("-symbol requires -module")}
  var report impact.VersionReport
  var err error
  revisionMode:=*oldRef!=""||*newRef!=""
