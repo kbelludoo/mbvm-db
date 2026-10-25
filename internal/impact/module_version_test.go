@@ -154,3 +154,54 @@ func TestRealModuleDiffUnchangedContractNotReportedAsBreak(t *testing.T){
   t.Fatalf("body-only change incorrectly reported as signature break: %+v",result)
  }
 }
+
+func TestOldClientOverlayDiagnosticReverseMapping(t *testing.T){
+ setRealDiffOffline(t)
+ oldRoot,newRoot:=realModuleFixture(t,
+  "package api\nfunc Run(x int)int{return x}\n",
+  "package api\nfunc Run(x,y int)int{return x+y}\n",
+  "package client\nimport \"example.test/realdiff/api\"\nfunc Use()int{return api.Run(2)}\n",
+  "package client\nimport \"example.test/realdiff/api\"\nfunc Use()int{return api.Run(2,3)}\n",
+ )
+ oldModule,err:=LoadModule(oldRoot)
+ if err!=nil{t.Fatal(err)}
+ oldGraph,_,err:=oldModule.FindSymbol("example.test/realdiff/client.Use")
+ if err!=nil{t.Fatal(err)}
+ tmp:=filepath.Join(t.TempDir(),"overlay-000")
+ if err:=os.MkdirAll(tmp,0700);err!=nil{t.Fatal(err)}
+ overlay,err:=overlayOldClient(oldGraph,filepath.Join(newRoot,"client"),tmp)
+ if err!=nil{t.Fatal(err)}
+ if len(overlay.NewSourceByReplacement)!=1{t.Fatalf("expected one overlay replacement: %+v",overlay)}
+ var physical,logical string
+ for p,l:=range overlay.NewSourceByReplacement{physical,logical=p,l}
+ reference:=":3:31: not enough arguments in call to api.Run"
+ windowsRelative:="..\\..\\..\\"+filepath.Base(filepath.Dir(tmp))+"\\"+
+  filepath.Base(tmp)+"\\"+filepath.Base(physical)
+ cases:=[]struct{label,location string;want bool}{
+  {"physical absolute",physical,true},
+  {"logical virtual",logical,true},
+  {"Windows physical relative",windowsRelative,true},
+  {"wrong caller line",physical[:len(physical)],false},
+  {"unrelated physical overlay",filepath.Join(t.TempDir(),"overlay-000","old-client-000.go"),false},
+ }
+ for _,tc:=range cases{
+  message:=tc.location+reference
+  if tc.label=="wrong caller line"{
+   message=tc.location+":4:31: not enough arguments in call to api.Run"
+  }
+  got:=oldClientTargetErrors(oldModule,"example.test/realdiff/client",realDiffTarget,
+   newRoot,overlay,[]string{message})
+  if (len(got)>0)!=tc.want{
+   t.Fatalf("%s: want match %v, got %v from %q",tc.label,tc.want,got,message)
+  }
+ }
+ for _,message:=range []string{
+  physical+":3:31: not enough arguments in call to api.Other",
+  physical+":3:31: cannot use string as int",
+ }{
+  if got:=oldClientTargetErrors(oldModule,"example.test/realdiff/client",realDiffTarget,
+   newRoot,overlay,[]string{message});len(got)>0{
+   t.Fatalf("unrelated compiler error incorrectly confirmed: %v",got)
+  }
+ }
+}
