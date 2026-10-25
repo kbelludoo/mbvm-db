@@ -99,3 +99,30 @@ func TestModuleImpactRealMBVMDB(t *testing.T){
  if !found{t.Fatal("no concrete typed calls from MBVM-DB CLI to pkg/mbvmdb")}
  t.Logf("real MBVM module: packages=%d symbols=%d typed calls=%d",len(module.Packages),len(module.Symbols),len(module.Edges))
 }
+
+func TestCrossPackageReceiverMethodWitness(t *testing.T){
+ t.Setenv("GOPROXY","off");t.Setenv("GOSUMDB","off");t.Setenv("GOWORK","off")
+ module,err:=LoadModule(moduleFixture(t))
+ if err!=nil{t.Fatal(err)}
+ report,err:=module.CheckCrossPackageBuild("example.test/multipkg/api.(A).Apply")
+ if err!=nil{t.Fatal(err)}
+ if len(report.ConfirmedBrokenConsumers)!=1||
+  report.ConfirmedBrokenConsumers[0]!="example.test/multipkg/client"||
+  !report.SourceFilesUnmodified{
+  t.Fatalf("receiver-typed cross-package compiler witness failed: %+v",report)
+ }
+ // B.Apply is unchanged; no contract mutation should ever be silently
+ // attributed to the unrelated homonymous receiver B.
+ if _,err:=module.Impact("example.test/multipkg/api.(B).Apply");err!=nil{t.Fatal(err)}
+}
+func TestConsumerCompilerDiagnosticAttribution(t *testing.T){
+ root:=t.TempDir()
+ dir:=filepath.Join(root,"client")
+ if err:=os.MkdirAll(dir,0755);err!=nil{t.Fatal(err)}
+ if containsConsumerDiagnostic([]string{"api/api.go:3: not enough arguments"},dir,root){
+  t.Fatal("callee error falsely attributed to consumer")
+ }
+ if !containsConsumerDiagnostic([]string{"client/client.go:9: not enough arguments"},dir,root){
+  t.Fatal("consumer diagnostic not recognized")
+ }
+}
