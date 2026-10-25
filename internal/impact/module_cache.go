@@ -24,6 +24,7 @@ type ModuleCacheQueryStats struct{
  CacheHit bool `json:"cache_hit"`
  CacheBypassedReason string `json:"cache_bypassed_reason,omitempty"`
  FingerprintMilliseconds float64 `json:"fingerprint_ms"`
+ ImpactMilliseconds float64 `json:"impact_ms"`
  TotalMilliseconds float64 `json:"total_ms"`
  GoListCalls int `json:"go_list_calls"`
  Packages int `json:"packages"`
@@ -93,7 +94,9 @@ func (c *ModuleCache) Impact(root,symbol string)(ModuleImpact,ModuleCacheQuerySt
    }
   }
  }
+ impactStart:=time.Now()
  result,err=graph.Impact(symbol)
+ stats.ImpactMilliseconds=durationMillis(time.Since(impactStart))
  stats.Packages=len(graph.Packages)
  stats.Symbols=len(graph.Symbols)
  stats.Edges=len(graph.Edges)
