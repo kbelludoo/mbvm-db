@@ -1,0 +1,131 @@
+{
+  "schema": "mbvm-engineering-value-summary-v2",
+  "date_local": "2026-10-26",
+  "go_version": "go1.27.0",
+  "goos": "windows",
+  "goarch": "amd64",
+  "gomaxprocs": 1,
+  "full_report": "output/value-validation-2026-10-26-v2/report.json",
+  "initial_underresolved_micro_report_preserved": "output/value-validation-2026-10-26/report.json",
+  "all_symbol_queries_compared": 496.0,
+  "compiler_mutation_cases": 9,
+  "compiler_confirmed_target_caller_pairs": 16,
+  "new_usable_command": "mbvm-db impact-server -root <module>",
+  "cases": [
+    {
+      "project": "mbvm-db",
+      "root": "C:\\Users\\kbell\\Downloads\\mbvm-db",
+      "source_sha256": "a16616de6aa1a6f806aefbb54b54cad262abd49614bfba61fa012a553c6a3cbd",
+      "packages": 30,
+      "symbols": 413,
+      "typed_call_sites": 844,
+      "queries_compared": 413,
+      "fresh_median_ms": 1307.144,
+      "cached_median_ms": 71.1941,
+      "fresh_over_cache_ratio": 18.360285473093978,
+      "cache_initialization_ms": 1462.0157,
+      "cache_hits": 7,
+      "cache_bypass_reason": null,
+      "csr_ms_per_indexed_query": 0.0035818950000000003,
+      "adjacency_ms_per_indexed_query": 0.0028401209999999997,
+      "adjacency_over_csr_ratio": 0.7929101774340117,
+      "micro_timing_resolved": true,
+      "full_typed_inventory_json_bytes": 264383,
+      "median_impact_json_bytes": 561,
+      "median_context_selection_reduction_percent": 99.78780783938454,
+      "compiler_mutation_cases": 3
+    },
+    {
+      "project": "twitch-miner-go",
+      "root": "C:\\Users\\kbell\\Downloads\\twitch-miner-go",
+      "source_sha256": "d96c9c402439f914e65502c649d83a6823c75e136f5a460f7e3867a0aae4d969",
+      "packages": 5,
+      "symbols": 28,
+      "typed_call_sites": 43,
+      "queries_compared": 28,
+      "fresh_median_ms": 679.2057,
+      "cached_median_ms": 697.1782,
+      "fresh_over_cache_ratio": 0.9742210814968111,
+      "cache_initialization_ms": 677.3667,
+      "cache_hits": 0,
+      "cache_bypass_reason": "go:embed assets are not tracked by this Go-source-only cache",
+      "csr_ms_per_indexed_query": 0.000569769,
+      "adjacency_ms_per_indexed_query": 0.0005788799999999999,
+      "adjacency_over_csr_ratio": 1.0159906909642327,
+      "micro_timing_resolved": true,
+      "full_typed_inventory_json_bytes": 13307,
+      "median_impact_json_bytes": 603,
+      "median_context_selection_reduction_percent": 95.46855038701435,
+      "compiler_mutation_cases": 3
+    },
+    {
+      "project": "kick-miner-go",
+      "root": "C:\\Users\\kbell\\Downloads\\kick-miner-go",
+      "source_sha256": "f1730afcc8b949510f797afe76206da2fc26aa10f92c83ec2a3cc9efece96eaf",
+      "packages": 6,
+      "symbols": 55,
+      "typed_call_sites": 103,
+      "queries_compared": 55,
+      "fresh_median_ms": 679.91,
+      "cached_median_ms": 38.4325,
+      "fresh_over_cache_ratio": 17.691016717621803,
+      "cache_initialization_ms": 765.0595,
+      "cache_hits": 7,
+      "cache_bypass_reason": null,
+      "csr_ms_per_indexed_query": 0.001109767,
+      "adjacency_ms_per_indexed_query": 0.001044854,
+      "adjacency_over_csr_ratio": 0.9415075416731621,
+      "micro_timing_resolved": true,
+      "full_typed_inventory_json_bytes": 31254,
+      "median_impact_json_bytes": 642.5,
+      "median_context_selection_reduction_percent": 97.94426313431882,
+      "compiler_mutation_cases": 3
+    }
+  ],
+  "interpretation": "Bounded utility demonstrated for exact typed impact answers and source-validated index reuse. Comparable conventional adjacency answers match; CSR superiority and neural benefit are not demonstrated.",
+  "real_go_build_cases": [
+    {
+      "project": "mbvm-db",
+      "symbol": "github.com/kbelludoo/mbvm-db/pkg/mbvmdb.New",
+      "baseline_provider_compiled": true,
+      "self_consistent_virtual_provider_compiled": true,
+      "confirmed_broken_consumer_packages": [
+        "github.com/kbelludoo/mbvm-db/cmd/benchmark",
+        "github.com/kbelludoo/mbvm-db/cmd/compile_all_games",
+        "github.com/kbelludoo/mbvm-db/cmd/gen_sigma_db",
+        "github.com/kbelludoo/mbvm-db/cmd/mbvm-db",
+        "github.com/kbelludoo/mbvm-db/cmd/mbvm-mcp",
+        "github.com/kbelludoo/mbvm-db/experiments/hdc-csr"
+      ],
+      "source_files_unmodified": true,
+      "raw_report": "output\\value-validation-2026-10-26-v2\\build-witness-mbvm-db.json",
+      "raw_report_sha256": "7ff8c8efc4e5f8c0a70acd50e51342a765b05bfbfc4ca90be5dbcae60b8563c8"
+    },
+    {
+      "project": "twitch-miner-go",
+      "symbol": "github.com/kbelludoo/twitch-miner-go/pkg/miner.NewManager",
+      "baseline_provider_compiled": true,
+      "self_consistent_virtual_provider_compiled": true,
+      "confirmed_broken_consumer_packages": [
+        "github.com/kbelludoo/twitch-miner-go"
+      ],
+      "source_files_unmodified": true,
+      "raw_report": "output\\value-validation-2026-10-26-v2\\build-witness-twitch-miner-go.json",
+      "raw_report_sha256": "4c573b71d88a9b77d3c794658b84398cad784032c5f31cafc51df66b6b19c127"
+    },
+    {
+      "project": "kick-miner-go",
+      "symbol": "github.com/kbelludoo/kick-miner-go/pkg/miner.NewManager",
+      "baseline_provider_compiled": true,
+      "self_consistent_virtual_provider_compiled": true,
+      "confirmed_broken_consumer_packages": [
+        "github.com/kbelludoo/kick-miner-go"
+      ],
+      "source_files_unmodified": true,
+      "raw_report": "output\\value-validation-2026-10-26-v2\\build-witness-kick-miner-go.json",
+      "raw_report_sha256": "cd14cf2760052458756c184c186b1c3fe187ca91502f212d6ff6cb5c3d87222f"
+    }
+  ],
+  "real_go_build_confirmed_consumer_packages": 8,
+  "protocol_sha256": "7ff66652ba304892558555262c32fd9ff8ec320d2cf3ecc0db0359bc2f8b9f89"
+}

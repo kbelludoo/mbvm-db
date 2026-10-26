@@ -1,0 +1,52 @@
+name: Closed-loop learning experiment
+
+on:
+  push:
+    paths:
+      - 'experiments/hdc-csr/**'
+      - 'internal/impact/**'
+      - 'pkg/mbvmdb/**'
+      - 'go.mod'
+      - 'go.sum'
+      - '.github/workflows/closed_loop_learning.yml'
+  pull_request:
+    paths:
+      - 'experiments/hdc-csr/**'
+      - 'internal/impact/**'
+      - 'pkg/mbvmdb/**'
+      - 'go.mod'
+      - 'go.sum'
+      - '.github/workflows/closed_loop_learning.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  experiment:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CGO_ENABLED: '1'
+      GEMINI_API_KEY: ''
+      GOOGLE_API_KEY: ''
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Race tests and static checks
+        run: |
+          go test -race -count=1 -v ./experiments/hdc-csr/closed_loop_learning/...
+          go vet ./experiments/hdc-csr/closed_loop_learning/...
+      - name: Run frozen development experiment
+        run: |
+          go run ./experiments/hdc-csr/closed_loop_learning/cmd/closed-loop -dir ./pkg/mbvmdb -out output/closed-loop
+      - name: Preserve all results, including zero gains and regressions
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: closed-loop-development-results
+          path: output/closed-loop
+          if-no-files-found: warn

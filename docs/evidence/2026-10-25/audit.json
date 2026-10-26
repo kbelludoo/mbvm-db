@@ -1,0 +1,160 @@
+{
+  "schema": "mbvm-proof-boundaries-v1",
+  "audit_date_local": "2026-10-25",
+  "timezone": "America/Sao_Paulo",
+  "recorded_at_utc": "2026-10-26 02:28:38 UTC",
+  "git_base": "6093a797adaddb34fc418b4d701feef4dd1459f0",
+  "branch": "feature/hdc-csr-experimental",
+  "scope": "Current local checkout, including pre-existing untracked Go files. Historical reports are explicitly separated from fresh command observations.",
+  "environment": {
+    "go": "go1.27.0",
+    "goos": "windows",
+    "goarch": "amd64",
+    "cgo_enabled": "0",
+    "configured_c_compiler": "gcc",
+    "c_compiler_found": false
+  },
+  "source_inventory": {
+    "file": "source.sha256",
+    "files": 185,
+    "coverage": "Nonignored Go/Python sources, workflow YAML, go.mod/go.sum and root agent instructions; individual SHA-256 values."
+  },
+  "artifact_inventory": {
+    "file": "artifacts.sha256",
+    "files": 20,
+    "note": "Hashes identify inspected bytes; they do not authenticate historical execution or authorship."
+  },
+  "fresh_checks": [
+    {
+      "id": "build",
+      "command": "go build -o <audit-temp>/mbvm-db.exe ./cmd/mbvm-db",
+      "status": "passed",
+      "exit_code": 0
+    },
+    {
+      "id": "vet",
+      "command": "go vet ./...",
+      "status": "passed",
+      "exit_code": 0
+    },
+    {
+      "id": "fresh_snapshot",
+      "command": "<fresh-cli> build . <audit-temp>/current.mbvmdb; verify; inspect; slice",
+      "status": "passed",
+      "files": 100,
+      "symbols": 548,
+      "file_bytes": 82997,
+      "bytecode_bytes": 13131,
+      "sha256": "30375c95b815a88bf5a2a6356e4723021c14cd699415e1910bcbc3c073a1e0b7"
+    },
+    {
+      "id": "typed_cross_package_breakage",
+      "status": "passed_for_recorded_case",
+      "report": "module_breakage.json",
+      "loaded_packages": 26,
+      "typed_symbols": 366,
+      "resolved_edges": 723,
+      "unlinked_imported_call_sites": 3015,
+      "direct_caller_functions": 16,
+      "confirmed_consumer_packages": 6,
+      "inconclusive_consumer_packages": 0,
+      "provider_original_and_overlay_compile": true,
+      "adapted_internal_call_sites": 2,
+      "source_files_unmodified": true
+    },
+    {
+      "id": "crt_execution",
+      "status": "passed_for_public_development_fixtures",
+      "variants": 3,
+      "pairs_per_variant": 12,
+      "unique_independent_holdout_tasks": 0,
+      "log": "commands.txt"
+    },
+    {
+      "id": "independent_arithmetic",
+      "status": "passed_for_finite_certificates",
+      "report": "arithmetic_checks.json",
+      "final_crt_classes_checked": 72,
+      "related_fixture_rows": 36,
+      "reported_numeric_identities_checked": 5,
+      "distinct_numeric_triples": 2,
+      "method": "Independent .NET BigInteger and exhaustive enumeration; not the repository's Go verifier."
+    },
+    {
+      "id": "strict_budget_claim",
+      "status": "contradicted",
+      "command": "<fresh-cli> slice-budget <audit-temp>/current.mbvmdb ExtractSlice 1 2",
+      "requested_budget": 1,
+      "reported_estimated_tokens": 32,
+      "note": "Estimator is bytes/4; first candidate bypasses budget. Actual tokenizer counts were not measured."
+    },
+    {
+      "id": "race_suite_cgo_disabled",
+      "status": "environment_blocked",
+      "command": "go test -race -count=1 -v ./...",
+      "exit_code": 1,
+      "reason": "-race requires cgo"
+    },
+    {
+      "id": "race_suite_cgo_enabled",
+      "status": "environment_blocked",
+      "command": "CGO_ENABLED=1 (process only): go test -race -count=1 -v ./...",
+      "exit_code": 1,
+      "reason": "gcc not found",
+      "tests_declared_passed": false
+    },
+    {
+      "id": "security_scan",
+      "status": "findings_reported",
+      "command": "govulncheck ./...",
+      "exit_code": 3,
+      "reported_reachable_stdlib_findings": 9,
+      "report": "govulncheck.txt",
+      "exploit_demonstrated": false
+    },
+    {
+      "id": "legacy_neural_artifact",
+      "status": "incompatible_with_current_8k_index_auditor",
+      "file": "mbvm_neural_weights.bin",
+      "bytes": 12662197,
+      "observed_magic": "MBVMNN1",
+      "auditor_expects": "MBVM8K1",
+      "sha256": "e365c356c47b8f318302c772b252fefc6d9b326b3e4433e5e7ce9e7022ea8f92",
+      "trained_model_inference_verified": false
+    },
+    {
+      "id": "kaggle_zip",
+      "status": "not_a_valid_zip_in_this_copy",
+      "file": "kaggle_output.zip",
+      "bytes": 13308,
+      "report": "kaggle_archive.txt"
+    }
+  ],
+  "historical_only": {
+    "summary": "historical_summary.json",
+    "hdc_multipath_recall_at_10": 0.9065431435732186,
+    "semantic_only_recall_at_10": 0.2324024346580737,
+    "exact_csr_semantic_recall_at_10": 1,
+    "seeds": 50,
+    "valid_queries": 133,
+    "excluded_empty_relevance_queries": 17,
+    "capacity_configurations": 120,
+    "official_benchmark_provenance": "local-manual; not a verified CI run",
+    "original_experiment_reports_preserved": true
+  },
+  "not_established": [
+    "Learned Go program semantics or causal improvement from training",
+    "General HDC superiority, unbounded capacity, or global O(1) retrieval",
+    "Universal correctness/completeness of Go impact analysis",
+    "Formal validity of model prose proofs or new mathematical discovery",
+    "Production database readiness, race-free execution, clean vulnerability audit, or total resident-memory guarantees",
+    "Lossless source compression, guaranteed task sufficiency, or strict tokenizer budget"
+  ],
+  "deliverables": {
+    "interpretation": "../../EVIDENCIAS_E_LIMITES.md",
+    "raw_commands": "commands.txt",
+    "independent_checker": "summarize.ps1",
+    "source_hashes": "source.sha256",
+    "artifact_hashes": "artifacts.sha256"
+  }
+}

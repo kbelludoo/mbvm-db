@@ -14,9 +14,9 @@
       "avg_false_positives": 1,
       "p50_latency_us": 0,
       "p95_latency_us": 0,
-      "p99_latency_us": 1000.1,
-      "mean_latency_us": 10.001,
-      "estimated_qps": 99990.00099990002
+      "p99_latency_us": 524.7,
+      "mean_latency_us": 5.333000000000001,
+      "estimated_qps": 187511.71948246763
     },
     {
       "name": "Pure_Semantic_Scan",
@@ -27,11 +27,11 @@
       "avg_returned_results": 10,
       "mrr": 0.008083333333333333,
       "avg_false_positives": 9.96,
-      "p50_latency_us": 0,
-      "p95_latency_us": 1008.3,
-      "p99_latency_us": 1022.7,
-      "mean_latency_us": 335.61799999999994,
-      "estimated_qps": 2979.577972575965
+      "p50_latency_us": 525,
+      "p95_latency_us": 563,
+      "p99_latency_us": 594.1,
+      "mean_latency_us": 336.89899999999994,
+      "estimated_qps": 2968.2486442524323
     },
     {
       "name": "HDC_Hybrid_ContextSimilarity",
@@ -42,11 +42,11 @@
       "avg_returned_results": 10,
       "mrr": 0.29083333333333317,
       "avg_false_positives": 7.97,
-      "p50_latency_us": 997.6,
-      "p95_latency_us": 1067.2,
-      "p99_latency_us": 1318.1,
-      "mean_latency_us": 687.665,
-      "estimated_qps": 1454.196447398079
+      "p50_latency_us": 545.7,
+      "p95_latency_us": 1095.6,
+      "p99_latency_us": 1588.4,
+      "mean_latency_us": 688.041,
+      "estimated_qps": 1453.40175948817
     },
     {
       "name": "HDC_Canonical_VSA_Unbinding",
@@ -57,11 +57,11 @@
       "avg_returned_results": 10,
       "mrr": 1,
       "avg_false_positives": 5,
-      "p50_latency_us": 980.6,
-      "p95_latency_us": 1018.4,
-      "p99_latency_us": 1019.9,
-      "mean_latency_us": 526.218,
-      "estimated_qps": 1900.3530856033053
+      "p50_latency_us": 537.2,
+      "p95_latency_us": 561.3,
+      "p99_latency_us": 1047.8,
+      "mean_latency_us": 534.947,
+      "estimated_qps": 1869.34406586073
     }
   ]
 }

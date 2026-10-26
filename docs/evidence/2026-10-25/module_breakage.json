@@ -1,0 +1,186 @@
+{
+  "impact": {
+    "schema": "mbvm-module-impact-v1",
+    "symbol": "github.com/kbelludoo/mbvm-db/pkg/mbvmdb.New",
+    "packages": 26,
+    "symbols": 366,
+    "resolved_edges": 723,
+    "unlinked_imported_call_sites": 3015,
+    "direct_callers": [
+      "github.com/kbelludoo/mbvm-db/cmd/benchmark.main",
+      "github.com/kbelludoo/mbvm-db/cmd/compile_all_games.compileBaiakIdle",
+      "github.com/kbelludoo/mbvm-db/cmd/compile_all_games.compileBotLeveling",
+      "github.com/kbelludoo/mbvm-db/cmd/compile_all_games.compileFarmbot",
+      "github.com/kbelludoo/mbvm-db/cmd/compile_all_games.compileLuxidle",
+      "github.com/kbelludoo/mbvm-db/cmd/compile_all_games.compilePokebot",
+      "github.com/kbelludoo/mbvm-db/cmd/compile_all_games.compilePokeidleworld",
+      "github.com/kbelludoo/mbvm-db/cmd/compile_all_games.compilePokerlegacy",
+      "github.com/kbelludoo/mbvm-db/cmd/compile_all_games.compileTibiaIdle",
+      "github.com/kbelludoo/mbvm-db/cmd/gen_sigma_db.main",
+      "github.com/kbelludoo/mbvm-db/cmd/mbvm-db.loadOrIngest",
+      "github.com/kbelludoo/mbvm-db/cmd/mbvm-db.main",
+      "github.com/kbelludoo/mbvm-db/cmd/mbvm-mcp.loadDB",
+      "github.com/kbelludoo/mbvm-db/experiments/hdc-csr.ExportRealAST",
+      "github.com/kbelludoo/mbvm-db/pkg/mbvmdb.CompileWebPageToBytecode",
+      "github.com/kbelludoo/mbvm-db/pkg/mbvmdb.NewCognitiveMemory"
+    ],
+    "transitive_candidates": [
+      "github.com/kbelludoo/mbvm-db/cmd/compile_all_games.main",
+      "github.com/kbelludoo/mbvm-db/cmd/mbvm-mcp.handleRPC",
+      "github.com/kbelludoo/mbvm-db/cmd/mbvm-mcp.handleToolCall",
+      "github.com/kbelludoo/mbvm-db/cmd/mbvm-mcp.main",
+      "github.com/kbelludoo/mbvm-db/experiments/hdc-csr/cmd/export_real_ast.main"
+    ],
+    "max_depth": 4,
+    "warnings": [
+      "Only loaded local Go packages and statically resolved call sites are included.",
+      "Interface dispatch, function values and reflection are not assigned to concrete callees.",
+      "Graph reachability is not proof of compile-time or runtime breakage."
+    ]
+  },
+  "cross_package_breakage": {
+    "schema": "mbvm-cross-package-breakage-v1",
+    "symbol": "github.com/kbelludoo/mbvm-db/pkg/mbvmdb.New",
+    "source_files_unmodified": true,
+    "mode": "go build -mod=readonly -overlay (CGO_ENABLED=0)",
+    "provider_baseline_build_passed": true,
+    "provider_overlay_build_passed": true,
+    "adapted_internal_call_sites": 2,
+    "provider_diagnostics": [],
+    "consumers": [
+      {
+        "package": "github.com/kbelludoo/mbvm-db/cmd/benchmark",
+        "baseline_build_passed": true,
+        "changed_build_passed": false,
+        "confirmed_consumer_error": true,
+        "diagnostics": [
+          "# github.com/kbelludoo/mbvm-db/cmd/benchmark",
+          "cmd\\benchmark\\main.go:23:8: not enough arguments in call to mbvmdb.New",
+          "\thave ()",
+          "\twant (int)"
+        ]
+      },
+      {
+        "package": "github.com/kbelludoo/mbvm-db/cmd/compile_all_games",
+        "baseline_build_passed": true,
+        "changed_build_passed": false,
+        "confirmed_consumer_error": true,
+        "diagnostics": [
+          "# github.com/kbelludoo/mbvm-db/cmd/compile_all_games",
+          "cmd\\compile_all_games\\main.go:44:8: not enough arguments in call to mbvmdb.New",
+          "\thave ()",
+          "\twant (int)",
+          "cmd\\compile_all_games\\main.go:93:8: not enough arguments in call to mbvmdb.New",
+          "\thave ()",
+          "\twant (int)",
+          "cmd\\compile_all_games\\main.go:135:8: not enough arguments in call to mbvmdb.New",
+          "\thave ()",
+          "\twant (int)",
+          "cmd\\compile_all_games\\main.go:173:8: not enough arguments in call to mbvmdb.New",
+          "\thave ()",
+          "\twant (int)",
+          "cmd\\compile_all_games\\main.go:209:8: not enough arguments in call to mbvmdb.New",
+          "\thave ()",
+          "\twant (int)",
+          "cmd\\compile_all_games\\main.go:245:8: not enough arguments in call to mbvmdb.New",
+          "\thave ()",
+          "\twant (int)",
+          "cmd\\compile_all_games\\main.go:255:8: not enough arguments in call to mbvmdb.New",
+          "\thave ()",
+          "\twant (int)",
+          "cmd\\compile_all_games\\main.go:263:8: not enough arguments in call to mbvmdb.New",
+          "\thave ()",
+          "\twant (int)"
+        ]
+      },
+      {
+        "package": "github.com/kbelludoo/mbvm-db/cmd/gen_sigma_db",
+        "baseline_build_passed": true,
+        "changed_build_passed": false,
+        "confirmed_consumer_error": true,
+        "diagnostics": [
+          "# github.com/kbelludoo/mbvm-db/cmd/gen_sigma_db",
+          "cmd\\gen_sigma_db\\main.go:56:8: not enough arguments in call to mbvmdb.New",
+          "\thave ()",
+          "\twant (int)"
+        ]
+      },
+      {
+        "package": "github.com/kbelludoo/mbvm-db/cmd/mbvm-db",
+        "baseline_build_passed": true,
+        "changed_build_passed": false,
+        "confirmed_consumer_error": true,
+        "diagnostics": [
+          "# github.com/kbelludoo/mbvm-db/cmd/mbvm-db",
+          "cmd\\mbvm-db\\main.go:50:9: not enough arguments in call to mbvmdb.New",
+          "\thave ()",
+          "\twant (int)",
+          "cmd\\mbvm-db\\main.go:87:10: not enough arguments in call to mbvmdb.New",
+          "\thave ()",
+          "\twant (int)",
+          "cmd\\mbvm-db\\main.go:90:9: not enough arguments in call to mbvmdb.New",
+          "\thave ()",
+          "\twant (int)",
+          "cmd\\mbvm-db\\main.go:122:9: not enough arguments in call to mbvmdb.New",
+          "\thave ()",
+          "\twant (int)",
+          "cmd\\mbvm-db\\main.go:245:8: not enough arguments in call to mbvmdb.New",
+          "\thave ()",
+          "\twant (int)"
+        ]
+      },
+      {
+        "package": "github.com/kbelludoo/mbvm-db/cmd/mbvm-mcp",
+        "baseline_build_passed": true,
+        "changed_build_passed": false,
+        "confirmed_consumer_error": true,
+        "diagnostics": [
+          "# github.com/kbelludoo/mbvm-db/cmd/mbvm-mcp",
+          "cmd\\mbvm-mcp\\main.go:362:8: not enough arguments in call to mbvmdb.New",
+          "\thave ()",
+          "\twant (int)"
+        ]
+      },
+      {
+        "package": "github.com/kbelludoo/mbvm-db/experiments/hdc-csr",
+        "baseline_build_passed": true,
+        "changed_build_passed": false,
+        "confirmed_consumer_error": true,
+        "diagnostics": [
+          "# github.com/kbelludoo/mbvm-db/experiments/hdc-csr",
+          "experiments\\hdc-csr\\real_ast.go:55:11: not enough arguments in call to mbvmdb.New",
+          "\thave ()",
+          "\twant (int)"
+        ]
+      }
+    ],
+    "confirmed_broken_consumers": [
+      "github.com/kbelludoo/mbvm-db/cmd/benchmark",
+      "github.com/kbelludoo/mbvm-db/cmd/compile_all_games",
+      "github.com/kbelludoo/mbvm-db/cmd/gen_sigma_db",
+      "github.com/kbelludoo/mbvm-db/cmd/mbvm-db",
+      "github.com/kbelludoo/mbvm-db/cmd/mbvm-mcp",
+      "github.com/kbelludoo/mbvm-db/experiments/hdc-csr"
+    ],
+    "inconclusive_consumers": [],
+    "warnings": [
+      "Only direct statically linked consumers in loaded Go packages are checked.",
+      "The baseline provider and self-consistent overlay provider must compile before consumer verification.",
+      "Only typed local provider calls are adapted (synthetic int argument 0); original consumer calls are never adapted.",
+      "Compiler errors are attributed to consumers only at known static target call-site lines.",
+      "Go build may update the compiler build cache and writes its binary only to temporary files.",
+      "Interface dispatch, reflection, function values and alternate build tags are not covered."
+    ]
+  },
+  "load_profile": {
+    "go_list_calls": 1,
+    "export_archives": 299,
+    "packages": 26,
+    "symbols": 366,
+    "edges": 723,
+    "discovery_ms": 991.0207,
+    "typecheck_ms": 241.6045,
+    "link_ms": 0.523,
+    "total_ms": 1233.1482
+  }
+}

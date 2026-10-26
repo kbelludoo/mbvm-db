@@ -1,0 +1,299 @@
+MBVM-DB local proof-boundary audit, local date 2026-10-25
+
+Commands below were executed separately. <audit-temp> is:
+C:\Users\kbell\AppData\Local\Temp\mbvm-evidence-2ddecf654b6b4da49484fcbadf7972c3
+
+Build current CLI
+Command: go build -o <audit-temp>/mbvm-db.exe ./cmd/mbvm-db
+Exit code: 0
+{
+  "Directory": "C:\\Users\\kbell\\AppData\\Local\\Temp\\mbvm-evidence-2ddecf654b6b4da49484fcbadf7972c3",
+  "Executable": "C:\\Users\\kbell\\AppData\\Local\\Temp\\mbvm-evidence-2ddecf654b6b4da49484fcbadf7972c3\\mbvm-db.exe",
+  "BuildExit": 0
+}
+
+
+Static vet
+Command: go vet ./...
+Exit code: 0
+(no output)
+
+
+Required race suite with current environment
+Command: go test -race -count=1 -v ./...
+Exit code: 1
+go: -race requires cgo; enable cgo by setting CGO_ENABLED=1
+
+
+Fresh database and source slices
+Command: <fresh-cli> verify codebase.mbvmdb; <fresh-cli> build . <audit-temp>/current.mbvmdb; inspect; slice
+Exit code: 0
+✅ [MBVM-DB] Arquivo 'codebase.mbvmdb' íntegro! Magic Header válido, versão 1.0 e CRC32 verificado.
+  • Total de Símbolos: 387
+  • Bytecode: 8634 bytes
+⚡ [MBVM-DB] Banco de dados compilado com sucesso em 60.9624ms!
+  • Arquivo de Saída: C:\Users\kbell\AppData\Local\Temp\mbvm-evidence-2ddecf654b6b4da49484fcbadf7972c3\current.mbvmdb (82997 bytes)
+  • Arquivos Processados: 100
+  • Símbolos Indexados: 548
+  • Bytecode Compilado: 13131 bytes
+📦 MBVM-DB Status: C:\Users\kbell\AppData\Local\Temp\mbvm-evidence-2ddecf654b6b4da49484fcbadf7972c3\current.mbvmdb
+  • Total de Arquivos: 100
+  • Total de Símbolos Indexados: 548
+  • Tamanho do Bytecode Compilado: 13131 bytes
+@MBVM:slice:target%mode=dynamic_slice
+
+📦 pkg impact
+  func (*ModuleCache) Impact(root, symbol string) (ModuleImpact, ModuleCacheQueryStats, error)
+  func LoadModule(root string) (*ModuleGraph, error)
+  func LoadModuleWithStats(root string) (*ModuleGraph, ModuleLoadStats, error)
+  func (Symbol) Qualified() string
+  func durationMillis(duration time.Duration) float64
+  func loadModuleExports(root string) (*moduleExports, error)
+  func loadWithSharedImporter(dir, expected string, sharedImporter types.Importer, sharedFileSet *token.FileSet) (*Graph, error)
+
+📦 pkg main
+  func runImpactModule(args []string, out io.Writer) error
+
+⚡ [MBVM-DB] Símbolo 'LoadModuleWithStats' fatiado em 3.123ms (profundidade 1 | 8 símbolos | ~159 tokens)
+
+⚡ [MBVM-DB] Símbolo 'ExtractSlice' fatiado em 2.6225ms (profundidade 1 | 5 símbolos | ~151 tokens)
+
+@MBVM:slice:target%mode=dynamic_slice
+
+📦 pkg main
+  func handleToolCall(params json.RawMessage) toolCallResult
+  func main()
+
+📦 pkg mbvmdb
+  type DB struct { mu sync.RWMutex, pool *StringPool, symbols []*SymbolRecord, indexByName map[string]*SymbolRecord, methodsByReceiver map[string][]*SymbolRecord, bytecode []byte, TotalFiles int, TotalRawBytes int64, csrOffsets []uint32, csrEdges []uint16, csrRevOffsets []uint32, csrRevEdges []uint16 }
+  func (*DB) ExtractSlice(targetSymbol string, maxDepth int) *ContextSlice
+  func (*DB) extractSliceLocked(targetSymbol string, maxDepth int) *ContextSlice
+
+
+
+Race suite with process-local CGO_ENABLED=1
+Command: go test -race -count=1 -v ./...
+Exit code: 1
+# runtime/cgo
+cgo: C compiler "gcc" not found: exec: "gcc": executable file not found in %PATH%
+FAIL	github.com/kbelludoo/mbvm-db/cmd/benchmark [build failed]
+FAIL	github.com/kbelludoo/mbvm-db/cmd/compile_all_games [build failed]
+FAIL	github.com/kbelludoo/mbvm-db/cmd/gen_huntera_ops [build failed]
+FAIL	github.com/kbelludoo/mbvm-db/cmd/gen_poke_hunts [build failed]
+FAIL	github.com/kbelludoo/mbvm-db/cmd/gen_pokeidleworld [build failed]
+FAIL	github.com/kbelludoo/mbvm-db/cmd/gen_pokerlegacy [build failed]
+FAIL	github.com/kbelludoo/mbvm-db/cmd/gen_sigma_db [build failed]
+FAIL	github.com/kbelludoo/mbvm-db/cmd/gen_sigma_table [build failed]
+FAIL	github.com/kbelludoo/mbvm-db/cmd/gen_tibia_mobs [build failed]
+FAIL	github.com/kbelludoo/mbvm-db/cmd/list_gaps [build failed]
+FAIL	github.com/kbelludoo/mbvm-db/cmd/mbvm-db [build failed]
+FAIL	github.com/kbelludoo/mbvm-db/cmd/mbvm-mcp [build failed]
+FAIL	github.com/kbelludoo/mbvm-db/cmd/run_live_eval [build failed]
+FAIL	github.com/kbelludoo/mbvm-db/cmd/run_multilemma_choice_dev [build failed]
+FAIL	github.com/kbelludoo/mbvm-db/cmd/run_multilemma_depth_dev [build failed]
+FAIL	github.com/kbelludoo/mbvm-db/cmd/run_multilemma_dev [build failed]
+FAIL	github.com/kbelludoo/mbvm-db/experiments/erdos_straus [build failed]
+FAIL	github.com/kbelludoo/mbvm-db/experiments/hdc-csr [build failed]
+FAIL	github.com/kbelludoo/mbvm-db/experiments/hdc-csr/cmd/audit_supreme_index [build failed]
+FAIL	github.com/kbelludoo/mbvm-db/experiments/hdc-csr/cmd/audit_supreme_structure [build failed]
+FAIL	github.com/kbelludoo/mbvm-db/experiments/hdc-csr/cmd/evaluate_real_ast [build failed]
+FAIL	github.com/kbelludoo/mbvm-db/experiments/hdc-csr/cmd/export_real_ast [build failed]
+FAIL	github.com/kbelludoo/mbvm-db/experiments/hdc-csr/cmd/semantic_sensitivity_go [build failed]
+FAIL	github.com/kbelludoo/mbvm-db/experiments/real_eval [build failed]
+FAIL	github.com/kbelludoo/mbvm-db/internal/impact [build failed]
+FAIL	github.com/kbelludoo/mbvm-db/pkg/mbvmdb [build failed]
+FAIL
+
+
+Fresh module impact
+Command: <fresh-cli> impact-module -root . -symbol github.com/kbelludoo/mbvm-db/pkg/mbvmdb.New -json -profile
+Exit code: 0
+{
+  "impact": {
+    "schema": "mbvm-module-impact-v1",
+    "symbol": "github.com/kbelludoo/mbvm-db/pkg/mbvmdb.New",
+    "packages": 26,
+    "symbols": 366,
+    "resolved_edges": 723,
+    "unlinked_imported_call_sites": 3015,
+    "direct_callers": [
+      "github.com/kbelludoo/mbvm-db/cmd/benchmark.main",
+      "github.com/kbelludoo/mbvm-db/cmd/compile_all_games.compileBaiakIdle",
+      "github.com/kbelludoo/mbvm-db/cmd/compile_all_games.compileBotLeveling",
+      "github.com/kbelludoo/mbvm-db/cmd/compile_all_games.compileFarmbot",
+      "github.com/kbelludoo/mbvm-db/cmd/compile_all_games.compileLuxidle",
+      "github.com/kbelludoo/mbvm-db/cmd/compile_all_games.compilePokebot",
+      "github.com/kbelludoo/mbvm-db/cmd/compile_all_games.compilePokeidleworld",
+      "github.com/kbelludoo/mbvm-db/cmd/compile_all_games.compilePokerlegacy",
+      "github.com/kbelludoo/mbvm-db/cmd/compile_all_games.compileTibiaIdle",
+      "github.com/kbelludoo/mbvm-db/cmd/gen_sigma_db.main",
+      "github.com/kbelludoo/mbvm-db/cmd/mbvm-db.loadOrIngest",
+      "github.com/kbelludoo/mbvm-db/cmd/mbvm-db.main",
+      "github.com/kbelludoo/mbvm-db/cmd/mbvm-mcp.loadDB",
+      "github.com/kbelludoo/mbvm-db/experiments/hdc-csr.ExportRealAST",
+      "github.com/kbelludoo/mbvm-db/pkg/mbvmdb.CompileWebPageToBytecode",
+      "github.com/kbelludoo/mbvm-db/pkg/mbvmdb.NewCognitiveMemory"
+    ],
+    "transitive_candidates": [
+      "github.com/kbelludoo/mbvm-db/cmd/compile_all_games.main",
+      "github.com/kbelludoo/mbvm-db/cmd/mbvm-mcp.handleRPC",
+      "github.com/kbelludoo/mbvm-db/cmd/mbvm-mcp.handleToolCall",
+      "github.com/kbelludoo/mbvm-db/cmd/mbvm-mcp.main",
+      "github.com/kbelludoo/mbvm-db/experiments/hdc-csr/cmd/export_real_ast.main"
+    ],
+    "max_depth": 4,
+    "warnings": [
+      "Only loaded local Go packages and statically resolved call sites are included.",
+      "Interface dispatch, function values and reflection are not assigned to concrete callees.",
+      "Graph reachability is not proof of compile-time or runtime breakage."
+    ]
+  },
+  "load_profile": {
+    "go_list_calls": 1,
+    "export_archives": 299,
+    "packages": 26,
+    "symbols": 366,
+    "edges": 723,
+    "discovery_ms": 1062.1561,
+    "typecheck_ms": 180.9673,
+    "link_ms": 1.0046,
+    "total_ms": 1244.128
+  }
+}
+
+
+Compiler-witness summary
+Command: <fresh-cli> impact-module -root . -symbol github.com/kbelludoo/mbvm-db/pkg/mbvmdb.New -simulate-add-param int -json -profile
+Exit code: 0
+{
+  "Exit": 0,
+  "Packages": 26,
+  "Symbols": 366,
+  "Edges": 723,
+  "DirectCallers": 16,
+  "ProviderBaseline": true,
+  "ProviderOverlay": true,
+  "Confirmed": [
+    "github.com/kbelludoo/mbvm-db/cmd/benchmark",
+    "github.com/kbelludoo/mbvm-db/cmd/compile_all_games",
+    "github.com/kbelludoo/mbvm-db/cmd/gen_sigma_db",
+    "github.com/kbelludoo/mbvm-db/cmd/mbvm-db",
+    "github.com/kbelludoo/mbvm-db/cmd/mbvm-mcp",
+    "github.com/kbelludoo/mbvm-db/experiments/hdc-csr"
+  ],
+  "Inconclusive": [],
+  "SourceUnmodified": true
+}
+
+
+Fresh snapshot verification and estimated budget
+Command: <fresh-cli> verify <audit-temp>/current.mbvmdb; slice-budget <audit-temp>/current.mbvmdb ExtractSlice 100 2
+Exit code: 0
+✅ [MBVM-DB] Arquivo 'C:\Users\kbell\AppData\Local\Temp\mbvm-evidence-2ddecf654b6b4da49484fcbadf7972c3\current.mbvmdb' íntegro! Magic Header válido, versão 1.0 e CRC32 verificado.
+  • Total de Símbolos: 548
+  • Bytecode: 13131 bytes
+⚡ [MBVM-DB] Símbolo 'ExtractSlice' fatiado com teto de 100 tokens em 3.1932ms (2 símbolos | ~52 tokens)
+
+@MBVM:slice:target%mode=dynamic_slice
+
+📦 pkg mbvmdb
+  func (*DB) ExtractSlice(targetSymbol string, maxDepth int) *ContextSlice
+  func (*DB) extractSliceLocked(targetSymbol string, maxDepth int) *ContextSlice
+
+[
+  {
+    "Path": "C:\\Users\\kbell\\AppData\\Local\\Temp\\mbvm-evidence-2ddecf654b6b4da49484fcbadf7972c3\\mbvm-db.exe",
+    "Hash": "E264F988C83B8EAC34F5653A39D412544F770BAF1B96AE7B967E03E0D0434CAC"
+  },
+  {
+    "Path": "C:\\Users\\kbell\\AppData\\Local\\Temp\\mbvm-evidence-2ddecf654b6b4da49484fcbadf7972c3\\current.mbvmdb",
+    "Hash": "30375C95B815A88BF5A2A6356E4723021C14CD699415E1910BCBC3C073A1E0B7"
+  },
+  {
+    "Path": "C:\\Users\\kbell\\Downloads\\mbvm-db\\codebase.mbvmdb",
+    "Hash": "E115A545EAD72239F82A12F96732C6E01F62529FAA22A25D03477CA22551A0F6"
+  }
+]
+
+
+Strict token-budget counterexample
+Command: <fresh-cli> slice-budget <audit-temp>/current.mbvmdb ExtractSlice 1 2
+Exit code: 0
+@MBVM:slice:target%mode=dynamic_slice
+
+📦 pkg mbvmdb
+  func (*DB) ExtractSlice(targetSymbol string, maxDepth int) *ContextSlice
+
+⚡ [MBVM-DB] Símbolo 'ExtractSlice' fatiado com teto de 1 tokens em 4.717ms (1 símbolos | ~32 tokens)
+
+
+
+Fresh public CRT controls
+Command: go run ./cmd/run_multilemma_{dev,depth_dev,choice_dev} -report <audit-temp>/<report>.json
+Exit code: 0
+PUBLIC CRT development controls: 12/12 B/C pairs match with certified arithmetic. No LLM inference.
+JSON development report saved to C:\Users\kbell\AppData\Local\Temp\mbvm-evidence-2ddecf654b6b4da49484fcbadf7972c3\crt_dev_results.json
+PUBLIC three-premise CRT development: 12/12 matching B/C certificates; no LLM calls or CSR superiority claim.
+Development report: C:\Users\kbell\AppData\Local\Temp\mbvm-evidence-2ddecf654b6b4da49484fcbadf7972c3\crt_depth_dev_results.json
+PUBLIC competing CRT proofs: 12/12 matching B/C certificates; no Gemini calls or CSR advantage claimed.
+Development report: C:\Users\kbell\AppData\Local\Temp\mbvm-evidence-2ddecf654b6b4da49484fcbadf7972c3\crt_choice_dev_results.json
+
+
+Historical legacy artifact compatibility
+Command: go run ./experiments/hdc-csr/cmd/audit_supreme_index -file mbvm_neural_weights.bin -queries 32 -out <audit-output>
+Exit code: 1
+{
+  "Name": "mbvm_neural_weights.bin",
+  "Length": 12662197,
+  "LastWriteTimeUtc": "2026-10-24T02:50:19.9454292Z"
+}
+{
+  "Hash": "E365C356C47B8F318302C772B252FEFC6D9B326B3E4433E5E7CE9E7022EA8F92"
+}
+index audit failed: incorrect MBVM8K1 binary magic
+exit status 1
+
+
+Local Kaggle ZIP validation
+Command: System.IO.Compression.ZipFile.OpenRead(kaggle_output.zip)
+Exit code: 1
+Exception calling "OpenRead" with "1" argument(s): "End of Central Directory record could not be found."
+
+
+Independent arithmetic checks and build provenance
+Command: pwsh -NoProfile -File docs/evidence/2026-10-25/summarize.ps1 -FreshCRTDirectory <audit-temp>; go version -m <fresh-cli>
+Exit code: 0
+{
+  "crt_tasks_checked": 36,
+  "numeric_identities_checked": 5,
+  "source_files_hashed": 185,
+  "artifact_files_hashed": 20
+}
+{
+  "AdaptedInternal": 2,
+  "ProviderOriginal": true,
+  "ProviderOverlay": true,
+  "ValidConsumers": 6,
+  "SourcesUnmodified": true
+}
+C:\Users\kbell\AppData\Local\Temp\mbvm-evidence-2ddecf654b6b4da49484fcbadf7972c3\mbvm-db.exe: go1.27.0
+	path	github.com/kbelludoo/mbvm-db/cmd/mbvm-db
+	mod	github.com/kbelludoo/mbvm-db	v0.0.0-20261025022025-6093a797adad+dirty	
+	dep	google.golang.org/protobuf	v1.36.12	h1:pJOKDDOyeXErUroCihFAd5LQuwXBSpVnKGrj5o/fwxc=
+	build	-buildmode=exe
+	build	-compiler=gc
+	build	CGO_ENABLED=0
+	build	GOARCH=amd64
+	build	GOOS=windows
+	build	GOAMD64=v1
+	build	vcs=git
+	build	vcs.revision=6093a797adaddb34fc418b4d701feef4dd1459f0
+	build	vcs.time=2026-10-25T02:20:25Z
+	build	vcs.modified=true
+2026-10-26T02:27:08.4630370Z
+
+
+Security scan: govulncheck ./...
+Recorded process exit code: 3
+Full stdout/stderr: govulncheck.txt
+Nine findings reported by the tool. This is not a demonstrated exploit.

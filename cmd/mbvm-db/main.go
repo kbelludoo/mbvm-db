@@ -17,21 +17,27 @@ func main() {
 
 	cmd := os.Args[1]
 	switch cmd {
+	case "impact-server":
+		if err := runImpactServer(os.Args[2:], os.Stdin, os.Stdout); err != nil {
+			fmt.Fprintf(os.Stderr, "mbvm-db impact-server: %s\n", err)
+			os.Exit(1)
+		}
+
 	case "impact-module":
-		if err := runImpactModule(os.Args[2:],os.Stdout);err!=nil{
-			fmt.Fprintf(os.Stderr,"mbvm-db impact-module: %v\n",err)
+		if err := runImpactModule(os.Args[2:], os.Stdout); err != nil {
+			fmt.Fprintf(os.Stderr, "mbvm-db impact-module: %v\n", err)
 			os.Exit(1)
 		}
 
 	case "impact-diff":
-		if err := runImpactDiff(os.Args[2:],os.Stdout);err!=nil{
-			fmt.Fprintf(os.Stderr,"mbvm-db impact-diff: %v\n",err)
+		if err := runImpactDiff(os.Args[2:], os.Stdout); err != nil {
+			fmt.Fprintf(os.Stderr, "mbvm-db impact-diff: %v\n", err)
 			os.Exit(1)
 		}
 
 	case "impact":
-		if err := runImpact(os.Args[2:],os.Stdout);err!=nil{
-			fmt.Fprintf(os.Stderr,"mbvm-db impact: %v\n",err)
+		if err := runImpact(os.Args[2:], os.Stdout); err != nil {
+			fmt.Fprintf(os.Stderr, "mbvm-db impact: %v\n", err)
 			os.Exit(1)
 		}
 
@@ -255,6 +261,7 @@ func printUsage() {
 	fmt.Println("COMANDOS:")
 	fmt.Println("  mbvm-db impact -dir <pacote> -symbol <funcao> [-simulate-add-param int] [-json]  Analisa impacto tipado")
 	fmt.Println("  mbvm-db impact-module -root <modulo> -symbol <identidade> [-simulate-add-param int] [-json] [-profile]  Grafo multi-pacote")
+	fmt.Println("  mbvm-db impact-server -root <modulo>                                Consultas JSONL persistentes com cache verificado")
 	fmt.Println("  mbvm-db impact-diff -old <pacote_v1> -new <pacote_v2> [-json]           Compara contratos entre versões")
 	fmt.Println("  mbvm-db impact-diff -repo . -old-ref <rev1> -new-ref <rev2> -package <pacote> [-json]  Compara revisões Git")
 	fmt.Println("  mbvm-db impact-diff -module -repo . -old-ref <rev1> -new-ref <rev2> -symbol <simbolo> [-json]  Compila consumidores antigos com API real nova")

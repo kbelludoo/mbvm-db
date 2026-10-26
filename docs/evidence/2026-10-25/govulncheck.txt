@@ -1,0 +1,182 @@
+=== Symbol Results ===
+
+Vulnerability #1: GO-2026-6809
+    Distrust compromised intermediate certificates in crypto/x509
+  More info: https://pkg.go.dev/vuln/GO-2026-6809
+  Standard library
+    Found in: crypto/x509@go1.27
+    Fixed in: crypto/x509@go1.27.3
+    Example traces found:
+      #1: pkg/mbvmdb/storage.go:289:27: mbvmdb.LoadFromFile calls io.ReadFull, which eventually calls x509.Certificate.Verify
+
+Vulnerability #2: GO-2026-6617
+    HTTP/2 server crash due to HPACK encoder race in net/http
+  More info: https://pkg.go.dev/vuln/GO-2026-6617
+  Standard library
+    Found in: net/http/internal/http2@go1.27
+    Fixed in: net/http/internal/http2@go1.27.2
+    Example traces found:
+      #1: experiments/real_eval/client.go:78:30: real_eval.GeminiClient.GenerateContent calls http.Client.Do, which eventually calls http2.NetHTTPClientConn.Close
+      #2: experiments/real_eval/client.go:78:30: real_eval.GeminiClient.GenerateContent calls http.Client.Do, which eventually calls http2.NetHTTPClientConn.Close
+      #3: experiments/real_eval/client.go:78:30: real_eval.GeminiClient.GenerateContent calls http.Client.Do, which eventually calls http2.NetHTTPClientConn.RoundTrip
+      #4: experiments/real_eval/client.go:78:30: real_eval.GeminiClient.GenerateContent calls http.Client.Do, which eventually calls http2.NetHTTPClientConn.RoundTrip
+      #5: experiments/real_eval/client.go:78:30: real_eval.GeminiClient.GenerateContent calls http.Client.Do, which eventually calls http2.Transport.AddConn
+      #6: experiments/real_eval/client.go:78:30: real_eval.GeminiClient.GenerateContent calls http.Client.Do, which eventually calls http2.Transport.AddConn
+      #7: experiments/real_eval/client.go:78:30: real_eval.GeminiClient.GenerateContent calls http.Client.Do, which eventually calls http2.Transport.NewClientConn
+      #8: experiments/real_eval/client.go:78:30: real_eval.GeminiClient.GenerateContent calls http.Client.Do, which eventually calls http2.Transport.NewClientConn
+      #9: experiments/real_eval/client.go:78:30: real_eval.GeminiClient.GenerateContent calls http.Client.Do, which eventually calls http2.Transport.RoundTrip
+      #10: experiments/real_eval/client.go:78:30: real_eval.GeminiClient.GenerateContent calls http.Client.Do, which eventually calls http2.Transport.RoundTrip
+      #11: cmd/mbvm-mcp/main.go:84:15: mbvm.main calls bufio.Writer.Write, which calls http2.chunkWriter.Write
+      #12: cmd/mbvm-mcp/main.go:84:15: mbvm.main calls bufio.Writer.Write, which calls http2.chunkWriter.Write
+      #13: experiments/real_eval/client.go:82:2: real_eval.GeminiClient.GenerateContent calls http2.gzipReader.Close
+      #14: experiments/real_eval/client.go:82:2: real_eval.GeminiClient.GenerateContent calls http2.gzipReader.Close
+      #15: pkg/mbvmdb/storage.go:289:27: mbvmdb.LoadFromFile calls io.ReadFull, which eventually calls http2.gzipReader.Read
+      #16: pkg/mbvmdb/storage.go:289:27: mbvmdb.LoadFromFile calls io.ReadFull, which eventually calls http2.gzipReader.Read
+      #17: cmd/mbvm-mcp/main.go:84:15: mbvm.main calls bufio.Writer.Write, which calls http2.stickyErrWriter.Write
+      #18: cmd/mbvm-mcp/main.go:84:15: mbvm.main calls bufio.Writer.Write, which calls http2.stickyErrWriter.Write
+      #19: experiments/real_eval/client.go:82:2: real_eval.GeminiClient.GenerateContent calls http2.transportResponseBody.Close
+      #20: experiments/real_eval/client.go:82:2: real_eval.GeminiClient.GenerateContent calls http2.transportResponseBody.Close
+      #21: pkg/mbvmdb/storage.go:289:27: mbvmdb.LoadFromFile calls io.ReadFull, which eventually calls http2.transportResponseBody.Read
+      #22: pkg/mbvmdb/storage.go:289:27: mbvmdb.LoadFromFile calls io.ReadFull, which eventually calls http2.transportResponseBody.Read
+
+Vulnerability #3: GO-2026-6613
+    HTTP/1 server connection desynchronization after 2xx CONNECT response in
+    net/http
+  More info: https://pkg.go.dev/vuln/GO-2026-6613
+  Standard library
+    Found in: net/http@go1.27
+    Fixed in: net/http@go1.27.2
+    Example traces found:
+      #1: internal/impact/graph.go:6:2: impact.init calls build.init, which eventually calls http.CanonicalHeaderKey
+      #2: experiments/real_eval/client.go:78:30: real_eval.GeminiClient.GenerateContent calls http.Client.Do
+      #3: experiments/real_eval/client.go:75:16: real_eval.GeminiClient.GenerateContent calls http.Header.Set
+      #4: experiments/real_eval/client.go:71:40: real_eval.GeminiClient.GenerateContent calls http.NewRequestWithContext
+      #5: experiments/real_eval/client.go:82:2: real_eval.GeminiClient.GenerateContent calls http.body.Close
+      #6: pkg/mbvmdb/storage.go:263:33: mbvmdb.LoadFromFile calls io.ReadAll, which eventually calls http.body.Read
+      #7: experiments/real_eval/client.go:82:2: real_eval.GeminiClient.GenerateContent calls http.bodyEOFSignal.Close
+      #8: pkg/mbvmdb/storage.go:289:27: mbvmdb.LoadFromFile calls io.ReadFull, which eventually calls http.bodyEOFSignal.Read
+      #9: pkg/mbvmdb/storage.go:263:33: mbvmdb.LoadFromFile calls io.ReadAll, which eventually calls http.bodyLocked.Read
+      #10: internal/impact/mutation.go:27:17: impact.Graph.SourceSHA256 calls io.WriteString, which calls http.bufioFlushWriter.Write
+      #11: experiments/real_eval/client.go:82:2: real_eval.GeminiClient.GenerateContent calls http.cancelTimerBody.Close
+      #12: pkg/mbvmdb/storage.go:263:33: mbvmdb.LoadFromFile calls io.ReadAll, which eventually calls http.cancelTimerBody.Read
+      #13: experiments/real_eval/client.go:82:2: real_eval.GeminiClient.GenerateContent calls http.gzipReader.Close
+      #14: pkg/mbvmdb/storage.go:263:33: mbvmdb.LoadFromFile calls io.ReadAll, which eventually calls http.gzipReader.Read
+      #15: pkg/mbvmdb/storage.go:263:33: mbvmdb.LoadFromFile calls io.ReadAll, which eventually calls http.persistConn.Read
+      #16: internal/impact/module_cache_fingerprint.go:191:30: impact.fingerprintModule calls io.CopyBuffer, which eventually calls http.persistConnWriter.ReadFrom
+      #17: cmd/mbvm-mcp/main.go:84:15: mbvm.main calls bufio.Writer.Write, which calls http.persistConnWriter.Write
+      #18: experiments/real_eval/client.go:82:2: real_eval.GeminiClient.GenerateContent calls http2.transportResponseBody.Close, which eventually calls http.readTrackingBody.Close
+      #19: pkg/mbvmdb/storage.go:263:33: mbvmdb.LoadFromFile calls io.ReadAll, which eventually calls http.readTrackingBody.Read
+      #20: pkg/mbvmdb/storage.go:263:33: mbvmdb.LoadFromFile calls io.ReadAll, which eventually calls http.readWriteCloserBody.Read
+      #21: internal/impact/module_version_compare.go:127:74: impact.CompareRealModuleDirs calls http.transportReadFromServerError.Error
+
+Vulnerability #4: GO-2026-6611
+    Excessive CPU consumption from repeated initial window changes in net/http
+  More info: https://pkg.go.dev/vuln/GO-2026-6611
+  Standard library
+    Found in: net/http/internal/http2@go1.27
+    Fixed in: net/http/internal/http2@go1.27.2
+    Example traces found:
+      #1: experiments/real_eval/client.go:78:30: real_eval.GeminiClient.GenerateContent calls http.Client.Do, which eventually calls http2.NetHTTPClientConn.Close
+      #2: experiments/real_eval/client.go:78:30: real_eval.GeminiClient.GenerateContent calls http.Client.Do, which eventually calls http2.NetHTTPClientConn.Close
+      #3: experiments/real_eval/client.go:78:30: real_eval.GeminiClient.GenerateContent calls http.Client.Do, which eventually calls http2.NetHTTPClientConn.RoundTrip
+      #4: experiments/real_eval/client.go:78:30: real_eval.GeminiClient.GenerateContent calls http.Client.Do, which eventually calls http2.NetHTTPClientConn.RoundTrip
+      #5: experiments/real_eval/client.go:78:30: real_eval.GeminiClient.GenerateContent calls http.Client.Do, which eventually calls http2.Transport.AddConn
+      #6: experiments/real_eval/client.go:78:30: real_eval.GeminiClient.GenerateContent calls http.Client.Do, which eventually calls http2.Transport.AddConn
+      #7: experiments/real_eval/client.go:78:30: real_eval.GeminiClient.GenerateContent calls http.Client.Do, which eventually calls http2.Transport.NewClientConn
+      #8: experiments/real_eval/client.go:78:30: real_eval.GeminiClient.GenerateContent calls http.Client.Do, which eventually calls http2.Transport.NewClientConn
+      #9: experiments/real_eval/client.go:78:30: real_eval.GeminiClient.GenerateContent calls http.Client.Do, which eventually calls http2.Transport.RoundTrip
+      #10: experiments/real_eval/client.go:78:30: real_eval.GeminiClient.GenerateContent calls http.Client.Do, which eventually calls http2.Transport.RoundTrip
+      #11: cmd/mbvm-mcp/main.go:84:15: mbvm.main calls bufio.Writer.Write, which calls http2.chunkWriter.Write
+      #12: cmd/mbvm-mcp/main.go:84:15: mbvm.main calls bufio.Writer.Write, which calls http2.chunkWriter.Write
+      #13: experiments/real_eval/client.go:82:2: real_eval.GeminiClient.GenerateContent calls http2.gzipReader.Close
+      #14: experiments/real_eval/client.go:82:2: real_eval.GeminiClient.GenerateContent calls http2.gzipReader.Close
+      #15: pkg/mbvmdb/storage.go:289:27: mbvmdb.LoadFromFile calls io.ReadFull, which eventually calls http2.gzipReader.Read
+      #16: pkg/mbvmdb/storage.go:289:27: mbvmdb.LoadFromFile calls io.ReadFull, which eventually calls http2.gzipReader.Read
+      #17: cmd/mbvm-mcp/main.go:84:15: mbvm.main calls bufio.Writer.Write, which calls http2.stickyErrWriter.Write
+      #18: cmd/mbvm-mcp/main.go:84:15: mbvm.main calls bufio.Writer.Write, which calls http2.stickyErrWriter.Write
+      #19: experiments/real_eval/client.go:82:2: real_eval.GeminiClient.GenerateContent calls http2.transportResponseBody.Close
+      #20: experiments/real_eval/client.go:82:2: real_eval.GeminiClient.GenerateContent calls http2.transportResponseBody.Close
+      #21: pkg/mbvmdb/storage.go:289:27: mbvmdb.LoadFromFile calls io.ReadFull, which eventually calls http2.transportResponseBody.Read
+      #22: pkg/mbvmdb/storage.go:289:27: mbvmdb.LoadFromFile calls io.ReadFull, which eventually calls http2.transportResponseBody.Read
+
+Vulnerability #5: GO-2026-6610
+    HTTP/2 transport accepts malformed framing-related headers in net/http
+  More info: https://pkg.go.dev/vuln/GO-2026-6610
+  Standard library
+    Found in: net/http/internal/http2@go1.27
+    Fixed in: net/http/internal/http2@go1.27.2
+    Example traces found:
+      #1: experiments/real_eval/client.go:78:30: real_eval.GeminiClient.GenerateContent calls http.Client.Do, which eventually calls http2.Transport.AddConn
+      #2: experiments/real_eval/client.go:78:30: real_eval.GeminiClient.GenerateContent calls http.Client.Do, which eventually calls http2.Transport.AddConn
+      #3: experiments/real_eval/client.go:78:30: real_eval.GeminiClient.GenerateContent calls http.Client.Do, which eventually calls http2.Transport.NewClientConn
+      #4: experiments/real_eval/client.go:78:30: real_eval.GeminiClient.GenerateContent calls http.Client.Do, which eventually calls http2.Transport.NewClientConn
+      #5: experiments/real_eval/client.go:78:30: real_eval.GeminiClient.GenerateContent calls http.Client.Do, which eventually calls http2.Transport.RoundTrip
+      #6: experiments/real_eval/client.go:78:30: real_eval.GeminiClient.GenerateContent calls http.Client.Do, which eventually calls http2.Transport.RoundTrip
+
+Vulnerability #6: GO-2026-6608
+    Memory limit bypass when parsing MIME headers in net/textproto,
+    mime/multipart
+  More info: https://pkg.go.dev/vuln/GO-2026-6608
+  Standard library
+    Found in: net/textproto@go1.27
+    Fixed in: net/textproto@go1.27.2
+    Example traces found:
+      #1: experiments/real_eval/client.go:78:30: real_eval.GeminiClient.GenerateContent calls http.Client.Do, which eventually calls textproto.Reader.ReadMIMEHeader
+
+Vulnerability #7: GO-2026-6607
+    Reject malformed ECH outer extension references in crypto/tls
+  More info: https://pkg.go.dev/vuln/GO-2026-6607
+  Standard library
+    Found in: crypto/tls@go1.27
+    Fixed in: crypto/tls@go1.27.2
+    Example traces found:
+      #1: experiments/real_eval/client.go:78:30: real_eval.GeminiClient.GenerateContent calls http.Client.Do, which eventually calls tls.Conn.HandshakeContext
+      #2: pkg/mbvmdb/storage.go:289:27: mbvmdb.LoadFromFile calls io.ReadFull, which eventually calls tls.Conn.Read
+      #3: cmd/mbvm-mcp/main.go:84:15: mbvm.main calls bufio.Writer.Write, which calls tls.Conn.Write
+      #4: experiments/real_eval/client.go:78:30: real_eval.GeminiClient.GenerateContent calls http.Client.Do, which eventually calls tls.Dialer.DialContext
+
+Vulnerability #8: GO-2026-6605
+    HTTP/1 client connection desynchronization after CONNECT rejection in
+    net/http
+  More info: https://pkg.go.dev/vuln/GO-2026-6605
+  Standard library
+    Found in: net/http@go1.27
+    Fixed in: net/http@go1.27.2
+    Example traces found:
+      #1: experiments/real_eval/client.go:78:30: real_eval.GeminiClient.GenerateContent calls http.Client.Do
+
+Vulnerability #9: GO-2026-6603
+    HTTP/2 server memory exhaustion due to Trailer headers in net/http
+  More info: https://pkg.go.dev/vuln/GO-2026-6603
+  Standard library
+    Found in: net/http/internal/http2@go1.27
+    Fixed in: net/http/internal/http2@go1.27.2
+    Example traces found:
+      #1: experiments/real_eval/client.go:78:30: real_eval.GeminiClient.GenerateContent calls http.Client.Do, which eventually calls http2.NetHTTPClientConn.Close
+      #2: experiments/real_eval/client.go:78:30: real_eval.GeminiClient.GenerateContent calls http.Client.Do, which eventually calls http2.NetHTTPClientConn.Close
+      #3: experiments/real_eval/client.go:78:30: real_eval.GeminiClient.GenerateContent calls http.Client.Do, which eventually calls http2.NetHTTPClientConn.RoundTrip
+      #4: experiments/real_eval/client.go:78:30: real_eval.GeminiClient.GenerateContent calls http.Client.Do, which eventually calls http2.NetHTTPClientConn.RoundTrip
+      #5: experiments/real_eval/client.go:78:30: real_eval.GeminiClient.GenerateContent calls http.Client.Do, which eventually calls http2.Transport.AddConn
+      #6: experiments/real_eval/client.go:78:30: real_eval.GeminiClient.GenerateContent calls http.Client.Do, which eventually calls http2.Transport.AddConn
+      #7: experiments/real_eval/client.go:78:30: real_eval.GeminiClient.GenerateContent calls http.Client.Do, which eventually calls http2.Transport.NewClientConn
+      #8: experiments/real_eval/client.go:78:30: real_eval.GeminiClient.GenerateContent calls http.Client.Do, which eventually calls http2.Transport.NewClientConn
+      #9: experiments/real_eval/client.go:78:30: real_eval.GeminiClient.GenerateContent calls http.Client.Do, which eventually calls http2.Transport.RoundTrip
+      #10: experiments/real_eval/client.go:78:30: real_eval.GeminiClient.GenerateContent calls http.Client.Do, which eventually calls http2.Transport.RoundTrip
+      #11: cmd/mbvm-mcp/main.go:84:15: mbvm.main calls bufio.Writer.Write, which calls http2.chunkWriter.Write
+      #12: cmd/mbvm-mcp/main.go:84:15: mbvm.main calls bufio.Writer.Write, which calls http2.chunkWriter.Write
+      #13: experiments/real_eval/client.go:82:2: real_eval.GeminiClient.GenerateContent calls http2.gzipReader.Close
+      #14: experiments/real_eval/client.go:82:2: real_eval.GeminiClient.GenerateContent calls http2.gzipReader.Close
+      #15: pkg/mbvmdb/storage.go:289:27: mbvmdb.LoadFromFile calls io.ReadFull, which eventually calls http2.gzipReader.Read
+      #16: pkg/mbvmdb/storage.go:289:27: mbvmdb.LoadFromFile calls io.ReadFull, which eventually calls http2.gzipReader.Read
+      #17: cmd/mbvm-mcp/main.go:84:15: mbvm.main calls bufio.Writer.Write, which calls http2.stickyErrWriter.Write
+      #18: cmd/mbvm-mcp/main.go:84:15: mbvm.main calls bufio.Writer.Write, which calls http2.stickyErrWriter.Write
+      #19: experiments/real_eval/client.go:82:2: real_eval.GeminiClient.GenerateContent calls http2.transportResponseBody.Close
+      #20: experiments/real_eval/client.go:82:2: real_eval.GeminiClient.GenerateContent calls http2.transportResponseBody.Close
+      #21: pkg/mbvmdb/storage.go:289:27: mbvmdb.LoadFromFile calls io.ReadFull, which eventually calls http2.transportResponseBody.Read
+      #22: pkg/mbvmdb/storage.go:289:27: mbvmdb.LoadFromFile calls io.ReadFull, which eventually calls http2.transportResponseBody.Read
+
+Your code is affected by 9 vulnerabilities from the Go standard library.
+This scan also found 3 vulnerabilities in packages you import and 2
+vulnerabilities in modules you require, but your code doesn't appear to call
+these vulnerabilities.
+Use '-show verbose' for more details.

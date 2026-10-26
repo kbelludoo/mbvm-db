@@ -1,0 +1,17 @@
+{
+  "schema": "mbvm-real-world-ast-impact-v1",
+  "source": "actual checked-in pkg/mbvmdb Go declarations",
+  "source_digest": "55d458c4fc13d7f6bf0d60061033a3a25d55db5305d5d5326595c307cf7234b6",
+  "real_symbol_count": 102,
+  "name_resolved_call_edges": 118,
+  "mutated_symbol_id": 82,
+  "mutated_symbol_name": "mbvmdb.Intern",
+  "api_signature_changed": true,
+  "format_only_signature_stable": true,
+  "immediate_possible_callers": 5,
+  "transitive_possible_callers": 11,
+  "all_possible_callers": 16,
+  "max_reverse_call_depth": 3,
+  "functional_counterexample_confirmed": false,
+  "interpretation": "Real-source, name-resolved static caller candidates only; signature difference is NOT a demonstrated build failure or behavioral change."
+}

@@ -1,0 +1,10 @@
+{
+  "hashes_matched": 205,
+  "local_links_resolved": 15,
+  "json_files_parsed": 4,
+  "evidence_files_within_400_lines": true,
+  "powershell_parse_errors": 0,
+  "summary_repeated_with_identical_outputs": true,
+  "git_diff_check_passed": true,
+  "go_source_diff": []
+}

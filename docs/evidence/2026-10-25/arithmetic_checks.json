@@ -1,0 +1,385 @@
+{
+  "method": "Independent .NET BigInteger identities and exhaustive enumeration of public CRT fixture residue classes",
+  "crt_inputs": "fresh_go_run_outputs",
+  "numeric_identities_checked": 5,
+  "identities": [
+    {
+      "n": "26881",
+      "x": "6721",
+      "y": "60222404",
+      "z": "989110288015564",
+      "exact_integer_identity": true
+    },
+    {
+      "n": "26881",
+      "x": "6721",
+      "y": "60222404",
+      "z": "989110288015564",
+      "exact_integer_identity": true
+    },
+    {
+      "n": "26881",
+      "x": "6721",
+      "y": "60222404",
+      "z": "989110288015564",
+      "exact_integer_identity": true
+    },
+    {
+      "n": "26881",
+      "x": "6721",
+      "y": "65697164",
+      "z": "722668804",
+      "exact_integer_identity": true
+    },
+    {
+      "n": "26881",
+      "x": "6721",
+      "y": "60222404",
+      "z": "989110288015564",
+      "exact_integer_identity": true
+    }
+  ],
+  "crt_report_hashes": [
+    {
+      "file": "crt_dev_results.json",
+      "sha256": "e15d81fd161c542e2fb9d9bfcaee7eb684ee5696f8045ea34b5c5de7ed15eae5"
+    },
+    {
+      "file": "crt_depth_dev_results.json",
+      "sha256": "84cf69a159b11ec4b1f4f5ba0ce4e05273df69423e3e885d7d0e4b17c16b9405"
+    },
+    {
+      "file": "crt_choice_dev_results.json",
+      "sha256": "61d81663291614da593808f6372471e4745f720090361906c28d8f18cfe9ee70"
+    }
+  ],
+  "crt_tasks_checked": 36,
+  "crt_arm_certificates_checked": 72,
+  "crt_checks": [
+    {
+      "report": "crt_dev_results.json",
+      "task": "DEV-CRT-01",
+      "residue": 61,
+      "modulus": 72,
+      "canonical_unique_class": true,
+      "every_premise_indispensable_for_this_class": true,
+      "matching_certificates": true
+    },
+    {
+      "report": "crt_dev_results.json",
+      "task": "DEV-CRT-02",
+      "residue": 18,
+      "modulus": 35,
+      "canonical_unique_class": true,
+      "every_premise_indispensable_for_this_class": true,
+      "matching_certificates": true
+    },
+    {
+      "report": "crt_dev_results.json",
+      "task": "DEV-CRT-03",
+      "residue": 58,
+      "modulus": 77,
+      "canonical_unique_class": true,
+      "every_premise_indispensable_for_this_class": true,
+      "matching_certificates": true
+    },
+    {
+      "report": "crt_dev_results.json",
+      "task": "DEV-CRT-04",
+      "residue": 138,
+      "modulus": 143,
+      "canonical_unique_class": true,
+      "every_premise_indispensable_for_this_class": true,
+      "matching_certificates": true
+    },
+    {
+      "report": "crt_dev_results.json",
+      "task": "DEV-CRT-05",
+      "residue": 148,
+      "modulus": 221,
+      "canonical_unique_class": true,
+      "every_premise_indispensable_for_this_class": true,
+      "matching_certificates": true
+    },
+    {
+      "report": "crt_dev_results.json",
+      "task": "DEV-CRT-06",
+      "residue": 13,
+      "modulus": 144,
+      "canonical_unique_class": true,
+      "every_premise_indispensable_for_this_class": true,
+      "matching_certificates": true
+    },
+    {
+      "report": "crt_dev_results.json",
+      "task": "DEV-CRT-07",
+      "residue": 121,
+      "modulus": 400,
+      "canonical_unique_class": true,
+      "every_premise_indispensable_for_this_class": true,
+      "matching_certificates": true
+    },
+    {
+      "report": "crt_dev_results.json",
+      "task": "DEV-CRT-08",
+      "residue": 160,
+      "modulus": 323,
+      "canonical_unique_class": true,
+      "every_premise_indispensable_for_this_class": true,
+      "matching_certificates": true
+    },
+    {
+      "report": "crt_dev_results.json",
+      "task": "DEV-CRT-09",
+      "residue": 317,
+      "modulus": 437,
+      "canonical_unique_class": true,
+      "every_premise_indispensable_for_this_class": true,
+      "matching_certificates": true
+    },
+    {
+      "report": "crt_dev_results.json",
+      "task": "DEV-CRT-10",
+      "residue": 631,
+      "modulus": 667,
+      "canonical_unique_class": true,
+      "every_premise_indispensable_for_this_class": true,
+      "matching_certificates": true
+    },
+    {
+      "report": "crt_dev_results.json",
+      "task": "DEV-CRT-11",
+      "residue": 581,
+      "modulus": 675,
+      "canonical_unique_class": true,
+      "every_premise_indispensable_for_this_class": true,
+      "matching_certificates": true
+    },
+    {
+      "report": "crt_dev_results.json",
+      "task": "DEV-CRT-12",
+      "residue": 497,
+      "modulus": 864,
+      "canonical_unique_class": true,
+      "every_premise_indispensable_for_this_class": true,
+      "matching_certificates": true
+    },
+    {
+      "report": "crt_depth_dev_results.json",
+      "task": "DEPTH-01",
+      "residue": 133,
+      "modulus": 360,
+      "canonical_unique_class": true,
+      "every_premise_indispensable_for_this_class": true,
+      "matching_certificates": true
+    },
+    {
+      "report": "crt_depth_dev_results.json",
+      "task": "DEPTH-02",
+      "residue": 18,
+      "modulus": 280,
+      "canonical_unique_class": true,
+      "every_premise_indispensable_for_this_class": true,
+      "matching_certificates": true
+    },
+    {
+      "report": "crt_depth_dev_results.json",
+      "task": "DEPTH-03",
+      "residue": 212,
+      "modulus": 693,
+      "canonical_unique_class": true,
+      "every_premise_indispensable_for_this_class": true,
+      "matching_certificates": true
+    },
+    {
+      "report": "crt_depth_dev_results.json",
+      "task": "DEPTH-04",
+      "residue": 567,
+      "modulus": 1144,
+      "canonical_unique_class": true,
+      "every_premise_indispensable_for_this_class": true,
+      "matching_certificates": true
+    },
+    {
+      "report": "crt_depth_dev_results.json",
+      "task": "DEPTH-05",
+      "residue": 148,
+      "modulus": 1989,
+      "canonical_unique_class": true,
+      "every_premise_indispensable_for_this_class": true,
+      "matching_certificates": true
+    },
+    {
+      "report": "crt_depth_dev_results.json",
+      "task": "DEPTH-06",
+      "residue": 157,
+      "modulus": 1008,
+      "canonical_unique_class": true,
+      "every_premise_indispensable_for_this_class": true,
+      "matching_certificates": true
+    },
+    {
+      "report": "crt_depth_dev_results.json",
+      "task": "DEPTH-07",
+      "residue": 521,
+      "modulus": 3600,
+      "canonical_unique_class": true,
+      "every_premise_indispensable_for_this_class": true,
+      "matching_certificates": true
+    },
+    {
+      "report": "crt_depth_dev_results.json",
+      "task": "DEPTH-08",
+      "residue": 806,
+      "modulus": 2584,
+      "canonical_unique_class": true,
+      "every_premise_indispensable_for_this_class": true,
+      "matching_certificates": true
+    },
+    {
+      "report": "crt_depth_dev_results.json",
+      "task": "DEPTH-09",
+      "residue": 754,
+      "modulus": 3933,
+      "canonical_unique_class": true,
+      "every_premise_indispensable_for_this_class": true,
+      "matching_certificates": true
+    },
+    {
+      "report": "crt_depth_dev_results.json",
+      "task": "DEPTH-10",
+      "residue": 4633,
+      "modulus": 5336,
+      "canonical_unique_class": true,
+      "every_premise_indispensable_for_this_class": true,
+      "matching_certificates": true
+    },
+    {
+      "report": "crt_depth_dev_results.json",
+      "task": "DEPTH-11",
+      "residue": 4631,
+      "modulus": 4725,
+      "canonical_unique_class": true,
+      "every_premise_indispensable_for_this_class": true,
+      "matching_certificates": true
+    },
+    {
+      "report": "crt_depth_dev_results.json",
+      "task": "DEPTH-12",
+      "residue": 3953,
+      "modulus": 4320,
+      "canonical_unique_class": true,
+      "every_premise_indispensable_for_this_class": true,
+      "matching_certificates": true
+    },
+    {
+      "report": "crt_choice_dev_results.json",
+      "task": "DEPTH-01",
+      "residue": 133,
+      "modulus": 360,
+      "canonical_unique_class": true,
+      "every_premise_indispensable_for_this_class": true,
+      "matching_certificates": true
+    },
+    {
+      "report": "crt_choice_dev_results.json",
+      "task": "DEPTH-02",
+      "residue": 18,
+      "modulus": 280,
+      "canonical_unique_class": true,
+      "every_premise_indispensable_for_this_class": true,
+      "matching_certificates": true
+    },
+    {
+      "report": "crt_choice_dev_results.json",
+      "task": "DEPTH-03",
+      "residue": 212,
+      "modulus": 693,
+      "canonical_unique_class": true,
+      "every_premise_indispensable_for_this_class": true,
+      "matching_certificates": true
+    },
+    {
+      "report": "crt_choice_dev_results.json",
+      "task": "DEPTH-04",
+      "residue": 567,
+      "modulus": 1144,
+      "canonical_unique_class": true,
+      "every_premise_indispensable_for_this_class": true,
+      "matching_certificates": true
+    },
+    {
+      "report": "crt_choice_dev_results.json",
+      "task": "DEPTH-05",
+      "residue": 148,
+      "modulus": 1989,
+      "canonical_unique_class": true,
+      "every_premise_indispensable_for_this_class": true,
+      "matching_certificates": true
+    },
+    {
+      "report": "crt_choice_dev_results.json",
+      "task": "DEPTH-06",
+      "residue": 157,
+      "modulus": 1008,
+      "canonical_unique_class": true,
+      "every_premise_indispensable_for_this_class": true,
+      "matching_certificates": true
+    },
+    {
+      "report": "crt_choice_dev_results.json",
+      "task": "DEPTH-07",
+      "residue": 521,
+      "modulus": 3600,
+      "canonical_unique_class": true,
+      "every_premise_indispensable_for_this_class": true,
+      "matching_certificates": true
+    },
+    {
+      "report": "crt_choice_dev_results.json",
+      "task": "DEPTH-08",
+      "residue": 806,
+      "modulus": 2584,
+      "canonical_unique_class": true,
+      "every_premise_indispensable_for_this_class": true,
+      "matching_certificates": true
+    },
+    {
+      "report": "crt_choice_dev_results.json",
+      "task": "DEPTH-09",
+      "residue": 754,
+      "modulus": 3933,
+      "canonical_unique_class": true,
+      "every_premise_indispensable_for_this_class": true,
+      "matching_certificates": true
+    },
+    {
+      "report": "crt_choice_dev_results.json",
+      "task": "DEPTH-10",
+      "residue": 4633,
+      "modulus": 5336,
+      "canonical_unique_class": true,
+      "every_premise_indispensable_for_this_class": true,
+      "matching_certificates": true
+    },
+    {
+      "report": "crt_choice_dev_results.json",
+      "task": "DEPTH-11",
+      "residue": 4631,
+      "modulus": 4725,
+      "canonical_unique_class": true,
+      "every_premise_indispensable_for_this_class": true,
+      "matching_certificates": true
+    },
+    {
+      "report": "crt_choice_dev_results.json",
+      "task": "DEPTH-12",
+      "residue": 3953,
+      "modulus": 4320,
+      "canonical_unique_class": true,
+      "every_premise_indispensable_for_this_class": true,
+      "matching_certificates": true
+    }
+  ],
+  "scope": "Finite certificates only. This does not prove new theorems or validate prose proofs, model provenance, retrieval traces, or generalization."
+}

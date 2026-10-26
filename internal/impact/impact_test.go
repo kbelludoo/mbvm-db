@@ -3,6 +3,7 @@ package impact
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -152,11 +153,25 @@ func TestRealMBVMDBPackage(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if g.Symbols[id].Name != "Intern" || len(r.DirectCallers) != 4 || len(r.TransitiveCallers) < 6 {
+	if g.Symbols[id].Name != "Intern" || len(r.TransitiveCallers) < 6 || !r.SourceFilesUnmodified {
 		t.Fatalf("unexpected real typed callers in target package %+v", r)
 	}
-	if len(r.Simulation.BrokenDirectCallers) != 4 || r.Simulation.MutatedPackageTypechecked {
-		t.Fatalf("mutation didn't expose 4 real direct failures %+v", r.Simulation)
+	// Keep the known original callers as independent anchors, while allowing
+	// legitimate new consumers (for example CompileChessBytecode). Every found
+	// caller must still have an actual compiler diagnostic after mutation.
+	for _, name := range []string{"(*DB).compileBytecode", "(*DB).CompileGameBytecode", "(*DB).SaveToFile", "LoadFromFile"} {
+		if !slices.Contains(r.DirectCallers, g.PackagePath+"."+name) {
+			t.Fatalf("missing original typed caller %s", name)
+		}
+	}
+	if r.Simulation == nil || r.Simulation.MutatedPackageTypechecked {
+		t.Fatalf("mutation didn't expose real direct failures %+v", r.Simulation)
+	}
+	want, got := slices.Clone(r.DirectCallers), slices.Clone(r.Simulation.BrokenDirectCallers)
+	slices.Sort(want)
+	slices.Sort(got)
+	if !slices.Equal(want, got) {
+		t.Fatalf("compiler-confirmed callers differ: static=%q compiler=%q", want, got)
 	}
 	t.Logf("real MBVM impact: %s; direct=%d indirect=%d compile_diagnostics=%d", r.Symbol, len(r.DirectCallers), r.TransitiveCandidates, r.Simulation.TypeDiagnostics)
 }
