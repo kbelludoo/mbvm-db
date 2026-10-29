@@ -7,6 +7,8 @@ on:
       - main
     paths:
       - 'experiments/hdc-csr/**'
+      - 'internal/impact/**'
+      - 'cmd/mbvm-db/**'
       - '.github/workflows/hdc_benchmark_pages.yml'
   workflow_dispatch:
 
@@ -43,6 +45,45 @@ jobs:
         run: |
           cd experiments/hdc-csr
           go test -count=1 -v -cpu 1
+
+      - name: Validate Production Impact CLI and Typed Analysis
+        run: |
+          CGO_ENABLED=0 go test -count=1 -v ./internal/impact ./cmd/mbvm-db
+          CGO_ENABLED=0 GOMAXPROCS=1 go test -run '^
+
+      - name: Validate Kaggle Index Audit (Go-only, synthetic v1/v2 fixtures)
+        run: |
+          go test -count=1 -v ./experiments/hdc-csr/cmd/audit_supreme_index
+          go test -count=1 -v ./experiments/hdc-csr/cmd/audit_supreme_structure
+
+      - name: Run Official Single-Core Benchmarks
+        run: |
+          cd experiments/hdc-csr
+          set -o pipefail
+          go test -run='^$' -count=1 -bench=Benchmark -benchmem -cpu 1 -benchtime=2s | tee bench_output.txt
+
+      - name: Generate Automated CI Benchmarks & Quality JSON
+        run: |
+          go run experiments/hdc-csr/parse_bench.go experiments/hdc-csr/bench_output.txt experiments/hdc-csr/quality_output.json experiments/hdc-csr/multipath_quality.json experiments/hdc-csr/paired_metrics.json
+
+      - name: Build WebAssembly Module
+        run: |
+          mkdir -p experiments/hdc-csr/web
+          cp "$(go env GOROOT)/lib/wasm/wasm_exec.js" experiments/hdc-csr/web/wasm_exec.js || cp "$(go env GOROOT)/misc/wasm/wasm_exec.js" experiments/hdc-csr/web/wasm_exec.js
+          GOOS=js GOARCH=wasm go build -o experiments/hdc-csr/web/mbvm_hdc.wasm ./experiments/hdc-csr/wasm
+
+      - name: Deploy to GitHub Pages (gh-pages branch)
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./experiments/hdc-csr/web
+          keep_files: false
+ -bench '^BenchmarkImpact' -benchmem -cpu=1 -benchtime=1s ./internal/impact
+
+      - name: Validate Kaggle Index Audit (Go-only, synthetic v1/v2 fixtures)
+        run: |
+          go test -count=1 -v ./experiments/hdc-csr/cmd/audit_supreme_index
+          go test -count=1 -v ./experiments/hdc-csr/cmd/audit_supreme_structure
 
       - name: Run Official Single-Core Benchmarks
         run: |

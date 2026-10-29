@@ -1,0 +1,149 @@
+{
+  "status": "saved_reports_only_not_rerun_with_race",
+  "multipath": {
+    "seeds": 50,
+    "queries": 133,
+    "skipped_no_relevant": 17,
+    "average_relevant": 2.9022556390977443,
+    "csr_semantic_recall_at_10": 1,
+    "csr_semantic_mrr": 1,
+    "semantic_only_recall_at_10": 0.2324024346580737,
+    "semantic_only_mrr": 0.1837491666178191,
+    "hdc_hybrid_recall_at_10": 0.9065431435732186,
+    "hdc_hybrid_mrr": 0.8978895577965388,
+    "evaluation": "synthetic_context_capacity_not_neural_generalization"
+  },
+  "capacity": {
+    "configurations": 120,
+    "program_trials_per_approach": 1440.0,
+    "numeric_evaluations_per_approach": 4320.0,
+    "selected_40_percent_noise_results": [
+      {
+        "length": 3,
+        "noise": 0.4,
+        "trials": 36.0,
+        "hdc_exact_program_rate": 1.0,
+        "ecc_exact_program_rate": 1.0
+      },
+      {
+        "length": 8,
+        "noise": 0.4,
+        "trials": 36.0,
+        "hdc_exact_program_rate": 0.9722222222222222,
+        "ecc_exact_program_rate": 1.0
+      },
+      {
+        "length": 32,
+        "noise": 0.4,
+        "trials": 36.0,
+        "hdc_exact_program_rate": 0.05555555555555555,
+        "ecc_exact_program_rate": 0.5833333333333334
+      },
+      {
+        "length": 64,
+        "noise": 0.4,
+        "trials": 36.0,
+        "hdc_exact_program_rate": 0.0,
+        "ecc_exact_program_rate": 0.027777777777777776
+      }
+    ]
+  },
+  "binary_lsh": {
+    "schema": "mbvm-binary-lsh-v1",
+    "nodes": 1000,
+    "queries": 100,
+    "tables": 12,
+    "bits_per_table": 10,
+    "probe_radius": 1,
+    "oracle_recall_at_10": 0.014361184567066919,
+    "lsh_recall_at_10": 0.01359195379783615,
+    "avg_oracle_top10_agreement": 0.9760000000000004,
+    "avg_unique_candidates": 774.31,
+    "max_unique_candidates": 999,
+    "index_posting_entries": 12000,
+    "evaluation": "synthetic_accuracy_and_candidate_pruning_not_neural_generalization"
+  },
+  "pilot": [
+    {
+      "condition": "Condition 1: Gemini Direct (No Memory)",
+      "issued": 4,
+      "completed": 4,
+      "marked_success": 2
+    },
+    {
+      "condition": "Condition 2: Flat RAG (Unfiltered Dump)",
+      "issued": 4,
+      "completed": 3,
+      "marked_success": 1
+    },
+    {
+      "condition": "Condition 3: Filtered Inverted Index (Conventional Relevant)",
+      "issued": 4,
+      "completed": 4,
+      "marked_success": 1
+    },
+    {
+      "condition": "Condition 4: MBVM-DB CSR Subgraph (Smart Slicing)",
+      "issued": 4,
+      "completed": 4,
+      "marked_success": 2
+    }
+  ],
+  "ablation_single_n": [
+    {
+      "condition": "Group A: Gemini Direct Baseline",
+      "issued": 2,
+      "completed": 1,
+      "marked_success": 1
+    },
+    {
+      "condition": "Group B: Conventional Filtered Index (Formula Only)",
+      "issued": 2,
+      "completed": 1,
+      "marked_success": 1
+    },
+    {
+      "condition": "Group C: Conventional Filtered Index + Instantiation Recipe",
+      "issued": 2,
+      "completed": 2,
+      "marked_success": 2
+    },
+    {
+      "condition": "Group D: MBVM-DB CSR Subgraph + Instantiation Recipe",
+      "issued": 2,
+      "completed": 1,
+      "marked_success": 1
+    }
+  ],
+  "typed_package_breakage": {
+    "schema": "mbvm-real-typed-breakage-v1",
+    "corpus": "pkg/mbvmdb",
+    "typed_function_declarations": 58,
+    "typed_local_direct_call_sites": 105,
+    "target_object_identity": "github.com/kbelludoo/mbvm-db/pkg/mbvmdb.(*StringPool).Intern",
+    "direct_possible_callers": 4,
+    "transitive_possible_callers": 8,
+    "baseline_typechecked": true,
+    "mutated_package_typechecked": false,
+    "go_types_compile_errors": 23,
+    "direct_callers_with_type_errors": 4,
+    "dynamic_dispatch_not_assumed_resolved": true,
+    "source_files_unmodified": true,
+    "source_files_sha256": "08bb7ee2ea99fecdd47cece037e4970706ffd13297408969e2401acf778875f5",
+    "typed_direct_caller_names": [
+      "github.com/kbelludoo/mbvm-db/pkg/mbvmdb.(*DB).compileBytecode",
+      "github.com/kbelludoo/mbvm-db/pkg/mbvmdb.(*DB).CompileGameBytecode",
+      "github.com/kbelludoo/mbvm-db/pkg/mbvmdb.(*DB).SaveToFile",
+      "github.com/kbelludoo/mbvm-db/pkg/mbvmdb.LoadFromFile"
+    ],
+    "direct_callers_with_type_errors_names": [
+      "github.com/kbelludoo/mbvm-db/pkg/mbvmdb.(*DB).compileBytecode",
+      "github.com/kbelludoo/mbvm-db/pkg/mbvmdb.(*DB).CompileGameBytecode",
+      "github.com/kbelludoo/mbvm-db/pkg/mbvmdb.(*DB).SaveToFile",
+      "github.com/kbelludoo/mbvm-db/pkg/mbvmdb.LoadFromFile"
+    ],
+    "runtime_behavior_verified": false,
+    "interpretation": "Go/types compile errors for an in-memory required-parameter mutation. Typed direct callers are established, while transitive callers are possible impact only; cross-package/dynamic callers excluded."
+  },
+  "caveat": "Flags and summaries in historical JSON are not independent execution certificates."
+}

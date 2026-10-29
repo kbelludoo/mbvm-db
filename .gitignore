@@ -42,3 +42,4 @@ kaggle-watcher.service
 *.bin
 *.zip
 
+*.exe

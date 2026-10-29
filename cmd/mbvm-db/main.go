@@ -17,6 +17,30 @@ func main() {
 
 	cmd := os.Args[1]
 	switch cmd {
+	case "impact-server":
+		if err := runImpactServer(os.Args[2:], os.Stdin, os.Stdout); err != nil {
+			fmt.Fprintf(os.Stderr, "mbvm-db impact-server: %s\n", err)
+			os.Exit(1)
+		}
+
+	case "impact-module":
+		if err := runImpactModule(os.Args[2:], os.Stdout); err != nil {
+			fmt.Fprintf(os.Stderr, "mbvm-db impact-module: %v\n", err)
+			os.Exit(1)
+		}
+
+	case "impact-diff":
+		if err := runImpactDiff(os.Args[2:], os.Stdout); err != nil {
+			fmt.Fprintf(os.Stderr, "mbvm-db impact-diff: %v\n", err)
+			os.Exit(1)
+		}
+
+	case "impact":
+		if err := runImpact(os.Args[2:], os.Stdout); err != nil {
+			fmt.Fprintf(os.Stderr, "mbvm-db impact: %v\n", err)
+			os.Exit(1)
+		}
+
 	case "build":
 		if len(os.Args) < 3 {
 			fmt.Println("Uso: mbvm-db build <dir_projeto> [arquivo_saida.mbvmdb]")
@@ -89,6 +113,47 @@ func main() {
 		fmt.Printf("⚡ [MBVM-DB] Conhecimento de Protocolo compilado em %v!\n", duration)
 		fmt.Printf("  • Arquivo: %s\n", outPath)
 		fmt.Printf("  • Símbolos Totais: %d\n", db.TotalSymbols())
+	case "ingest-game":
+		if len(os.Args) < 3 {
+			fmt.Println("Uso: mbvm-db ingest-game <dir_farm> [arquivo_saida.mbvmdb]")
+			os.Exit(1)
+		}
+		farmDir := os.Args[2]
+		outPath := "game.mbvmdb"
+		if len(os.Args) > 3 {
+			outPath = os.Args[3]
+		}
+
+		start := time.Now()
+		db := mbvmdb.New()
+		if err := db.IngestLoLIdle(farmDir); err != nil {
+			fmt.Fprintf(os.Stderr, "Erro ao ingerir dados do jogo: %v\n", err)
+			os.Exit(1)
+		}
+
+		if err := db.SaveToFile(outPath); err != nil {
+			fmt.Fprintf(os.Stderr, "Erro ao salvar arquivo binário: %v\n", err)
+			os.Exit(1)
+		}
+		duration := time.Since(start)
+
+		fileInfo, _ := os.Stat(outPath)
+		var fileSize int64
+		if fileInfo != nil {
+			fileSize = fileInfo.Size()
+		}
+
+		fmt.Printf("⚡ [MBVM-DB] Conhecimento do Jogo compilado com sucesso em %v!\n", duration)
+		fmt.Printf("  • Arquivo de Saída: %s (%d bytes)\n", outPath, fileSize)
+		fmt.Printf("  • Símbolos Totais: %d\n", db.TotalSymbols())
+		fmt.Printf("  • Bytecode Compilado: %d bytes\n", db.BytecodeSize())
+
+	case "audit":
+		target := "."
+		if len(os.Args) > 2 {
+			target = os.Args[2]
+		}
+		runAudit(target)
 
 	case "slice", "query":
 		if len(os.Args) < 4 {
@@ -194,6 +259,12 @@ func printUsage() {
 	fmt.Println("MBVM-DB — Micro-Bytecode Virtual Machine Database Engine (Go 1.27)")
 	fmt.Println()
 	fmt.Println("COMANDOS:")
+	fmt.Println("  mbvm-db impact -dir <pacote> -symbol <funcao> [-simulate-add-param int] [-json]  Analisa impacto tipado")
+	fmt.Println("  mbvm-db impact-module -root <modulo> -symbol <identidade> [-simulate-add-param int] [-json] [-profile]  Grafo multi-pacote")
+	fmt.Println("  mbvm-db impact-server -root <modulo>                                Consultas JSONL persistentes com cache verificado")
+	fmt.Println("  mbvm-db impact-diff -old <pacote_v1> -new <pacote_v2> [-json]           Compara contratos entre versões")
+	fmt.Println("  mbvm-db impact-diff -repo . -old-ref <rev1> -new-ref <rev2> -package <pacote> [-json]  Compara revisões Git")
+	fmt.Println("  mbvm-db impact-diff -module -repo . -old-ref <rev1> -new-ref <rev2> -symbol <simbolo> [-json]  Compila consumidores antigos com API real nova")
 	fmt.Println("  mbvm-db build <dir> [arquivo.mbvmdb]             Compila AST para banco binário indexado persistente")
 	fmt.Println("  mbvm-db ingest-proto <saida.mbvmdb> <f.bin ...>  Ingere descritores Protobuf para banco binário de protocolo")
 	fmt.Println("  mbvm-db slice <dir|banco.mbvmdb> <simb> [prof]   Extrai fatia subgrafo para IA (-93% tokens)")

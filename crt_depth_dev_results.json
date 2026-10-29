@@ -1,0 +1,762 @@
+{
+  "schema": "mbvm-crt-three-premise-dev-v1",
+  "interpretation": "Public 3-lemma CRT controls. Same knowledge, verifier and executable across B/C. No blind holdout, new theorem, or demonstrated CSR advantage.",
+  "results": [
+    {
+      "task_id": "DEPTH-01",
+      "conventional": {
+        "arm": "B: conventional multihop",
+        "retrieved_ids": [
+          "DEPTH-01-L3",
+          "DEV-CRT-01-L1",
+          "DEV-CRT-01-L2"
+        ],
+        "context_bytes": 85,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "intermediate": {
+            "residue": "61",
+            "modulus": "72",
+            "parent_ids": [
+              "DEV-CRT-01-L1",
+              "DEV-CRT-01-L2"
+            ]
+          },
+          "final": {
+            "residue": "133",
+            "modulus": "360",
+            "parent_ids": [
+              "DEPTH-01-L3",
+              "DEV-CRT-01-GOAL"
+            ]
+          }
+        },
+        "certified": true
+      },
+      "csr": {
+        "arm": "C: CSR multihop",
+        "retrieved_ids": [
+          "DEPTH-01-L3",
+          "DEV-CRT-01-L1",
+          "DEV-CRT-01-L2"
+        ],
+        "context_bytes": 85,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "intermediate": {
+            "residue": "61",
+            "modulus": "72",
+            "parent_ids": [
+              "DEV-CRT-01-L1",
+              "DEV-CRT-01-L2"
+            ]
+          },
+          "final": {
+            "residue": "133",
+            "modulus": "360",
+            "parent_ids": [
+              "DEPTH-01-L3",
+              "DEV-CRT-01-GOAL"
+            ]
+          }
+        },
+        "certified": true
+      },
+      "same_context": true,
+      "same_certificate": true
+    },
+    {
+      "task_id": "DEPTH-02",
+      "conventional": {
+        "arm": "B: conventional multihop",
+        "retrieved_ids": [
+          "DEPTH-02-L3",
+          "DEV-CRT-02-L1",
+          "DEV-CRT-02-L2"
+        ],
+        "context_bytes": 85,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "intermediate": {
+            "residue": "18",
+            "modulus": "35",
+            "parent_ids": [
+              "DEV-CRT-02-L1",
+              "DEV-CRT-02-L2"
+            ]
+          },
+          "final": {
+            "residue": "18",
+            "modulus": "280",
+            "parent_ids": [
+              "DEPTH-02-L3",
+              "DEV-CRT-02-GOAL"
+            ]
+          }
+        },
+        "certified": true
+      },
+      "csr": {
+        "arm": "C: CSR multihop",
+        "retrieved_ids": [
+          "DEPTH-02-L3",
+          "DEV-CRT-02-L1",
+          "DEV-CRT-02-L2"
+        ],
+        "context_bytes": 85,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "intermediate": {
+            "residue": "18",
+            "modulus": "35",
+            "parent_ids": [
+              "DEV-CRT-02-L1",
+              "DEV-CRT-02-L2"
+            ]
+          },
+          "final": {
+            "residue": "18",
+            "modulus": "280",
+            "parent_ids": [
+              "DEPTH-02-L3",
+              "DEV-CRT-02-GOAL"
+            ]
+          }
+        },
+        "certified": true
+      },
+      "same_context": true,
+      "same_certificate": true
+    },
+    {
+      "task_id": "DEPTH-03",
+      "conventional": {
+        "arm": "B: conventional multihop",
+        "retrieved_ids": [
+          "DEPTH-03-L3",
+          "DEV-CRT-03-L1",
+          "DEV-CRT-03-L2"
+        ],
+        "context_bytes": 86,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "intermediate": {
+            "residue": "58",
+            "modulus": "77",
+            "parent_ids": [
+              "DEV-CRT-03-L1",
+              "DEV-CRT-03-L2"
+            ]
+          },
+          "final": {
+            "residue": "212",
+            "modulus": "693",
+            "parent_ids": [
+              "DEPTH-03-L3",
+              "DEV-CRT-03-GOAL"
+            ]
+          }
+        },
+        "certified": true
+      },
+      "csr": {
+        "arm": "C: CSR multihop",
+        "retrieved_ids": [
+          "DEPTH-03-L3",
+          "DEV-CRT-03-L1",
+          "DEV-CRT-03-L2"
+        ],
+        "context_bytes": 86,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "intermediate": {
+            "residue": "58",
+            "modulus": "77",
+            "parent_ids": [
+              "DEV-CRT-03-L1",
+              "DEV-CRT-03-L2"
+            ]
+          },
+          "final": {
+            "residue": "212",
+            "modulus": "693",
+            "parent_ids": [
+              "DEPTH-03-L3",
+              "DEV-CRT-03-GOAL"
+            ]
+          }
+        },
+        "certified": true
+      },
+      "same_context": true,
+      "same_certificate": true
+    },
+    {
+      "task_id": "DEPTH-04",
+      "conventional": {
+        "arm": "B: conventional multihop",
+        "retrieved_ids": [
+          "DEPTH-04-L3",
+          "DEV-CRT-04-L1",
+          "DEV-CRT-04-L2"
+        ],
+        "context_bytes": 87,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "intermediate": {
+            "residue": "138",
+            "modulus": "143",
+            "parent_ids": [
+              "DEV-CRT-04-L1",
+              "DEV-CRT-04-L2"
+            ]
+          },
+          "final": {
+            "residue": "567",
+            "modulus": "1144",
+            "parent_ids": [
+              "DEPTH-04-L3",
+              "DEV-CRT-04-GOAL"
+            ]
+          }
+        },
+        "certified": true
+      },
+      "csr": {
+        "arm": "C: CSR multihop",
+        "retrieved_ids": [
+          "DEPTH-04-L3",
+          "DEV-CRT-04-L1",
+          "DEV-CRT-04-L2"
+        ],
+        "context_bytes": 87,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "intermediate": {
+            "residue": "138",
+            "modulus": "143",
+            "parent_ids": [
+              "DEV-CRT-04-L1",
+              "DEV-CRT-04-L2"
+            ]
+          },
+          "final": {
+            "residue": "567",
+            "modulus": "1144",
+            "parent_ids": [
+              "DEPTH-04-L3",
+              "DEV-CRT-04-GOAL"
+            ]
+          }
+        },
+        "certified": true
+      },
+      "same_context": true,
+      "same_certificate": true
+    },
+    {
+      "task_id": "DEPTH-05",
+      "conventional": {
+        "arm": "B: conventional multihop",
+        "retrieved_ids": [
+          "DEPTH-05-L3",
+          "DEV-CRT-05-L1",
+          "DEV-CRT-05-L2"
+        ],
+        "context_bytes": 88,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "intermediate": {
+            "residue": "148",
+            "modulus": "221",
+            "parent_ids": [
+              "DEV-CRT-05-L1",
+              "DEV-CRT-05-L2"
+            ]
+          },
+          "final": {
+            "residue": "148",
+            "modulus": "1989",
+            "parent_ids": [
+              "DEPTH-05-L3",
+              "DEV-CRT-05-GOAL"
+            ]
+          }
+        },
+        "certified": true
+      },
+      "csr": {
+        "arm": "C: CSR multihop",
+        "retrieved_ids": [
+          "DEPTH-05-L3",
+          "DEV-CRT-05-L1",
+          "DEV-CRT-05-L2"
+        ],
+        "context_bytes": 88,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "intermediate": {
+            "residue": "148",
+            "modulus": "221",
+            "parent_ids": [
+              "DEV-CRT-05-L1",
+              "DEV-CRT-05-L2"
+            ]
+          },
+          "final": {
+            "residue": "148",
+            "modulus": "1989",
+            "parent_ids": [
+              "DEPTH-05-L3",
+              "DEV-CRT-05-GOAL"
+            ]
+          }
+        },
+        "certified": true
+      },
+      "same_context": true,
+      "same_certificate": true
+    },
+    {
+      "task_id": "DEPTH-06",
+      "conventional": {
+        "arm": "B: conventional multihop",
+        "retrieved_ids": [
+          "DEPTH-06-L3",
+          "DEV-CRT-06-L1",
+          "DEV-CRT-06-L2"
+        ],
+        "context_bytes": 87,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "intermediate": {
+            "residue": "13",
+            "modulus": "144",
+            "parent_ids": [
+              "DEV-CRT-06-L1",
+              "DEV-CRT-06-L2"
+            ]
+          },
+          "final": {
+            "residue": "157",
+            "modulus": "1008",
+            "parent_ids": [
+              "DEPTH-06-L3",
+              "DEV-CRT-06-GOAL"
+            ]
+          }
+        },
+        "certified": true
+      },
+      "csr": {
+        "arm": "C: CSR multihop",
+        "retrieved_ids": [
+          "DEPTH-06-L3",
+          "DEV-CRT-06-L1",
+          "DEV-CRT-06-L2"
+        ],
+        "context_bytes": 87,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "intermediate": {
+            "residue": "13",
+            "modulus": "144",
+            "parent_ids": [
+              "DEV-CRT-06-L1",
+              "DEV-CRT-06-L2"
+            ]
+          },
+          "final": {
+            "residue": "157",
+            "modulus": "1008",
+            "parent_ids": [
+              "DEPTH-06-L3",
+              "DEV-CRT-06-GOAL"
+            ]
+          }
+        },
+        "certified": true
+      },
+      "same_context": true,
+      "same_certificate": true
+    },
+    {
+      "task_id": "DEPTH-07",
+      "conventional": {
+        "arm": "B: conventional multihop",
+        "retrieved_ids": [
+          "DEPTH-07-L3",
+          "DEV-CRT-07-L1",
+          "DEV-CRT-07-L2"
+        ],
+        "context_bytes": 88,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "intermediate": {
+            "residue": "121",
+            "modulus": "400",
+            "parent_ids": [
+              "DEV-CRT-07-L1",
+              "DEV-CRT-07-L2"
+            ]
+          },
+          "final": {
+            "residue": "521",
+            "modulus": "3600",
+            "parent_ids": [
+              "DEPTH-07-L3",
+              "DEV-CRT-07-GOAL"
+            ]
+          }
+        },
+        "certified": true
+      },
+      "csr": {
+        "arm": "C: CSR multihop",
+        "retrieved_ids": [
+          "DEPTH-07-L3",
+          "DEV-CRT-07-L1",
+          "DEV-CRT-07-L2"
+        ],
+        "context_bytes": 88,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "intermediate": {
+            "residue": "121",
+            "modulus": "400",
+            "parent_ids": [
+              "DEV-CRT-07-L1",
+              "DEV-CRT-07-L2"
+            ]
+          },
+          "final": {
+            "residue": "521",
+            "modulus": "3600",
+            "parent_ids": [
+              "DEPTH-07-L3",
+              "DEV-CRT-07-GOAL"
+            ]
+          }
+        },
+        "certified": true
+      },
+      "same_context": true,
+      "same_certificate": true
+    },
+    {
+      "task_id": "DEPTH-08",
+      "conventional": {
+        "arm": "B: conventional multihop",
+        "retrieved_ids": [
+          "DEPTH-08-L3",
+          "DEV-CRT-08-L1",
+          "DEV-CRT-08-L2"
+        ],
+        "context_bytes": 87,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "intermediate": {
+            "residue": "160",
+            "modulus": "323",
+            "parent_ids": [
+              "DEV-CRT-08-L1",
+              "DEV-CRT-08-L2"
+            ]
+          },
+          "final": {
+            "residue": "806",
+            "modulus": "2584",
+            "parent_ids": [
+              "DEPTH-08-L3",
+              "DEV-CRT-08-GOAL"
+            ]
+          }
+        },
+        "certified": true
+      },
+      "csr": {
+        "arm": "C: CSR multihop",
+        "retrieved_ids": [
+          "DEPTH-08-L3",
+          "DEV-CRT-08-L1",
+          "DEV-CRT-08-L2"
+        ],
+        "context_bytes": 87,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "intermediate": {
+            "residue": "160",
+            "modulus": "323",
+            "parent_ids": [
+              "DEV-CRT-08-L1",
+              "DEV-CRT-08-L2"
+            ]
+          },
+          "final": {
+            "residue": "806",
+            "modulus": "2584",
+            "parent_ids": [
+              "DEPTH-08-L3",
+              "DEV-CRT-08-GOAL"
+            ]
+          }
+        },
+        "certified": true
+      },
+      "same_context": true,
+      "same_certificate": true
+    },
+    {
+      "task_id": "DEPTH-09",
+      "conventional": {
+        "arm": "B: conventional multihop",
+        "retrieved_ids": [
+          "DEPTH-09-L3",
+          "DEV-CRT-09-L1",
+          "DEV-CRT-09-L2"
+        ],
+        "context_bytes": 89,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "intermediate": {
+            "residue": "317",
+            "modulus": "437",
+            "parent_ids": [
+              "DEV-CRT-09-L1",
+              "DEV-CRT-09-L2"
+            ]
+          },
+          "final": {
+            "residue": "754",
+            "modulus": "3933",
+            "parent_ids": [
+              "DEPTH-09-L3",
+              "DEV-CRT-09-GOAL"
+            ]
+          }
+        },
+        "certified": true
+      },
+      "csr": {
+        "arm": "C: CSR multihop",
+        "retrieved_ids": [
+          "DEPTH-09-L3",
+          "DEV-CRT-09-L1",
+          "DEV-CRT-09-L2"
+        ],
+        "context_bytes": 89,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "intermediate": {
+            "residue": "317",
+            "modulus": "437",
+            "parent_ids": [
+              "DEV-CRT-09-L1",
+              "DEV-CRT-09-L2"
+            ]
+          },
+          "final": {
+            "residue": "754",
+            "modulus": "3933",
+            "parent_ids": [
+              "DEPTH-09-L3",
+              "DEV-CRT-09-GOAL"
+            ]
+          }
+        },
+        "certified": true
+      },
+      "same_context": true,
+      "same_certificate": true
+    },
+    {
+      "task_id": "DEPTH-10",
+      "conventional": {
+        "arm": "B: conventional multihop",
+        "retrieved_ids": [
+          "DEPTH-10-L3",
+          "DEV-CRT-10-L1",
+          "DEV-CRT-10-L2"
+        ],
+        "context_bytes": 89,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "intermediate": {
+            "residue": "631",
+            "modulus": "667",
+            "parent_ids": [
+              "DEV-CRT-10-L1",
+              "DEV-CRT-10-L2"
+            ]
+          },
+          "final": {
+            "residue": "4633",
+            "modulus": "5336",
+            "parent_ids": [
+              "DEPTH-10-L3",
+              "DEV-CRT-10-GOAL"
+            ]
+          }
+        },
+        "certified": true
+      },
+      "csr": {
+        "arm": "C: CSR multihop",
+        "retrieved_ids": [
+          "DEPTH-10-L3",
+          "DEV-CRT-10-L1",
+          "DEV-CRT-10-L2"
+        ],
+        "context_bytes": 89,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "intermediate": {
+            "residue": "631",
+            "modulus": "667",
+            "parent_ids": [
+              "DEV-CRT-10-L1",
+              "DEV-CRT-10-L2"
+            ]
+          },
+          "final": {
+            "residue": "4633",
+            "modulus": "5336",
+            "parent_ids": [
+              "DEPTH-10-L3",
+              "DEV-CRT-10-GOAL"
+            ]
+          }
+        },
+        "certified": true
+      },
+      "same_context": true,
+      "same_certificate": true
+    },
+    {
+      "task_id": "DEPTH-11",
+      "conventional": {
+        "arm": "B: conventional multihop",
+        "retrieved_ids": [
+          "DEPTH-11-L3",
+          "DEV-CRT-11-L1",
+          "DEV-CRT-11-L2"
+        ],
+        "context_bytes": 88,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "intermediate": {
+            "residue": "581",
+            "modulus": "675",
+            "parent_ids": [
+              "DEV-CRT-11-L1",
+              "DEV-CRT-11-L2"
+            ]
+          },
+          "final": {
+            "residue": "4631",
+            "modulus": "4725",
+            "parent_ids": [
+              "DEPTH-11-L3",
+              "DEV-CRT-11-GOAL"
+            ]
+          }
+        },
+        "certified": true
+      },
+      "csr": {
+        "arm": "C: CSR multihop",
+        "retrieved_ids": [
+          "DEPTH-11-L3",
+          "DEV-CRT-11-L1",
+          "DEV-CRT-11-L2"
+        ],
+        "context_bytes": 88,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "intermediate": {
+            "residue": "581",
+            "modulus": "675",
+            "parent_ids": [
+              "DEV-CRT-11-L1",
+              "DEV-CRT-11-L2"
+            ]
+          },
+          "final": {
+            "residue": "4631",
+            "modulus": "4725",
+            "parent_ids": [
+              "DEPTH-11-L3",
+              "DEV-CRT-11-GOAL"
+            ]
+          }
+        },
+        "certified": true
+      },
+      "same_context": true,
+      "same_certificate": true
+    },
+    {
+      "task_id": "DEPTH-12",
+      "conventional": {
+        "arm": "B: conventional multihop",
+        "retrieved_ids": [
+          "DEPTH-12-L3",
+          "DEV-CRT-12-L1",
+          "DEV-CRT-12-L2"
+        ],
+        "context_bytes": 89,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "intermediate": {
+            "residue": "497",
+            "modulus": "864",
+            "parent_ids": [
+              "DEV-CRT-12-L1",
+              "DEV-CRT-12-L2"
+            ]
+          },
+          "final": {
+            "residue": "3953",
+            "modulus": "4320",
+            "parent_ids": [
+              "DEPTH-12-L3",
+              "DEV-CRT-12-GOAL"
+            ]
+          }
+        },
+        "certified": true
+      },
+      "csr": {
+        "arm": "C: CSR multihop",
+        "retrieved_ids": [
+          "DEPTH-12-L3",
+          "DEV-CRT-12-L1",
+          "DEV-CRT-12-L2"
+        ],
+        "context_bytes": 89,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "intermediate": {
+            "residue": "497",
+            "modulus": "864",
+            "parent_ids": [
+              "DEV-CRT-12-L1",
+              "DEV-CRT-12-L2"
+            ]
+          },
+          "final": {
+            "residue": "3953",
+            "modulus": "4320",
+            "parent_ids": [
+              "DEPTH-12-L3",
+              "DEV-CRT-12-GOAL"
+            ]
+          }
+        },
+        "certified": true
+      },
+      "same_context": true,
+      "same_certificate": true
+    }
+  ]
+}

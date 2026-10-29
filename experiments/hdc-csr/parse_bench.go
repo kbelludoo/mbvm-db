@@ -29,6 +29,8 @@ type BenchReport struct {
 	CompositionEvaluation   map[string]any    `json:"algebra_composition_evaluation,omitempty"`
 	DynamicCompositionEvaluation map[string]any `json:"dynamic_composition_evaluation,omitempty"`
 	HDCCapacityEvaluation map[string]any `json:"hdc_capacity_evaluation,omitempty"`
+	RealASTImpactEvaluation map[string]any `json:"real_ast_impact_evaluation,omitempty"`
+	TypedRealBreakageEvaluation map[string]any `json:"typed_real_breakage_evaluation,omitempty"`
 }
 
 func main() {
@@ -80,7 +82,7 @@ func main() {
 	}
 
 	metrics := make(map[string]any)
-	reBench := regexp.MustCompile(`(Benchmark\w+)(?:-\d+)?\s+(\d+)\s+([\d\.]+)\s+ns/op(?:\s+(\d+)\s+B/op\s+(\d+)\s+allocs/op)?`)
+	reBench := regexp.MustCompile(`(Benchmark[\w/]+)(?:-\d+)?\s+(\d+)\s+([\d\.]+)\s+ns/op(?:\s+(\d+)\s+B/op\s+(\d+)\s+allocs/op)?`)
 
 	scanner := bufio.NewScanner(strings.NewReader(cleanedBench))
 	for scanner.Scan() {
@@ -135,6 +137,56 @@ func main() {
 				metrics["e2e_semantic_ns"] = nsOp
 			case strings.Contains(name, "E2E_HDC"):
 				metrics["e2e_hdc_ns"] = nsOp
+			case strings.Contains(name, "TypedRealWorldImpact/"):
+				base := ""
+				switch {
+				case strings.Contains(name, "/IngestTypecheckAndBuild"):
+					base = "typed_real_ingest_typecheck_graph"
+				case strings.Contains(name, "/CachedTypedReverseCSR"):
+					base = "typed_real_cached_reverse_csr"
+				case strings.Contains(name, "/MutationAndFullPackageTypecheck"):
+					base = "typed_real_mutation_package_typecheck"
+				}
+				if base != "" {
+					metrics[base+"_ns"] = nsOp
+					if len(matches)>=6 && matches[4]!="" {
+						bytesOp,_:=strconv.Atoi(matches[4])
+						allocsOp,_:=strconv.Atoi(matches[5])
+						metrics[base+"_bytes_per_op"]=bytesOp
+						metrics[base+"_allocs_per_op"]=allocsOp
+					}
+				}
+			case strings.Contains(name, "RealWorldASTImpact/"):
+				// Distinguish ingestion, real-graph build, mutation and cached
+				// query; the cached query alone excludes parsing/ingestion.
+				metricBase := ""
+				switch {
+				case strings.Contains(name, "/FullIngestMutationReverseCSR"):
+					metricBase = "real_ast_full_ingest_mutation_reverse_csr"
+				case strings.Contains(name, "/BuildReverseCSR"):
+					metricBase = "real_ast_build_reverse_csr"
+				case strings.Contains(name, "/RealSignatureMutation"):
+					metricBase = "real_ast_signature_mutation"
+				case strings.Contains(name, "/CachedReverseCSRQuery"):
+					metricBase = "real_ast_cached_reverse_csr_query"
+				}
+				if metricBase != "" {
+					metrics[metricBase+"_ns"] = nsOp
+					if len(matches) >= 6 && matches[4] != "" {
+						bOp, _ := strconv.Atoi(matches[4])
+						allocsOp, _ := strconv.Atoi(matches[5])
+						metrics[metricBase+"_bytes_per_op"] = bOp
+						metrics[metricBase+"_allocs_per_op"] = allocsOp
+					}
+				}
+			case strings.Contains(name, "ASTCanonicalGoFunction"):
+				metrics["ast_canonical_go_function_ns"] = nsOp
+				if len(matches) >= 6 && matches[4] != "" {
+					bOp, _ := strconv.Atoi(matches[4])
+					allocsOp, _ := strconv.Atoi(matches[5])
+					metrics["ast_canonical_go_function_bytes_per_op"] = bOp
+					metrics["ast_canonical_go_function_allocs_per_op"] = allocsOp
+				}
 			case strings.Contains(name, "NativeProjection8K_384"):
 				metrics["native_projection_384_to_8192_ns"] = nsOp
 				if len(matches) >= 6 && matches[4] != "" {
@@ -313,7 +365,48 @@ func main() {
 		os.Exit(1)
 	}
 
-	var pairedMetrics map[string]any
+	rawRealImpact, err := os.ReadFile("experiments/hdc-csr/real_world_impact_output.json")
+	if err != nil {
+		fmt.Printf("FALHA CRÍTICA NO CI: real_world_impact_output.json ausente: %v\n",err)
+		os.Exit(1)
+	}
+	var realImpact map[string]any
+	if err := json.Unmarshal(rawRealImpact,&realImpact);err!=nil{
+		fmt.Printf("FALHA CRÍTICA NO CI: real-world AST impact JSON inválido: %v\n",err)
+		os.Exit(1)
+	}
+	if realImpact["schema"]!="mbvm-real-world-ast-impact-v1" ||
+		realImpact["api_signature_changed"]!=true ||
+		realImpact["format_only_signature_stable"]!=true ||
+		realImpact["functional_counterexample_confirmed"]!=false ||
+		len(fmt.Sprint(realImpact["source_digest"]))!=64 ||
+		realImpact["name_resolved_call_edges"].(float64)<1 ||
+		realImpact["immediate_possible_callers"].(float64)<1 {
+		fmt.Println("FALHA CRÍTICA NO CI: relatório AST não atende aos controles de evidência")
+		os.Exit(1)
+	}
+	
+	rawTyped, err := os.ReadFile("experiments/hdc-csr/typed_real_impact_output.json")
+	if err!=nil{
+		fmt.Printf("FALHA CRÍTICA NO CI: typed_real_impact_output.json ausente: %v\n",err)
+		os.Exit(1)
+	}
+	var typedImpact map[string]any
+	if err=json.Unmarshal(rawTyped,&typedImpact);err!=nil{
+		fmt.Printf("FALHA CRÍTICA NO CI: typed_real_impact_output.json inválido: %v\n",err)
+		os.Exit(1)
+	}
+	if typedImpact["schema"]!="mbvm-real-typed-breakage-v1" ||
+		typedImpact["baseline_typechecked"]!=true ||
+		typedImpact["mutated_package_typechecked"]!=false ||
+		typedImpact["source_files_unmodified"]!=true ||
+		typedImpact["runtime_behavior_verified"]!=false ||
+		typedImpact["go_types_compile_errors"].(float64)<1 ||
+		typedImpact["direct_callers_with_type_errors"].(float64)<1 {
+		fmt.Println("FALHA CRÍTICA NO CI: evidência typed Go incorreta")
+		os.Exit(1)
+	}
+
 	rawPairedBytes, err := os.ReadFile(pairedFile)
 	if err == nil {
 		_ = json.Unmarshal(rawPairedBytes, &pairedMetrics)
@@ -340,6 +433,8 @@ func main() {
 		CompositionEvaluation: composition,
 		DynamicCompositionEvaluation: dynamic,
 		HDCCapacityEvaluation: hdcCapacity,
+		RealASTImpactEvaluation: realImpact,
+		TypedRealBreakageEvaluation: typedImpact,
 	}
 
 	outBytes, err := json.MarshalIndent(report, "", "  ")

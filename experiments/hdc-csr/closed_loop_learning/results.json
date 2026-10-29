@@ -1,0 +1,200 @@
+{
+  "schema": "mbvm-closed-loop-results-summary-v1",
+  "date_local": "2026-10-26",
+  "source_snapshot": {
+    "directory": "C:\\Users\\kbell\\Downloads\\mbvm-db\\pkg\\mbvmdb",
+    "package": "github.com/kbelludoo/mbvm-db/pkg/mbvmdb",
+    "source_sha256": "609c1017e72e4db941a05214321f6ab31b0bdb1d8e66e9febf2a6bac93433541",
+    "context_sha256": "2a581bd8ad80fe633dced7cfda3e4e606612dda4ef3d0ef8cb61826021a53cbb",
+    "go_version": "go1.27.0",
+    "goos": "windows",
+    "goarch": "amd64"
+  },
+  "protocol_sha256": "efb5d72492bfeb19423582e22026536c6741ca93d3fcf887493e533f23d0728f",
+  "full_report": "output/closed-loop-2026-10-26-pkg-mbvmdb-verified/report.json",
+  "first_run_report": "output/closed-loop-2026-10-26-pkg-mbvmdb/report.json",
+  "proposals_across_runs": 270.0,
+  "confirmations_across_runs": 24.0,
+  "distinct_confirmed_acquired_relations": 20,
+  "positive_gain_seeds": 0,
+  "interpretation": "Functional propose/verify/persist/update/evaluate loop. Zero of three seed splits improved Recall@5 versus both controls. This run does not demonstrate useful incremental generalization.",
+  "seeds": [
+    {
+      "seed": 42,
+      "proposed": 95,
+      "confirmed": 10,
+      "eligible_test_queries": 7,
+      "excluded_empty_test_queries": 16,
+      "metrics": [
+        {
+          "arm": "continued_training_without_new_facts",
+          "recall_at_5": 0.49319727891156456,
+          "mrr": 0.5574829931972789,
+          "map": 0.4027358155583242
+        },
+        {
+          "arm": "deterministic_metadata_rules",
+          "recall_at_5": 0.30272108843537415,
+          "mrr": 0.23606435822227473,
+          "map": 0.17771114038666327
+        },
+        {
+          "arm": "fixed_hdc_no_training",
+          "recall_at_5": 0.1870748299319728,
+          "mrr": 0.163244176013805,
+          "map": 0.13344315917420027
+        },
+        {
+          "arm": "frozen_untrained_mlp",
+          "recall_at_5": 0.07142857142857142,
+          "mrr": 0.15900809573497873,
+          "map": 0.10339056445329464
+        },
+        {
+          "arm": "full_source_typed_oracle_reference",
+          "recall_at_5": 0.9353741496598641,
+          "mrr": 1,
+          "map": 1
+        },
+        {
+          "arm": "trained_after_verified_update",
+          "recall_at_5": 0.42176870748299317,
+          "mrr": 0.5418985776128633,
+          "map": 0.3953262608273409
+        },
+        {
+          "arm": "trained_before_update",
+          "recall_at_5": 0.42176870748299317,
+          "mrr": 0.48129251700680264,
+          "map": 0.32904633976800807
+        }
+      ],
+      "delta_vs_before": 0,
+      "delta_vs_equal_steps_control": -0.0714285714285714,
+      "weights_updated": true,
+      "source_evidence_and_holdout_checked": true,
+      "checkpoints_repeat_exactly": true,
+      "initial_state_sha256": "0beb0bebbd25228eb33a56586ed9840783bea38b4aa8f8219328ddceb67fc3ac",
+      "verified_state_sha256": "376ae5abb0d1475f8ccd3fb87f173640002758ed083b089bb35a5389a75c2719",
+      "updated_state_sha256": "66acea8908bcb1eaaaaf5a12f891db363965352527260222c5eb77de570c1a47"
+    },
+    {
+      "seed": 43,
+      "proposed": 55,
+      "confirmed": 4,
+      "eligible_test_queries": 6,
+      "excluded_empty_test_queries": 14,
+      "metrics": [
+        {
+          "arm": "continued_training_without_new_facts",
+          "recall_at_5": 0.3253968253968254,
+          "mrr": 0.500631313131313,
+          "map": 0.271109597160851
+        },
+        {
+          "arm": "deterministic_metadata_rules",
+          "recall_at_5": 0.3531746031746032,
+          "mrr": 0.2739234449760765,
+          "map": 0.20763556624179844
+        },
+        {
+          "arm": "fixed_hdc_no_training",
+          "recall_at_5": 0.30158730158730157,
+          "mrr": 0.2863095238095238,
+          "map": 0.2125836709522794
+        },
+        {
+          "arm": "frozen_untrained_mlp",
+          "recall_at_5": 0.35714285714285715,
+          "mrr": 0.2680803571428571,
+          "map": 0.21553627409464252
+        },
+        {
+          "arm": "full_source_typed_oracle_reference",
+          "recall_at_5": 0.9246031746031745,
+          "mrr": 1,
+          "map": 1
+        },
+        {
+          "arm": "trained_after_verified_update",
+          "recall_at_5": 0.3253968253968254,
+          "mrr": 0.5075757575757575,
+          "map": 0.28933660952916024
+        },
+        {
+          "arm": "trained_before_update",
+          "recall_at_5": 0.3253968253968254,
+          "mrr": 0.5075757575757575,
+          "map": 0.2844988188318999
+        }
+      ],
+      "delta_vs_before": 0,
+      "delta_vs_equal_steps_control": 0,
+      "weights_updated": true,
+      "source_evidence_and_holdout_checked": true,
+      "checkpoints_repeat_exactly": true,
+      "initial_state_sha256": "c478bc7f7c4b97842c245f6bf9f7f58c34487afcfb8a9ae4ea59d8a4313e56fe",
+      "verified_state_sha256": "74d93d76f1ffc5e9044782cd5b01ed68e83a5536567e03428aeb53e2f69bf07d",
+      "updated_state_sha256": "cef47c4e3c47b014fd04e6d0dd104647aaf2b91bdbfd35446b91ff775b51691c"
+    },
+    {
+      "seed": 44,
+      "proposed": 120,
+      "confirmed": 10,
+      "eligible_test_queries": 9,
+      "excluded_empty_test_queries": 7,
+      "metrics": [
+        {
+          "arm": "continued_training_without_new_facts",
+          "recall_at_5": 0.38359788359788355,
+          "mrr": 0.4785185185185185,
+          "map": 0.36293375834101427
+        },
+        {
+          "arm": "deterministic_metadata_rules",
+          "recall_at_5": 0.291005291005291,
+          "mrr": 0.2532268916522233,
+          "map": 0.18284801724072203
+        },
+        {
+          "arm": "fixed_hdc_no_training",
+          "recall_at_5": 0.20105820105820105,
+          "mrr": 0.20936117616445482,
+          "map": 0.16008929366985292
+        },
+        {
+          "arm": "frozen_untrained_mlp",
+          "recall_at_5": 0.06878306878306878,
+          "mrr": 0.07629850992827264,
+          "map": 0.05296189928177245
+        },
+        {
+          "arm": "full_source_typed_oracle_reference",
+          "recall_at_5": 0.9497354497354498,
+          "mrr": 1,
+          "map": 1
+        },
+        {
+          "arm": "trained_after_verified_update",
+          "recall_at_5": 0.3280423280423281,
+          "mrr": 0.4757489106753812,
+          "map": 0.3599028096381509
+        },
+        {
+          "arm": "trained_before_update",
+          "recall_at_5": 0.38359788359788355,
+          "mrr": 0.3904360812425329,
+          "map": 0.32133390722944105
+        }
+      ],
+      "delta_vs_before": -0.05555555555555547,
+      "delta_vs_equal_steps_control": -0.05555555555555547,
+      "weights_updated": true,
+      "source_evidence_and_holdout_checked": true,
+      "checkpoints_repeat_exactly": true,
+      "initial_state_sha256": "a0809c660ac1e0e93e33889a17aa4c1b6a2f0bbbe34c5fbcba27601f24f60afc",
+      "verified_state_sha256": "5f36cda0b11f33c254419a447d0fd91dfa08a464063509faaef711d81b555a01",
+      "updated_state_sha256": "3b6d8c1f572159ff27c3aa3a68a54384fec41dd77cbfd638a9c79041d7dc60b1"
+    }
+  ]
+}

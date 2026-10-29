@@ -1,0 +1,15 @@
+{
+  "schema": "mbvm-binary-lsh-v1",
+  "nodes": 1000,
+  "queries": 100,
+  "tables": 12,
+  "bits_per_table": 10,
+  "probe_radius": 1,
+  "oracle_recall_at_10": 0.014361184567066919,
+  "lsh_recall_at_10": 0.01359195379783615,
+  "avg_oracle_top10_agreement": 0.9760000000000004,
+  "avg_unique_candidates": 774.31,
+  "max_unique_candidates": 999,
+  "index_posting_entries": 12000,
+  "evaluation": "synthetic_accuracy_and_candidate_pruning_not_neural_generalization"
+}

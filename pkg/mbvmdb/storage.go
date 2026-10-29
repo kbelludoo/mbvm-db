@@ -401,7 +401,19 @@ func LoadFromFile(filename string) (*DB, error) {
 			methodsByReceiver[cleanRecv] = append(methodsByReceiver[cleanRecv], rec)
 		}
 
-		// Re-index game hunt aliases and proto tags stored in signature/fields
+		// Re-index game hunt and game domain entities
+		if strings.HasPrefix(rec.Kind, "game_") {
+			for _, word := range strings.Fields(strings.ToLower(rec.Name)) {
+				if len(word) > 2 && indexByName[word] == nil {
+					indexByName[word] = rec
+				}
+			}
+			for _, word := range strings.Fields(strings.ToLower(rec.Receiver)) {
+				if len(word) > 2 && indexByName[word] == nil {
+					indexByName[word] = rec
+				}
+			}
+		}
 		if rec.Kind == "game_hunt" {
 			for _, f := range rec.Fields {
 				if strings.HasPrefix(f, "Monster: ") {

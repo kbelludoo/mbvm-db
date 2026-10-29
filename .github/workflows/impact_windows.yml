@@ -1,0 +1,88 @@
+name: Impact Windows Compatibility
+
+on:
+  push:
+    branches:
+      - feature/hdc-csr-experimental
+      - main
+    paths:
+      - 'internal/impact/**'
+      - 'cmd/mbvm-db/**'
+      - '.github/workflows/impact_windows.yml'
+  pull_request:
+    paths:
+      - 'internal/impact/**'
+      - 'cmd/mbvm-db/**'
+      - '.github/workflows/impact_windows.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-impact:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout Git repo
+        uses: actions/checkout@v4
+
+      - name: Install Go from go.mod
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Git archive and real Go impact tests (Windows)
+        shell: pwsh
+        env:
+          CGO_ENABLED: '0'
+        run: |
+          go test -count=1 -timeout=120s -v -run 'Test(BoundedArchiveWriter|ExtractArchiveDeterministicPAXAndRejectLinks|ExtractGitArchivePAXMetadata|CompareGitRefsCommittedTreesOnly|ImpactDiffGitRevisionFlags|CompareDirs|ImpactDiffCommand)' ./internal/impact ./cmd/mbvm-db
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Self-consistent provider overlay and compiler witness (Windows)
+        shell: pwsh
+        env:
+          CGO_ENABLED: '0'
+        run: |
+          go test -count=1 -timeout=240s -v -run 'Test(PrepareContractOverlay|SelfConsistentProvider|ProviderOverlayFailure|KnownTargetCallLine|CrossPackageReceiverMethodWitness)' ./internal/impact
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Real Git revision contract regression (Windows)
+        shell: pwsh
+        env:
+          CGO_ENABLED: '0'
+          GOPROXY: 'off'
+          GOSUMDB: 'off'
+        run: |
+          go test -count=1 -timeout=300s -v -run 'Test(RealModule|ImpactDiffModule)' ./internal/impact ./cmd/mbvm-db
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Shared importer parity and CLI profile (Windows)
+        shell: pwsh
+        env:
+          CGO_ENABLED: '0'
+          GOPROXY: 'off'
+          GOSUMDB: 'off'
+        run: |
+          go test -count=1 -timeout=300s -v -run 'Test(SharedModuleImporter|ImpactModuleCLI)' ./internal/impact ./cmd/mbvm-db
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Phase 3.2 module cache invalidation and concurrency (Windows)
+        shell: pwsh
+        env:
+          CGO_ENABLED: '0'
+          GOPROXY: 'off'
+          GOSUMDB: 'off'
+        run: |
+          go test -count=1 -timeout=300s -v -run '^TestModuleCache' ./internal/impact
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Production impact integration tests (Windows)
+        shell: pwsh
+        env:
+          CGO_ENABLED: '0'
+        run: |
+          go test -count=1 -timeout=180s ./internal/impact ./cmd/mbvm-db
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

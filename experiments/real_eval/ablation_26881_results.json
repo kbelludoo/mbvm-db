@@ -1,0 +1,214 @@
+{
+  "target_n": "26881 (prime = 1 mod 840, = 8401 mod 9240)",
+  "timestamp": "2026-10-24T18:29:37Z",
+  "summaries": [
+    {
+      "condition": "Group A: Gemini Direct Baseline",
+      "trials_count": 2,
+      "completed_responses": 1,
+      "infrastructure_errors": 1,
+      "solved_count": 1,
+      "math_failures_count": 0,
+      "mathematical_accuracy": 1.0,
+      "availability_rate": 0.5,
+      "avg_prompt_tokens": 88.0,
+      "avg_complete_tokens": 946.0,
+      "avg_total_tokens": 8486.0,
+      "avg_reasoning_tokens": 7452.0,
+      "avg_latency_ms": 36193.6
+    },
+    {
+      "condition": "Group B: Conventional Filtered Index (Formula Only)",
+      "trials_count": 2,
+      "completed_responses": 1,
+      "infrastructure_errors": 1,
+      "solved_count": 1,
+      "math_failures_count": 0,
+      "mathematical_accuracy": 1.0,
+      "availability_rate": 0.5,
+      "avg_prompt_tokens": 200.0,
+      "avg_complete_tokens": 597.0,
+      "avg_total_tokens": 4191.0,
+      "avg_reasoning_tokens": 3394.0,
+      "avg_latency_ms": 17808.2
+    },
+    {
+      "condition": "Group C: Conventional Filtered Index + Instantiation Recipe",
+      "trials_count": 2,
+      "completed_responses": 2,
+      "infrastructure_errors": 0,
+      "solved_count": 2,
+      "math_failures_count": 0,
+      "mathematical_accuracy": 1.0,
+      "availability_rate": 1.0,
+      "avg_prompt_tokens": 310.0,
+      "avg_complete_tokens": 711.0,
+      "avg_total_tokens": 6683.0,
+      "avg_reasoning_tokens": 5662.0,
+      "avg_latency_ms": 27469.5
+    },
+    {
+      "condition": "Group D: MBVM-DB CSR Subgraph + Instantiation Recipe",
+      "trials_count": 2,
+      "completed_responses": 1,
+      "infrastructure_errors": 1,
+      "solved_count": 1,
+      "math_failures_count": 0,
+      "mathematical_accuracy": 1.0,
+      "availability_rate": 0.5,
+      "avg_prompt_tokens": 569.0,
+      "avg_complete_tokens": 777.0,
+      "avg_total_tokens": 7125.0,
+      "avg_reasoning_tokens": 5779.0,
+      "avg_latency_ms": 27590.2
+    }
+  ],
+  "results": [
+    {
+      "trial_index": 1,
+      "condition": "Group D: MBVM-DB CSR Subgraph + Instantiation Recipe",
+      "model_requested": "gemini-3.5-flash",
+      "model_version": "gemini-3.6-flash",
+      "prompt_tokens_real": 569,
+      "completion_tokens_real": 777,
+      "total_tokens_real": 7125,
+      "reasoning_tokens_real": 5779,
+      "latency": 27590153700,
+      "success": true,
+      "verification_status": "exact identity verified: 4/26881 = 1/6721 + 1/60222404 + 1/989110288015564",
+      "response_text": "To find positive integers $x, y, z$ satisfying \n$$\\frac{4}{26881} = \\frac{1}{x} + \\frac{1}{y} + \\frac{1}{z}$$\n\nwe apply **Lemma 1 (`RULE-HARD-840-RES1-P11`)**, which provides a closed polynomial solution for any $n \\equiv 8401 \\pmod{9240}$.\n\n### Step 1: Verification of Premise\nFor $n = 26881$:\n$$26881 - 8401 = 18480 = 2 \\times 9240 \\implies n \\equiv 8401 \\pmod{9240}$$\nThus, the condition for the lemma holds.\n\n### Step 2: Calculation of $x, y, z$\nUsing the parametric formulas given by Lemma 1:\n\n1. **Calculate $x$:**\n   $$x = \\frac{n+3}{4} = \\frac{26881 + 3}{4} = \\frac{26884}{4} = 6721$$\n\n2. **Calculate $y$:**\n   First, evaluate $n(n+3)$:\n   $$n(n+3) = 26881 \\times 26884 = 722668804$$\n   Now calculate $y$:\n   $$y = \\frac{n(n+3) + 44}{12} = \\frac{722668804 + 44}{12} = \\frac{722668848}{12} = 60222404$$\n\n3. **Calculate $z$:**\n   $$z = \\frac{n(n+3)[n(n+3)+44]}{528} = \\frac{n(n+3)}{44} \\times y$$\n   Evaluating $\\frac{n(n+3)}{44}$:\n   $$\\frac{722668804}{44} = 16424291$$\n   Multiplying to find $z$:\n   $$z = 16424291 \\times 60222404 = 989110288015564$$\n\n### Step 3: Rigorous Algebraic Verification\nUsing the identities from the substitution:\n$$\\frac{4}{n} - \\frac{1}{x} = \\frac{4}{26881} - \\frac{4}{26884} = \\frac{12}{n(n+3)}$$\n$$\\frac{12}{n(n+3)} - \\frac{1}{y} = \\frac{12}{n(n+3)} - \\frac{12}{n(n+3)+44} = \\frac{528}{n(n+3)[n(n+3)+44]} = \\frac{1}{z}$$\n\nThus, $\\frac{1}{x} + \\frac{1}{y} + \\frac{1}{z} = \\frac{4}{26881}$ holds exactly.\n\nx = 6721, y = 60222404, z = 989110288015564",
+      "retrieval_path": "CSR-SmartSlice:Root(RULE-HARD-840-RES1-P11)->Edge[Rel=1]->RULE-MORDELL-DIVISOR->Edge[Rel=1]->RULE-MOD4-3->Edge[Rel=1]->RULE-MOD3-2",
+      "rules_retrieved": [
+        "RULE-HARD-840-RES1-P11",
+        "RULE-MORDELL-DIVISOR",
+        "RULE-MOD4-3",
+        "RULE-MOD3-2"
+      ]
+    },
+    {
+      "trial_index": 2,
+      "condition": "Group A: Gemini Direct Baseline",
+      "model_requested": "gemini-3.5-flash",
+      "model_version": "",
+      "prompt_tokens_real": 0,
+      "completion_tokens_real": 0,
+      "total_tokens_real": 0,
+      "reasoning_tokens_real": 0,
+      "latency": 6900329400,
+      "success": false,
+      "verification_status": "API call failed",
+      "retrieval_path": "",
+      "rules_retrieved": null,
+      "error_message": "gemini api returned status 503: This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later. (UNAVAILABLE): gemini api error"
+    },
+    {
+      "trial_index": 3,
+      "condition": "Group B: Conventional Filtered Index (Formula Only)",
+      "model_requested": "gemini-3.5-flash",
+      "model_version": "",
+      "prompt_tokens_real": 0,
+      "completion_tokens_real": 0,
+      "total_tokens_real": 0,
+      "reasoning_tokens_real": 0,
+      "latency": 19319924400,
+      "success": false,
+      "verification_status": "API call failed",
+      "retrieval_path": "ConventionalInvertedIndex:ModulusMatch(RULE-HARD-840-RES1-P11)",
+      "rules_retrieved": [
+        "RULE-HARD-840-RES1-P11"
+      ],
+      "error_message": "gemini api returned status 503: This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later. (UNAVAILABLE): gemini api error"
+    },
+    {
+      "trial_index": 4,
+      "condition": "Group C: Conventional Filtered Index + Instantiation Recipe",
+      "model_requested": "gemini-3.5-flash",
+      "model_version": "gemini-3.6-flash",
+      "prompt_tokens_real": 310,
+      "completion_tokens_real": 696,
+      "total_tokens_real": 6631,
+      "reasoning_tokens_real": 5625,
+      "latency": 27349337200,
+      "success": true,
+      "verification_status": "exact identity verified: 4/26881 = 1/6721 + 1/60222404 + 1/989110288015564",
+      "response_text": "To solve for positive integers $x, y, z$ satisfying \n$$\\frac{4}{26881} = \\frac{1}{x} + \\frac{1}{y} + \\frac{1}{z}$$\nwe apply the provided **RULE-HARD-840-RES1-P11** theorem (Mordell 1967 specialization).\n\n---\n\n### Step 1: Verify the Premise\nWe check if $n = 26881$ satisfies $n \\equiv 8401 \\pmod{9240}$:\n$$26881 - 8401 = 18480 = 2 \\times 9240$$\nSince $18480$ is an exact multiple of $9240$, the premise holds.\n\n---\n\n### Step 2: Compute $x, y, z$ via the Closed Polynomial Formulas\n\n1. **Calculate $x$**:\n   $$x = \\frac{n + 3}{4} = \\frac{26881 + 3}{4} = \\frac{26884}{4} = 6721$$\n\n2. **Calculate $y$**:\n   $$n(n + 3) = 26881 \\times 26884 = 722668804$$\n   $$n(n + 3) + 44 = 722668804 + 44 = 722668848$$\n   $$y = \\frac{n(n + 3) + 44}{12} = \\frac{722668848}{12} = 60222404$$\n\n3. **Calculate $z$**:\n   $$z = \\frac{n(n + 3)[n(n + 3) + 44]}{528} = \\frac{722668804 \\times 722668848}{528}$$\n   Noting that $\\frac{722668804}{44} = 16424291$ and $\\frac{722668848}{12} = 60222404$:\n   $$z = 16424291 \\times 60222404 = 989110288015564$$\n\n---\n\n### Step 3: Verification\nSubstituting $x, y, z$ back into the original identity:\n$$\\frac{1}{6721} + \\frac{1}{60222404} + \\frac{1}{989110288015564} = \\frac{4}{26881}$$\n\n---\n\nx = 6721, y = 60222404, z = 989110288015564",
+      "retrieval_path": "ConventionalInvertedIndex:ModulusMatch(RULE-HARD-840-RES1-P11)",
+      "rules_retrieved": [
+        "RULE-HARD-840-RES1-P11"
+      ]
+    },
+    {
+      "trial_index": 5,
+      "condition": "Group D: MBVM-DB CSR Subgraph + Instantiation Recipe",
+      "model_requested": "gemini-3.5-flash",
+      "model_version": "",
+      "prompt_tokens_real": 0,
+      "completion_tokens_real": 0,
+      "total_tokens_real": 0,
+      "reasoning_tokens_real": 0,
+      "latency": 12170578800,
+      "success": false,
+      "verification_status": "API call failed",
+      "retrieval_path": "CSR-SmartSlice:Root(RULE-HARD-840-RES1-P11)->Edge[Rel=1]->RULE-MORDELL-DIVISOR->Edge[Rel=1]->RULE-MOD4-3->Edge[Rel=1]->RULE-MOD3-2",
+      "rules_retrieved": [
+        "RULE-HARD-840-RES1-P11",
+        "RULE-MORDELL-DIVISOR",
+        "RULE-MOD4-3",
+        "RULE-MOD3-2"
+      ],
+      "error_message": "gemini api returned status 503: This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later. (UNAVAILABLE): gemini api error"
+    },
+    {
+      "trial_index": 6,
+      "condition": "Group B: Conventional Filtered Index (Formula Only)",
+      "model_requested": "gemini-3.5-flash",
+      "model_version": "gemini-3.6-flash",
+      "prompt_tokens_real": 200,
+      "completion_tokens_real": 597,
+      "total_tokens_real": 4191,
+      "reasoning_tokens_real": 3394,
+      "latency": 17808239200,
+      "success": true,
+      "verification_status": "exact identity verified: 4/26881 = 1/6721 + 1/60222404 + 1/989110288015564",
+      "response_text": "To find positive integers $x, y, z$ satisfying $\\frac{4}{26881} = \\frac{1}{x} + \\frac{1}{y} + \\frac{1}{z}$, we apply the **RULE-HARD-840-RES1-P11** theorem with $n = 26881$.\n\n### **Step 1: Verify the Premise**\nWe first check if $n = 26881 \\equiv 8401 \\pmod{9240}$:\n$$26881 = 2 \\times 9240 + 8401$$\nSince the remainder is $8401$, the condition $n \\equiv 8401 \\pmod{9240}$ holds.\n\n---\n\n### **Step 2: Calculate $x$**\nUsing the formula $x = \\frac{n+3}{4}$:\n$$x = \\frac{26881 + 3}{4} = \\frac{26884}{4} = 6721$$\n\n---\n\n### **Step 3: Calculate $y$**\nUsing the formula $y = \\frac{n(n+3) + 44}{12}$:\n$$n(n+3) = 26881 \\times 26884 = 722668804$$\n$$y = \\frac{722668804 + 44}{12} = \\frac{722668848}{12} = 60222404$$\n\n---\n\n### **Step 4: Calculate $z$**\nUsing the formula $z = \\frac{n(n+3)[n(n+3)+44]}{528}$:\nNotice that:\n$$z = \\left(\\frac{n(n+3)}{44}\\right) \\times \\left(\\frac{n(n+3)+44}{12}\\right) = \\left(\\frac{722668804}{44}\\right) \\times y$$\n$$\\frac{722668804}{44} = 16424291$$\n$$z = 16424291 \\times 60222404 = 989110288015564$$\n\n---\n\n### **Final Answer**\nx = 6721, y = 60222404, z = 989110288015564",
+      "retrieval_path": "ConventionalInvertedIndex:ModulusMatch(RULE-HARD-840-RES1-P11)",
+      "rules_retrieved": [
+        "RULE-HARD-840-RES1-P11"
+      ]
+    },
+    {
+      "trial_index": 7,
+      "condition": "Group A: Gemini Direct Baseline",
+      "model_requested": "gemini-3.5-flash",
+      "model_version": "gemini-3.6-flash",
+      "prompt_tokens_real": 88,
+      "completion_tokens_real": 946,
+      "total_tokens_real": 8486,
+      "reasoning_tokens_real": 7452,
+      "latency": 36193645900,
+      "success": true,
+      "verification_status": "exact identity verified: 4/26881 = 1/6721 + 1/65697164 + 1/722668804",
+      "response_text": "To solve the equation \n$$\\frac{4}{26881} = \\frac{1}{x} + \\frac{1}{y} + \\frac{1}{z}$$\nfor positive integers $x, y, z$, we follow a systematic decomposition approach.\n\n### Step 1: Choose $x$\nLet $N = 26881$. Observe that $N + 3 = 26884$, which is divisible by $4$:\n$$\\frac{N+3}{4} = \\frac{26884}{4} = 6721$$\n\nWe choose $x = 6721$. Subtracting $\\frac{1}{x}$ from $\\frac{4}{N}$, we get:\n$$\\frac{4}{N} - \\frac{1}{x} = \\frac{4}{26881} - \\frac{1}{6721} = \\frac{4 \\times 6721 - 26881}{26881 \\times 6721} = \\frac{26884 - 26881}{26881 \\times 6721} = \\frac{3}{26881 \\times 6721}$$\n\nLet $A = N \\times x = 26881 \\times 6721 = 180,667,201$. The problem reduces to finding positive integers $y$ and $z$ such that:\n$$\\frac{1}{y} + \\frac{1}{z} = \\frac{3}{A}$$\n\n### Step 2: Determine $y$ and $z$\nNotice that $6721 = 11 \\times 611$, which means $11$ divides $A$:\n$$\\frac{A}{11} = \\frac{180,667,201}{11} = 16,424,291$$\n\nWe can split $\\frac{3}{A}$ by writing $3 = \\frac{12}{4} = \\frac{11 + 1}{4}$:\n$$\\frac{3}{A} = \\frac{12}{4A} = \\frac{11 + 1}{4A} = \\frac{11}{4A} + \\frac{1}{4A} = \\frac{1}{\\frac{4A}{11}} + \\frac{1}{4A}$$\n\nThus, we define:\n$$y = \\frac{4A}{11} = 4 \\times 16,424,291 = 65,697,164$$\n$$z = 4A = 4 \\times 180,667,201 = 722,668,804$$\n\n### Step 3: Verification\n1. $\\frac{1}{y} + \\frac{1}{z} = \\frac{1}{65697164} + \\frac{1}{722668804} = \\frac{11}{4A} + \\frac{1}{4A} = \\frac{12}{4A} = \\frac{3}{A} = \\frac{3}{26881 \\times 6721}$\n2. $\\frac{1}{x} + \\frac{1}{y} + \\frac{1}{z} = \\frac{1}{6721} + \\frac{3}{26881 \\times 6721} = \\frac{26881 + 3}{26881 \\times 6721} = \\frac{26884}{26881 \\times 6721} = \\frac{4 \\times 6721}{26881 \\times 6721} = \\frac{4}{26881}$\n\nAll values $x, y, z$ are positive integers.\n\nState: x = 6721, y = 65697164, z = 722668804",
+      "retrieval_path": "",
+      "rules_retrieved": null
+    },
+    {
+      "trial_index": 8,
+      "condition": "Group C: Conventional Filtered Index + Instantiation Recipe",
+      "model_requested": "gemini-3.5-flash",
+      "model_version": "gemini-3.6-flash",
+      "prompt_tokens_real": 310,
+      "completion_tokens_real": 726,
+      "total_tokens_real": 6735,
+      "reasoning_tokens_real": 5699,
+      "latency": 27589727400,
+      "success": true,
+      "verification_status": "exact identity verified: 4/26881 = 1/6721 + 1/60222404 + 1/989110288015564",
+      "response_text": "To find positive integers $x, y, z$ satisfying $\\frac{4}{26881} = \\frac{1}{x} + \\frac{1}{y} + \\frac{1}{z}$, we apply the given **RULE-HARD-840-RES1-P11** divisor specialization formula for $n = 26881$.\n\n### **Step 1: Check Premise**\nWe check if $n = 26881 \\equiv 8401 \\pmod{9240}$:\n$$26881 - 8401 = 18480 = 2 \\times 9240$$\nThus, $n \\equiv 8401 \\pmod{9240}$ holds.\n\n---\n\n### **Step 2: Evaluate $x$**\nUsing $x = \\frac{n+3}{4}$:\n$$x = \\frac{26881 + 3}{4} = \\frac{26884}{4} = 6721$$\n\n---\n\n### **Step 3: Evaluate $y$**\nUsing $y = \\frac{n(n+3) + 44}{12}$:\n$$n(n+3) = 26881 \\times 26884 = 722668804$$\n$$y = \\frac{722668804 + 44}{12} = \\frac{722668848}{12} = 60222404$$\n\n---\n\n### **Step 4: Evaluate $z$**\nUsing $z = \\frac{n(n+3)[n(n+3)+44]}{528}$:\nNotice that $\\frac{n(n+3)}{44} = \\frac{722668804}{44} = 16424291$.\n\nThus:\n$$z = 16424291 \\times y = 16424291 \\times 60222404 = 989110288015564$$\n\n---\n\n### **Step 5: Verification**\nWe verify algebraically that:\n$$\\frac{4}{n} - \\frac{1}{x} = \\frac{4}{n} - \\frac{4}{n+3} = \\frac{12}{n(n+3)}$$\n$$\\frac{12}{n(n+3)} - \\frac{1}{y} = \\frac{12}{n(n+3)} - \\frac{12}{n(n+3)+44} = \\frac{528}{n(n+3)[n(n+3)+44]} = \\frac{1}{z}$$\n\nHence, $\\frac{1}{x} + \\frac{1}{y} + \\frac{1}{z} = \\frac{4}{26881}$.\n\nx = 6721, y = 60222404, z = 989110288015564",
+      "retrieval_path": "ConventionalInvertedIndex:ModulusMatch(RULE-HARD-840-RES1-P11)",
+      "rules_retrieved": [
+        "RULE-HARD-840-RES1-P11"
+      ]
+    }
+  ]
+}

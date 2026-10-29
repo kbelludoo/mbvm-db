@@ -68,6 +68,23 @@ func (db *DB) extractSliceLocked(targetSymbol string, maxDepth int) *ContextSlic
 				}
 			}
 		}
+
+		// 3. Fallback to normalized substring matching across name, receiver, and signature
+		normTarget := normalizeSearchTerm(targetSymbol)
+		if len(selected) == 0 && normTarget != "" {
+			for _, sym := range db.symbols {
+				sNormName := normalizeSearchTerm(sym.Name)
+				sNormRecv := normalizeSearchTerm(sym.Receiver)
+				sNormSig := normalizeSearchTerm(sym.Signature)
+				if strings.Contains(sNormName, normTarget) || strings.Contains(sNormRecv, normTarget) || strings.Contains(sNormSig, normTarget) {
+					if !visitedBitset.Has(sym.ID) {
+						visitedBitset.Set(sym.ID)
+						selected = append(selected, sym)
+						queue = append(queue, sym.ID)
+					}
+				}
+			}
+		}
 	}
 
 	// BFS traversal over CSR adjacency arrays
@@ -387,9 +404,34 @@ func (db *DB) ProjectSlice(symbols []*SymbolRecord) string {
 					sb.WriteString(fmt.Sprintf("    • %s\n", f))
 				}
 			default:
-				sb.WriteString(fmt.Sprintf("  symbol %s: %s\n", s.Name, strings.Join(s.Fields, ", ")))
+				if strings.HasPrefix(s.Kind, "game_") {
+					label := s.Kind[5:]
+					sb.WriteString(fmt.Sprintf("  %s %s (%s) [%s]\n", label, s.Name, s.Receiver, s.Signature))
+					for _, f := range s.Fields {
+						sb.WriteString(fmt.Sprintf("    • %s\n", f))
+					}
+				} else {
+					sb.WriteString(fmt.Sprintf("  symbol %s: %s\n", s.Name, strings.Join(s.Fields, ", ")))
+				}
 			}
 		}
 	}
 	return sb.String()
+}
+
+func normalizeSearchTerm(s string) string {
+	s = strings.ToLower(s)
+	s = strings.ReplaceAll(s, "-", " ")
+	s = strings.ReplaceAll(s, "_", " ")
+	s = strings.ReplaceAll(s, "+", " ")
+	s = strings.ReplaceAll(s, "/", " ")
+	r := strings.NewReplacer(
+		"ã", "a", "á", "a", "à", "a", "â", "a",
+		"é", "e", "ê", "e",
+		"í", "i",
+		"ó", "o", "õ", "o", "ô", "o",
+		"ú", "u",
+		"ç", "c",
+	)
+	return strings.TrimSpace(r.Replace(s))
 }

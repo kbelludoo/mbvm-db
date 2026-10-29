@@ -1,0 +1,1002 @@
+{
+  "schema": "mbvm-crt-competing-paths-dev-v1",
+  "interpretation": "Public competing proof-path CRT test: same semantics, selector, catalog, and verifier. Tests equivalence and pruning of inapplicable branches, not discovery or CSR superiority.",
+  "results": [
+    {
+      "task_id": "DEPTH-01",
+      "conventional": {
+        "arm": "B: indexed graph expansion",
+        "selected_plan_id": "DEPTH-01-SHORT",
+        "trace_ids": [
+          "DEPTH-01-CHOICE",
+          "DEPTH-01-L3",
+          "DEPTH-01-SHORT",
+          "DEV-CRT-01-L1",
+          "DEV-CRT-01-L2"
+        ],
+        "retrieved_ids": [
+          "DEPTH-01-L3",
+          "DEV-CRT-01-L1",
+          "DEV-CRT-01-L2"
+        ],
+        "visited_nodes": 18,
+        "rejected_alternatives": 2,
+        "context_bytes": 85,
+        "retrieval_nanoseconds": 34100,
+        "certificate": {
+          "intermediate": {
+            "residue": "61",
+            "modulus": "72",
+            "parent_ids": [
+              "DEV-CRT-01-L1",
+              "DEV-CRT-01-L2"
+            ]
+          },
+          "final": {
+            "residue": "133",
+            "modulus": "360",
+            "parent_ids": [
+              "DEPTH-01-L3",
+              "DEV-CRT-01-GOAL"
+            ]
+          }
+        },
+        "certified": true
+      },
+      "csr": {
+        "arm": "C: CSR graph expansion",
+        "selected_plan_id": "DEPTH-01-SHORT",
+        "trace_ids": [
+          "DEPTH-01-CHOICE",
+          "DEPTH-01-L3",
+          "DEPTH-01-SHORT",
+          "DEV-CRT-01-L1",
+          "DEV-CRT-01-L2"
+        ],
+        "retrieved_ids": [
+          "DEPTH-01-L3",
+          "DEV-CRT-01-L1",
+          "DEV-CRT-01-L2"
+        ],
+        "visited_nodes": 18,
+        "rejected_alternatives": 2,
+        "context_bytes": 85,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "intermediate": {
+            "residue": "61",
+            "modulus": "72",
+            "parent_ids": [
+              "DEV-CRT-01-L1",
+              "DEV-CRT-01-L2"
+            ]
+          },
+          "final": {
+            "residue": "133",
+            "modulus": "360",
+            "parent_ids": [
+              "DEPTH-01-L3",
+              "DEV-CRT-01-GOAL"
+            ]
+          }
+        },
+        "certified": true
+      },
+      "same_context": true,
+      "same_certificate": true
+    },
+    {
+      "task_id": "DEPTH-02",
+      "conventional": {
+        "arm": "B: indexed graph expansion",
+        "selected_plan_id": "DEPTH-02-SHORT",
+        "trace_ids": [
+          "DEPTH-02-CHOICE",
+          "DEPTH-02-L3",
+          "DEPTH-02-SHORT",
+          "DEV-CRT-02-L1",
+          "DEV-CRT-02-L2"
+        ],
+        "retrieved_ids": [
+          "DEPTH-02-L3",
+          "DEV-CRT-02-L1",
+          "DEV-CRT-02-L2"
+        ],
+        "visited_nodes": 18,
+        "rejected_alternatives": 2,
+        "context_bytes": 85,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "intermediate": {
+            "residue": "18",
+            "modulus": "35",
+            "parent_ids": [
+              "DEV-CRT-02-L1",
+              "DEV-CRT-02-L2"
+            ]
+          },
+          "final": {
+            "residue": "18",
+            "modulus": "280",
+            "parent_ids": [
+              "DEPTH-02-L3",
+              "DEV-CRT-02-GOAL"
+            ]
+          }
+        },
+        "certified": true
+      },
+      "csr": {
+        "arm": "C: CSR graph expansion",
+        "selected_plan_id": "DEPTH-02-SHORT",
+        "trace_ids": [
+          "DEPTH-02-CHOICE",
+          "DEPTH-02-L3",
+          "DEPTH-02-SHORT",
+          "DEV-CRT-02-L1",
+          "DEV-CRT-02-L2"
+        ],
+        "retrieved_ids": [
+          "DEPTH-02-L3",
+          "DEV-CRT-02-L1",
+          "DEV-CRT-02-L2"
+        ],
+        "visited_nodes": 18,
+        "rejected_alternatives": 2,
+        "context_bytes": 85,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "intermediate": {
+            "residue": "18",
+            "modulus": "35",
+            "parent_ids": [
+              "DEV-CRT-02-L1",
+              "DEV-CRT-02-L2"
+            ]
+          },
+          "final": {
+            "residue": "18",
+            "modulus": "280",
+            "parent_ids": [
+              "DEPTH-02-L3",
+              "DEV-CRT-02-GOAL"
+            ]
+          }
+        },
+        "certified": true
+      },
+      "same_context": true,
+      "same_certificate": true
+    },
+    {
+      "task_id": "DEPTH-03",
+      "conventional": {
+        "arm": "B: indexed graph expansion",
+        "selected_plan_id": "DEPTH-03-SHORT",
+        "trace_ids": [
+          "DEPTH-03-CHOICE",
+          "DEPTH-03-L3",
+          "DEPTH-03-SHORT",
+          "DEV-CRT-03-L1",
+          "DEV-CRT-03-L2"
+        ],
+        "retrieved_ids": [
+          "DEPTH-03-L3",
+          "DEV-CRT-03-L1",
+          "DEV-CRT-03-L2"
+        ],
+        "visited_nodes": 18,
+        "rejected_alternatives": 2,
+        "context_bytes": 86,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "intermediate": {
+            "residue": "58",
+            "modulus": "77",
+            "parent_ids": [
+              "DEV-CRT-03-L1",
+              "DEV-CRT-03-L2"
+            ]
+          },
+          "final": {
+            "residue": "212",
+            "modulus": "693",
+            "parent_ids": [
+              "DEPTH-03-L3",
+              "DEV-CRT-03-GOAL"
+            ]
+          }
+        },
+        "certified": true
+      },
+      "csr": {
+        "arm": "C: CSR graph expansion",
+        "selected_plan_id": "DEPTH-03-SHORT",
+        "trace_ids": [
+          "DEPTH-03-CHOICE",
+          "DEPTH-03-L3",
+          "DEPTH-03-SHORT",
+          "DEV-CRT-03-L1",
+          "DEV-CRT-03-L2"
+        ],
+        "retrieved_ids": [
+          "DEPTH-03-L3",
+          "DEV-CRT-03-L1",
+          "DEV-CRT-03-L2"
+        ],
+        "visited_nodes": 18,
+        "rejected_alternatives": 2,
+        "context_bytes": 86,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "intermediate": {
+            "residue": "58",
+            "modulus": "77",
+            "parent_ids": [
+              "DEV-CRT-03-L1",
+              "DEV-CRT-03-L2"
+            ]
+          },
+          "final": {
+            "residue": "212",
+            "modulus": "693",
+            "parent_ids": [
+              "DEPTH-03-L3",
+              "DEV-CRT-03-GOAL"
+            ]
+          }
+        },
+        "certified": true
+      },
+      "same_context": true,
+      "same_certificate": true
+    },
+    {
+      "task_id": "DEPTH-04",
+      "conventional": {
+        "arm": "B: indexed graph expansion",
+        "selected_plan_id": "DEPTH-04-SHORT",
+        "trace_ids": [
+          "DEPTH-04-CHOICE",
+          "DEPTH-04-L3",
+          "DEPTH-04-SHORT",
+          "DEV-CRT-04-L1",
+          "DEV-CRT-04-L2"
+        ],
+        "retrieved_ids": [
+          "DEPTH-04-L3",
+          "DEV-CRT-04-L1",
+          "DEV-CRT-04-L2"
+        ],
+        "visited_nodes": 18,
+        "rejected_alternatives": 2,
+        "context_bytes": 87,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "intermediate": {
+            "residue": "138",
+            "modulus": "143",
+            "parent_ids": [
+              "DEV-CRT-04-L1",
+              "DEV-CRT-04-L2"
+            ]
+          },
+          "final": {
+            "residue": "567",
+            "modulus": "1144",
+            "parent_ids": [
+              "DEPTH-04-L3",
+              "DEV-CRT-04-GOAL"
+            ]
+          }
+        },
+        "certified": true
+      },
+      "csr": {
+        "arm": "C: CSR graph expansion",
+        "selected_plan_id": "DEPTH-04-SHORT",
+        "trace_ids": [
+          "DEPTH-04-CHOICE",
+          "DEPTH-04-L3",
+          "DEPTH-04-SHORT",
+          "DEV-CRT-04-L1",
+          "DEV-CRT-04-L2"
+        ],
+        "retrieved_ids": [
+          "DEPTH-04-L3",
+          "DEV-CRT-04-L1",
+          "DEV-CRT-04-L2"
+        ],
+        "visited_nodes": 18,
+        "rejected_alternatives": 2,
+        "context_bytes": 87,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "intermediate": {
+            "residue": "138",
+            "modulus": "143",
+            "parent_ids": [
+              "DEV-CRT-04-L1",
+              "DEV-CRT-04-L2"
+            ]
+          },
+          "final": {
+            "residue": "567",
+            "modulus": "1144",
+            "parent_ids": [
+              "DEPTH-04-L3",
+              "DEV-CRT-04-GOAL"
+            ]
+          }
+        },
+        "certified": true
+      },
+      "same_context": true,
+      "same_certificate": true
+    },
+    {
+      "task_id": "DEPTH-05",
+      "conventional": {
+        "arm": "B: indexed graph expansion",
+        "selected_plan_id": "DEPTH-05-SHORT",
+        "trace_ids": [
+          "DEPTH-05-CHOICE",
+          "DEPTH-05-L3",
+          "DEPTH-05-SHORT",
+          "DEV-CRT-05-L1",
+          "DEV-CRT-05-L2"
+        ],
+        "retrieved_ids": [
+          "DEPTH-05-L3",
+          "DEV-CRT-05-L1",
+          "DEV-CRT-05-L2"
+        ],
+        "visited_nodes": 18,
+        "rejected_alternatives": 2,
+        "context_bytes": 88,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "intermediate": {
+            "residue": "148",
+            "modulus": "221",
+            "parent_ids": [
+              "DEV-CRT-05-L1",
+              "DEV-CRT-05-L2"
+            ]
+          },
+          "final": {
+            "residue": "148",
+            "modulus": "1989",
+            "parent_ids": [
+              "DEPTH-05-L3",
+              "DEV-CRT-05-GOAL"
+            ]
+          }
+        },
+        "certified": true
+      },
+      "csr": {
+        "arm": "C: CSR graph expansion",
+        "selected_plan_id": "DEPTH-05-SHORT",
+        "trace_ids": [
+          "DEPTH-05-CHOICE",
+          "DEPTH-05-L3",
+          "DEPTH-05-SHORT",
+          "DEV-CRT-05-L1",
+          "DEV-CRT-05-L2"
+        ],
+        "retrieved_ids": [
+          "DEPTH-05-L3",
+          "DEV-CRT-05-L1",
+          "DEV-CRT-05-L2"
+        ],
+        "visited_nodes": 18,
+        "rejected_alternatives": 2,
+        "context_bytes": 88,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "intermediate": {
+            "residue": "148",
+            "modulus": "221",
+            "parent_ids": [
+              "DEV-CRT-05-L1",
+              "DEV-CRT-05-L2"
+            ]
+          },
+          "final": {
+            "residue": "148",
+            "modulus": "1989",
+            "parent_ids": [
+              "DEPTH-05-L3",
+              "DEV-CRT-05-GOAL"
+            ]
+          }
+        },
+        "certified": true
+      },
+      "same_context": true,
+      "same_certificate": true
+    },
+    {
+      "task_id": "DEPTH-06",
+      "conventional": {
+        "arm": "B: indexed graph expansion",
+        "selected_plan_id": "DEPTH-06-SHORT",
+        "trace_ids": [
+          "DEPTH-06-CHOICE",
+          "DEPTH-06-L3",
+          "DEPTH-06-SHORT",
+          "DEV-CRT-06-L1",
+          "DEV-CRT-06-L2"
+        ],
+        "retrieved_ids": [
+          "DEPTH-06-L3",
+          "DEV-CRT-06-L1",
+          "DEV-CRT-06-L2"
+        ],
+        "visited_nodes": 18,
+        "rejected_alternatives": 2,
+        "context_bytes": 87,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "intermediate": {
+            "residue": "13",
+            "modulus": "144",
+            "parent_ids": [
+              "DEV-CRT-06-L1",
+              "DEV-CRT-06-L2"
+            ]
+          },
+          "final": {
+            "residue": "157",
+            "modulus": "1008",
+            "parent_ids": [
+              "DEPTH-06-L3",
+              "DEV-CRT-06-GOAL"
+            ]
+          }
+        },
+        "certified": true
+      },
+      "csr": {
+        "arm": "C: CSR graph expansion",
+        "selected_plan_id": "DEPTH-06-SHORT",
+        "trace_ids": [
+          "DEPTH-06-CHOICE",
+          "DEPTH-06-L3",
+          "DEPTH-06-SHORT",
+          "DEV-CRT-06-L1",
+          "DEV-CRT-06-L2"
+        ],
+        "retrieved_ids": [
+          "DEPTH-06-L3",
+          "DEV-CRT-06-L1",
+          "DEV-CRT-06-L2"
+        ],
+        "visited_nodes": 18,
+        "rejected_alternatives": 2,
+        "context_bytes": 87,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "intermediate": {
+            "residue": "13",
+            "modulus": "144",
+            "parent_ids": [
+              "DEV-CRT-06-L1",
+              "DEV-CRT-06-L2"
+            ]
+          },
+          "final": {
+            "residue": "157",
+            "modulus": "1008",
+            "parent_ids": [
+              "DEPTH-06-L3",
+              "DEV-CRT-06-GOAL"
+            ]
+          }
+        },
+        "certified": true
+      },
+      "same_context": true,
+      "same_certificate": true
+    },
+    {
+      "task_id": "DEPTH-07",
+      "conventional": {
+        "arm": "B: indexed graph expansion",
+        "selected_plan_id": "DEPTH-07-SHORT",
+        "trace_ids": [
+          "DEPTH-07-CHOICE",
+          "DEPTH-07-L3",
+          "DEPTH-07-SHORT",
+          "DEV-CRT-07-L1",
+          "DEV-CRT-07-L2"
+        ],
+        "retrieved_ids": [
+          "DEPTH-07-L3",
+          "DEV-CRT-07-L1",
+          "DEV-CRT-07-L2"
+        ],
+        "visited_nodes": 18,
+        "rejected_alternatives": 2,
+        "context_bytes": 88,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "intermediate": {
+            "residue": "121",
+            "modulus": "400",
+            "parent_ids": [
+              "DEV-CRT-07-L1",
+              "DEV-CRT-07-L2"
+            ]
+          },
+          "final": {
+            "residue": "521",
+            "modulus": "3600",
+            "parent_ids": [
+              "DEPTH-07-L3",
+              "DEV-CRT-07-GOAL"
+            ]
+          }
+        },
+        "certified": true
+      },
+      "csr": {
+        "arm": "C: CSR graph expansion",
+        "selected_plan_id": "DEPTH-07-SHORT",
+        "trace_ids": [
+          "DEPTH-07-CHOICE",
+          "DEPTH-07-L3",
+          "DEPTH-07-SHORT",
+          "DEV-CRT-07-L1",
+          "DEV-CRT-07-L2"
+        ],
+        "retrieved_ids": [
+          "DEPTH-07-L3",
+          "DEV-CRT-07-L1",
+          "DEV-CRT-07-L2"
+        ],
+        "visited_nodes": 18,
+        "rejected_alternatives": 2,
+        "context_bytes": 88,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "intermediate": {
+            "residue": "121",
+            "modulus": "400",
+            "parent_ids": [
+              "DEV-CRT-07-L1",
+              "DEV-CRT-07-L2"
+            ]
+          },
+          "final": {
+            "residue": "521",
+            "modulus": "3600",
+            "parent_ids": [
+              "DEPTH-07-L3",
+              "DEV-CRT-07-GOAL"
+            ]
+          }
+        },
+        "certified": true
+      },
+      "same_context": true,
+      "same_certificate": true
+    },
+    {
+      "task_id": "DEPTH-08",
+      "conventional": {
+        "arm": "B: indexed graph expansion",
+        "selected_plan_id": "DEPTH-08-SHORT",
+        "trace_ids": [
+          "DEPTH-08-CHOICE",
+          "DEPTH-08-L3",
+          "DEPTH-08-SHORT",
+          "DEV-CRT-08-L1",
+          "DEV-CRT-08-L2"
+        ],
+        "retrieved_ids": [
+          "DEPTH-08-L3",
+          "DEV-CRT-08-L1",
+          "DEV-CRT-08-L2"
+        ],
+        "visited_nodes": 18,
+        "rejected_alternatives": 2,
+        "context_bytes": 87,
+        "retrieval_nanoseconds": 503600,
+        "certificate": {
+          "intermediate": {
+            "residue": "160",
+            "modulus": "323",
+            "parent_ids": [
+              "DEV-CRT-08-L1",
+              "DEV-CRT-08-L2"
+            ]
+          },
+          "final": {
+            "residue": "806",
+            "modulus": "2584",
+            "parent_ids": [
+              "DEPTH-08-L3",
+              "DEV-CRT-08-GOAL"
+            ]
+          }
+        },
+        "certified": true
+      },
+      "csr": {
+        "arm": "C: CSR graph expansion",
+        "selected_plan_id": "DEPTH-08-SHORT",
+        "trace_ids": [
+          "DEPTH-08-CHOICE",
+          "DEPTH-08-L3",
+          "DEPTH-08-SHORT",
+          "DEV-CRT-08-L1",
+          "DEV-CRT-08-L2"
+        ],
+        "retrieved_ids": [
+          "DEPTH-08-L3",
+          "DEV-CRT-08-L1",
+          "DEV-CRT-08-L2"
+        ],
+        "visited_nodes": 18,
+        "rejected_alternatives": 2,
+        "context_bytes": 87,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "intermediate": {
+            "residue": "160",
+            "modulus": "323",
+            "parent_ids": [
+              "DEV-CRT-08-L1",
+              "DEV-CRT-08-L2"
+            ]
+          },
+          "final": {
+            "residue": "806",
+            "modulus": "2584",
+            "parent_ids": [
+              "DEPTH-08-L3",
+              "DEV-CRT-08-GOAL"
+            ]
+          }
+        },
+        "certified": true
+      },
+      "same_context": true,
+      "same_certificate": true
+    },
+    {
+      "task_id": "DEPTH-09",
+      "conventional": {
+        "arm": "B: indexed graph expansion",
+        "selected_plan_id": "DEPTH-09-SHORT",
+        "trace_ids": [
+          "DEPTH-09-CHOICE",
+          "DEPTH-09-L3",
+          "DEPTH-09-SHORT",
+          "DEV-CRT-09-L1",
+          "DEV-CRT-09-L2"
+        ],
+        "retrieved_ids": [
+          "DEPTH-09-L3",
+          "DEV-CRT-09-L1",
+          "DEV-CRT-09-L2"
+        ],
+        "visited_nodes": 18,
+        "rejected_alternatives": 2,
+        "context_bytes": 89,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "intermediate": {
+            "residue": "317",
+            "modulus": "437",
+            "parent_ids": [
+              "DEV-CRT-09-L1",
+              "DEV-CRT-09-L2"
+            ]
+          },
+          "final": {
+            "residue": "754",
+            "modulus": "3933",
+            "parent_ids": [
+              "DEPTH-09-L3",
+              "DEV-CRT-09-GOAL"
+            ]
+          }
+        },
+        "certified": true
+      },
+      "csr": {
+        "arm": "C: CSR graph expansion",
+        "selected_plan_id": "DEPTH-09-SHORT",
+        "trace_ids": [
+          "DEPTH-09-CHOICE",
+          "DEPTH-09-L3",
+          "DEPTH-09-SHORT",
+          "DEV-CRT-09-L1",
+          "DEV-CRT-09-L2"
+        ],
+        "retrieved_ids": [
+          "DEPTH-09-L3",
+          "DEV-CRT-09-L1",
+          "DEV-CRT-09-L2"
+        ],
+        "visited_nodes": 18,
+        "rejected_alternatives": 2,
+        "context_bytes": 89,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "intermediate": {
+            "residue": "317",
+            "modulus": "437",
+            "parent_ids": [
+              "DEV-CRT-09-L1",
+              "DEV-CRT-09-L2"
+            ]
+          },
+          "final": {
+            "residue": "754",
+            "modulus": "3933",
+            "parent_ids": [
+              "DEPTH-09-L3",
+              "DEV-CRT-09-GOAL"
+            ]
+          }
+        },
+        "certified": true
+      },
+      "same_context": true,
+      "same_certificate": true
+    },
+    {
+      "task_id": "DEPTH-10",
+      "conventional": {
+        "arm": "B: indexed graph expansion",
+        "selected_plan_id": "DEPTH-10-SHORT",
+        "trace_ids": [
+          "DEPTH-10-CHOICE",
+          "DEPTH-10-L3",
+          "DEPTH-10-SHORT",
+          "DEV-CRT-10-L1",
+          "DEV-CRT-10-L2"
+        ],
+        "retrieved_ids": [
+          "DEPTH-10-L3",
+          "DEV-CRT-10-L1",
+          "DEV-CRT-10-L2"
+        ],
+        "visited_nodes": 18,
+        "rejected_alternatives": 2,
+        "context_bytes": 89,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "intermediate": {
+            "residue": "631",
+            "modulus": "667",
+            "parent_ids": [
+              "DEV-CRT-10-L1",
+              "DEV-CRT-10-L2"
+            ]
+          },
+          "final": {
+            "residue": "4633",
+            "modulus": "5336",
+            "parent_ids": [
+              "DEPTH-10-L3",
+              "DEV-CRT-10-GOAL"
+            ]
+          }
+        },
+        "certified": true
+      },
+      "csr": {
+        "arm": "C: CSR graph expansion",
+        "selected_plan_id": "DEPTH-10-SHORT",
+        "trace_ids": [
+          "DEPTH-10-CHOICE",
+          "DEPTH-10-L3",
+          "DEPTH-10-SHORT",
+          "DEV-CRT-10-L1",
+          "DEV-CRT-10-L2"
+        ],
+        "retrieved_ids": [
+          "DEPTH-10-L3",
+          "DEV-CRT-10-L1",
+          "DEV-CRT-10-L2"
+        ],
+        "visited_nodes": 18,
+        "rejected_alternatives": 2,
+        "context_bytes": 89,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "intermediate": {
+            "residue": "631",
+            "modulus": "667",
+            "parent_ids": [
+              "DEV-CRT-10-L1",
+              "DEV-CRT-10-L2"
+            ]
+          },
+          "final": {
+            "residue": "4633",
+            "modulus": "5336",
+            "parent_ids": [
+              "DEPTH-10-L3",
+              "DEV-CRT-10-GOAL"
+            ]
+          }
+        },
+        "certified": true
+      },
+      "same_context": true,
+      "same_certificate": true
+    },
+    {
+      "task_id": "DEPTH-11",
+      "conventional": {
+        "arm": "B: indexed graph expansion",
+        "selected_plan_id": "DEPTH-11-SHORT",
+        "trace_ids": [
+          "DEPTH-11-CHOICE",
+          "DEPTH-11-L3",
+          "DEPTH-11-SHORT",
+          "DEV-CRT-11-L1",
+          "DEV-CRT-11-L2"
+        ],
+        "retrieved_ids": [
+          "DEPTH-11-L3",
+          "DEV-CRT-11-L1",
+          "DEV-CRT-11-L2"
+        ],
+        "visited_nodes": 18,
+        "rejected_alternatives": 2,
+        "context_bytes": 88,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "intermediate": {
+            "residue": "581",
+            "modulus": "675",
+            "parent_ids": [
+              "DEV-CRT-11-L1",
+              "DEV-CRT-11-L2"
+            ]
+          },
+          "final": {
+            "residue": "4631",
+            "modulus": "4725",
+            "parent_ids": [
+              "DEPTH-11-L3",
+              "DEV-CRT-11-GOAL"
+            ]
+          }
+        },
+        "certified": true
+      },
+      "csr": {
+        "arm": "C: CSR graph expansion",
+        "selected_plan_id": "DEPTH-11-SHORT",
+        "trace_ids": [
+          "DEPTH-11-CHOICE",
+          "DEPTH-11-L3",
+          "DEPTH-11-SHORT",
+          "DEV-CRT-11-L1",
+          "DEV-CRT-11-L2"
+        ],
+        "retrieved_ids": [
+          "DEPTH-11-L3",
+          "DEV-CRT-11-L1",
+          "DEV-CRT-11-L2"
+        ],
+        "visited_nodes": 18,
+        "rejected_alternatives": 2,
+        "context_bytes": 88,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "intermediate": {
+            "residue": "581",
+            "modulus": "675",
+            "parent_ids": [
+              "DEV-CRT-11-L1",
+              "DEV-CRT-11-L2"
+            ]
+          },
+          "final": {
+            "residue": "4631",
+            "modulus": "4725",
+            "parent_ids": [
+              "DEPTH-11-L3",
+              "DEV-CRT-11-GOAL"
+            ]
+          }
+        },
+        "certified": true
+      },
+      "same_context": true,
+      "same_certificate": true
+    },
+    {
+      "task_id": "DEPTH-12",
+      "conventional": {
+        "arm": "B: indexed graph expansion",
+        "selected_plan_id": "DEPTH-12-SHORT",
+        "trace_ids": [
+          "DEPTH-12-CHOICE",
+          "DEPTH-12-L3",
+          "DEPTH-12-SHORT",
+          "DEV-CRT-12-L1",
+          "DEV-CRT-12-L2"
+        ],
+        "retrieved_ids": [
+          "DEPTH-12-L3",
+          "DEV-CRT-12-L1",
+          "DEV-CRT-12-L2"
+        ],
+        "visited_nodes": 18,
+        "rejected_alternatives": 2,
+        "context_bytes": 89,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "intermediate": {
+            "residue": "497",
+            "modulus": "864",
+            "parent_ids": [
+              "DEV-CRT-12-L1",
+              "DEV-CRT-12-L2"
+            ]
+          },
+          "final": {
+            "residue": "3953",
+            "modulus": "4320",
+            "parent_ids": [
+              "DEPTH-12-L3",
+              "DEV-CRT-12-GOAL"
+            ]
+          }
+        },
+        "certified": true
+      },
+      "csr": {
+        "arm": "C: CSR graph expansion",
+        "selected_plan_id": "DEPTH-12-SHORT",
+        "trace_ids": [
+          "DEPTH-12-CHOICE",
+          "DEPTH-12-L3",
+          "DEPTH-12-SHORT",
+          "DEV-CRT-12-L1",
+          "DEV-CRT-12-L2"
+        ],
+        "retrieved_ids": [
+          "DEPTH-12-L3",
+          "DEV-CRT-12-L1",
+          "DEV-CRT-12-L2"
+        ],
+        "visited_nodes": 18,
+        "rejected_alternatives": 2,
+        "context_bytes": 89,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "intermediate": {
+            "residue": "497",
+            "modulus": "864",
+            "parent_ids": [
+              "DEV-CRT-12-L1",
+              "DEV-CRT-12-L2"
+            ]
+          },
+          "final": {
+            "residue": "3953",
+            "modulus": "4320",
+            "parent_ids": [
+              "DEPTH-12-L3",
+              "DEV-CRT-12-GOAL"
+            ]
+          }
+        },
+        "certified": true
+      },
+      "same_context": true,
+      "same_certificate": true
+    }
+  ]
+}

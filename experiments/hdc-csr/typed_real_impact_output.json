@@ -1,0 +1,32 @@
+{
+  "schema": "mbvm-real-typed-breakage-v1",
+  "corpus": "pkg/mbvmdb",
+  "typed_function_declarations": 74,
+  "typed_local_direct_call_sites": 119,
+  "target_object_identity": "github.com/kbelludoo/mbvm-db/pkg/mbvmdb.(*StringPool).Intern",
+  "direct_possible_callers": 5,
+  "transitive_possible_callers": 12,
+  "baseline_typechecked": true,
+  "mutated_package_typechecked": false,
+  "go_types_compile_errors": 25,
+  "direct_callers_with_type_errors": 5,
+  "dynamic_dispatch_not_assumed_resolved": true,
+  "source_files_unmodified": true,
+  "source_files_sha256": "4f77af56a240836b4c756f5f5355c4d12e699c25383021fcebac8168dc7ab0a1",
+  "typed_direct_caller_names": [
+    "github.com/kbelludoo/mbvm-db/pkg/mbvmdb.(*DB).CompileChessBytecode",
+    "github.com/kbelludoo/mbvm-db/pkg/mbvmdb.(*DB).compileBytecode",
+    "github.com/kbelludoo/mbvm-db/pkg/mbvmdb.(*DB).CompileGameBytecode",
+    "github.com/kbelludoo/mbvm-db/pkg/mbvmdb.(*DB).SaveToFile",
+    "github.com/kbelludoo/mbvm-db/pkg/mbvmdb.LoadFromFile"
+  ],
+  "direct_callers_with_type_errors_names": [
+    "github.com/kbelludoo/mbvm-db/pkg/mbvmdb.(*DB).CompileChessBytecode",
+    "github.com/kbelludoo/mbvm-db/pkg/mbvmdb.(*DB).compileBytecode",
+    "github.com/kbelludoo/mbvm-db/pkg/mbvmdb.(*DB).CompileGameBytecode",
+    "github.com/kbelludoo/mbvm-db/pkg/mbvmdb.(*DB).SaveToFile",
+    "github.com/kbelludoo/mbvm-db/pkg/mbvmdb.LoadFromFile"
+  ],
+  "runtime_behavior_verified": false,
+  "interpretation": "Go/types compile errors for an in-memory required-parameter mutation. Typed direct callers are established, while transitive callers are possible impact only; cross-package/dynamic callers excluded."
+}
