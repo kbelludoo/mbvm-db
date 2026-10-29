@@ -1,0 +1,522 @@
+{
+  "schema": "mbvm-crt-paired-development-v1",
+  "interpretation": "Public CRT intersection fixture parity. Neither CSR advantage nor novel Erdos-Straus discovery is demonstrated.",
+  "results": [
+    {
+      "task_id": "DEV-CRT-01",
+      "conventional": {
+        "task_id": "DEV-CRT-01",
+        "arm": "B: conventional indexed expansion",
+        "retrieved_ids": [
+          "DEV-CRT-01-L1",
+          "DEV-CRT-01-L2"
+        ],
+        "context_bytes": 58,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "residue": "61",
+          "modulus": "72",
+          "parent_ids": [
+            "DEV-CRT-01-L1",
+            "DEV-CRT-01-L2"
+          ]
+        },
+        "certified": true
+      },
+      "csr": {
+        "task_id": "DEV-CRT-01",
+        "arm": "C: CSR dependency traversal",
+        "retrieved_ids": [
+          "DEV-CRT-01-L1",
+          "DEV-CRT-01-L2"
+        ],
+        "context_bytes": 58,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "residue": "61",
+          "modulus": "72",
+          "parent_ids": [
+            "DEV-CRT-01-L1",
+            "DEV-CRT-01-L2"
+          ]
+        },
+        "certified": true
+      },
+      "same_context": true,
+      "same_certificate": true
+    },
+    {
+      "task_id": "DEV-CRT-02",
+      "conventional": {
+        "task_id": "DEV-CRT-02",
+        "arm": "B: conventional indexed expansion",
+        "retrieved_ids": [
+          "DEV-CRT-02-L1",
+          "DEV-CRT-02-L2"
+        ],
+        "context_bytes": 58,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "residue": "18",
+          "modulus": "35",
+          "parent_ids": [
+            "DEV-CRT-02-L1",
+            "DEV-CRT-02-L2"
+          ]
+        },
+        "certified": true
+      },
+      "csr": {
+        "task_id": "DEV-CRT-02",
+        "arm": "C: CSR dependency traversal",
+        "retrieved_ids": [
+          "DEV-CRT-02-L1",
+          "DEV-CRT-02-L2"
+        ],
+        "context_bytes": 58,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "residue": "18",
+          "modulus": "35",
+          "parent_ids": [
+            "DEV-CRT-02-L1",
+            "DEV-CRT-02-L2"
+          ]
+        },
+        "certified": true
+      },
+      "same_context": true,
+      "same_certificate": true
+    },
+    {
+      "task_id": "DEV-CRT-03",
+      "conventional": {
+        "task_id": "DEV-CRT-03",
+        "arm": "B: conventional indexed expansion",
+        "retrieved_ids": [
+          "DEV-CRT-03-L1",
+          "DEV-CRT-03-L2"
+        ],
+        "context_bytes": 59,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "residue": "58",
+          "modulus": "77",
+          "parent_ids": [
+            "DEV-CRT-03-L1",
+            "DEV-CRT-03-L2"
+          ]
+        },
+        "certified": true
+      },
+      "csr": {
+        "task_id": "DEV-CRT-03",
+        "arm": "C: CSR dependency traversal",
+        "retrieved_ids": [
+          "DEV-CRT-03-L1",
+          "DEV-CRT-03-L2"
+        ],
+        "context_bytes": 59,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "residue": "58",
+          "modulus": "77",
+          "parent_ids": [
+            "DEV-CRT-03-L1",
+            "DEV-CRT-03-L2"
+          ]
+        },
+        "certified": true
+      },
+      "same_context": true,
+      "same_certificate": true
+    },
+    {
+      "task_id": "DEV-CRT-04",
+      "conventional": {
+        "task_id": "DEV-CRT-04",
+        "arm": "B: conventional indexed expansion",
+        "retrieved_ids": [
+          "DEV-CRT-04-L1",
+          "DEV-CRT-04-L2"
+        ],
+        "context_bytes": 60,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "residue": "138",
+          "modulus": "143",
+          "parent_ids": [
+            "DEV-CRT-04-L1",
+            "DEV-CRT-04-L2"
+          ]
+        },
+        "certified": true
+      },
+      "csr": {
+        "task_id": "DEV-CRT-04",
+        "arm": "C: CSR dependency traversal",
+        "retrieved_ids": [
+          "DEV-CRT-04-L1",
+          "DEV-CRT-04-L2"
+        ],
+        "context_bytes": 60,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "residue": "138",
+          "modulus": "143",
+          "parent_ids": [
+            "DEV-CRT-04-L1",
+            "DEV-CRT-04-L2"
+          ]
+        },
+        "certified": true
+      },
+      "same_context": true,
+      "same_certificate": true
+    },
+    {
+      "task_id": "DEV-CRT-05",
+      "conventional": {
+        "task_id": "DEV-CRT-05",
+        "arm": "B: conventional indexed expansion",
+        "retrieved_ids": [
+          "DEV-CRT-05-L1",
+          "DEV-CRT-05-L2"
+        ],
+        "context_bytes": 61,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "residue": "148",
+          "modulus": "221",
+          "parent_ids": [
+            "DEV-CRT-05-L1",
+            "DEV-CRT-05-L2"
+          ]
+        },
+        "certified": true
+      },
+      "csr": {
+        "task_id": "DEV-CRT-05",
+        "arm": "C: CSR dependency traversal",
+        "retrieved_ids": [
+          "DEV-CRT-05-L1",
+          "DEV-CRT-05-L2"
+        ],
+        "context_bytes": 61,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "residue": "148",
+          "modulus": "221",
+          "parent_ids": [
+            "DEV-CRT-05-L1",
+            "DEV-CRT-05-L2"
+          ]
+        },
+        "certified": true
+      },
+      "same_context": true,
+      "same_certificate": true
+    },
+    {
+      "task_id": "DEV-CRT-06",
+      "conventional": {
+        "task_id": "DEV-CRT-06",
+        "arm": "B: conventional indexed expansion",
+        "retrieved_ids": [
+          "DEV-CRT-06-L1",
+          "DEV-CRT-06-L2"
+        ],
+        "context_bytes": 60,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "residue": "13",
+          "modulus": "144",
+          "parent_ids": [
+            "DEV-CRT-06-L1",
+            "DEV-CRT-06-L2"
+          ]
+        },
+        "certified": true
+      },
+      "csr": {
+        "task_id": "DEV-CRT-06",
+        "arm": "C: CSR dependency traversal",
+        "retrieved_ids": [
+          "DEV-CRT-06-L1",
+          "DEV-CRT-06-L2"
+        ],
+        "context_bytes": 60,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "residue": "13",
+          "modulus": "144",
+          "parent_ids": [
+            "DEV-CRT-06-L1",
+            "DEV-CRT-06-L2"
+          ]
+        },
+        "certified": true
+      },
+      "same_context": true,
+      "same_certificate": true
+    },
+    {
+      "task_id": "DEV-CRT-07",
+      "conventional": {
+        "task_id": "DEV-CRT-07",
+        "arm": "B: conventional indexed expansion",
+        "retrieved_ids": [
+          "DEV-CRT-07-L1",
+          "DEV-CRT-07-L2"
+        ],
+        "context_bytes": 61,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "residue": "121",
+          "modulus": "400",
+          "parent_ids": [
+            "DEV-CRT-07-L1",
+            "DEV-CRT-07-L2"
+          ]
+        },
+        "certified": true
+      },
+      "csr": {
+        "task_id": "DEV-CRT-07",
+        "arm": "C: CSR dependency traversal",
+        "retrieved_ids": [
+          "DEV-CRT-07-L1",
+          "DEV-CRT-07-L2"
+        ],
+        "context_bytes": 61,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "residue": "121",
+          "modulus": "400",
+          "parent_ids": [
+            "DEV-CRT-07-L1",
+            "DEV-CRT-07-L2"
+          ]
+        },
+        "certified": true
+      },
+      "same_context": true,
+      "same_certificate": true
+    },
+    {
+      "task_id": "DEV-CRT-08",
+      "conventional": {
+        "task_id": "DEV-CRT-08",
+        "arm": "B: conventional indexed expansion",
+        "retrieved_ids": [
+          "DEV-CRT-08-L1",
+          "DEV-CRT-08-L2"
+        ],
+        "context_bytes": 60,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "residue": "160",
+          "modulus": "323",
+          "parent_ids": [
+            "DEV-CRT-08-L1",
+            "DEV-CRT-08-L2"
+          ]
+        },
+        "certified": true
+      },
+      "csr": {
+        "task_id": "DEV-CRT-08",
+        "arm": "C: CSR dependency traversal",
+        "retrieved_ids": [
+          "DEV-CRT-08-L1",
+          "DEV-CRT-08-L2"
+        ],
+        "context_bytes": 60,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "residue": "160",
+          "modulus": "323",
+          "parent_ids": [
+            "DEV-CRT-08-L1",
+            "DEV-CRT-08-L2"
+          ]
+        },
+        "certified": true
+      },
+      "same_context": true,
+      "same_certificate": true
+    },
+    {
+      "task_id": "DEV-CRT-09",
+      "conventional": {
+        "task_id": "DEV-CRT-09",
+        "arm": "B: conventional indexed expansion",
+        "retrieved_ids": [
+          "DEV-CRT-09-L1",
+          "DEV-CRT-09-L2"
+        ],
+        "context_bytes": 62,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "residue": "317",
+          "modulus": "437",
+          "parent_ids": [
+            "DEV-CRT-09-L1",
+            "DEV-CRT-09-L2"
+          ]
+        },
+        "certified": true
+      },
+      "csr": {
+        "task_id": "DEV-CRT-09",
+        "arm": "C: CSR dependency traversal",
+        "retrieved_ids": [
+          "DEV-CRT-09-L1",
+          "DEV-CRT-09-L2"
+        ],
+        "context_bytes": 62,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "residue": "317",
+          "modulus": "437",
+          "parent_ids": [
+            "DEV-CRT-09-L1",
+            "DEV-CRT-09-L2"
+          ]
+        },
+        "certified": true
+      },
+      "same_context": true,
+      "same_certificate": true
+    },
+    {
+      "task_id": "DEV-CRT-10",
+      "conventional": {
+        "task_id": "DEV-CRT-10",
+        "arm": "B: conventional indexed expansion",
+        "retrieved_ids": [
+          "DEV-CRT-10-L1",
+          "DEV-CRT-10-L2"
+        ],
+        "context_bytes": 62,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "residue": "631",
+          "modulus": "667",
+          "parent_ids": [
+            "DEV-CRT-10-L1",
+            "DEV-CRT-10-L2"
+          ]
+        },
+        "certified": true
+      },
+      "csr": {
+        "task_id": "DEV-CRT-10",
+        "arm": "C: CSR dependency traversal",
+        "retrieved_ids": [
+          "DEV-CRT-10-L1",
+          "DEV-CRT-10-L2"
+        ],
+        "context_bytes": 62,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "residue": "631",
+          "modulus": "667",
+          "parent_ids": [
+            "DEV-CRT-10-L1",
+            "DEV-CRT-10-L2"
+          ]
+        },
+        "certified": true
+      },
+      "same_context": true,
+      "same_certificate": true
+    },
+    {
+      "task_id": "DEV-CRT-11",
+      "conventional": {
+        "task_id": "DEV-CRT-11",
+        "arm": "B: conventional indexed expansion",
+        "retrieved_ids": [
+          "DEV-CRT-11-L1",
+          "DEV-CRT-11-L2"
+        ],
+        "context_bytes": 61,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "residue": "581",
+          "modulus": "675",
+          "parent_ids": [
+            "DEV-CRT-11-L1",
+            "DEV-CRT-11-L2"
+          ]
+        },
+        "certified": true
+      },
+      "csr": {
+        "task_id": "DEV-CRT-11",
+        "arm": "C: CSR dependency traversal",
+        "retrieved_ids": [
+          "DEV-CRT-11-L1",
+          "DEV-CRT-11-L2"
+        ],
+        "context_bytes": 61,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "residue": "581",
+          "modulus": "675",
+          "parent_ids": [
+            "DEV-CRT-11-L1",
+            "DEV-CRT-11-L2"
+          ]
+        },
+        "certified": true
+      },
+      "same_context": true,
+      "same_certificate": true
+    },
+    {
+      "task_id": "DEV-CRT-12",
+      "conventional": {
+        "task_id": "DEV-CRT-12",
+        "arm": "B: conventional indexed expansion",
+        "retrieved_ids": [
+          "DEV-CRT-12-L1",
+          "DEV-CRT-12-L2"
+        ],
+        "context_bytes": 62,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "residue": "497",
+          "modulus": "864",
+          "parent_ids": [
+            "DEV-CRT-12-L1",
+            "DEV-CRT-12-L2"
+          ]
+        },
+        "certified": true
+      },
+      "csr": {
+        "task_id": "DEV-CRT-12",
+        "arm": "C: CSR dependency traversal",
+        "retrieved_ids": [
+          "DEV-CRT-12-L1",
+          "DEV-CRT-12-L2"
+        ],
+        "context_bytes": 62,
+        "retrieval_nanoseconds": 0,
+        "certificate": {
+          "residue": "497",
+          "modulus": "864",
+          "parent_ids": [
+            "DEV-CRT-12-L1",
+            "DEV-CRT-12-L2"
+          ]
+        },
+        "certified": true
+      },
+      "same_context": true,
+      "same_certificate": true
+    }
+  ]
+}
