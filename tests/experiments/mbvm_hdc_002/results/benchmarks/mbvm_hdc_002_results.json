@@ -1,0 +1,48 @@
+{
+  "held_out_retrieval": {
+  "corpus_size": 24,
+  "distractor_count": 6,
+  "query_count": 6,
+  "linear_recall_at_1": 100.0,
+  "linear_recall_at_3": 100.0,
+  "ivf_recall_at_1": 100.0,
+  "ivf_recall_at_3": 100.0,
+  "lexical_recall_at_1": 100.0,
+  "lexical_recall_at_3": 100.0
+},
+  "scale_benchmarks": [
+    {
+  "dataset": "S_10k",
+  "count": 10000,
+  "clusters": 32,
+  "nprobe": 4,
+  "index_build_ms": 897,
+  "search_mean_ms": 0.376,
+  "qps": 2659.9,
+  "rss_mb": 14.23,
+  "within_400mb_budget": true
+},
+    {
+  "dataset": "S_100k",
+  "count": 100000,
+  "clusters": 64,
+  "nprobe": 4,
+  "index_build_ms": 9700,
+  "search_mean_ms": 3.053,
+  "qps": 327.6,
+  "rss_mb": 113.51,
+  "within_400mb_budget": true
+},
+    {
+  "dataset": "S_250k",
+  "count": 250000,
+  "clusters": 128,
+  "nprobe": 4,
+  "index_build_ms": 28553,
+  "search_mean_ms": 4.044,
+  "qps": 247.3,
+  "rss_mb": 361.49,
+  "within_400mb_budget": true
+}
+  ]
+}
