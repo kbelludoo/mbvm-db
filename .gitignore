@@ -43,3 +43,6 @@ kaggle-watcher.service
 *.zip
 
 *.exe
+
+*.hdc
+tests/experiments/**/fixtures/*.hdc

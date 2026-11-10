@@ -1,0 +1,61 @@
+{
+  "collision_analysis": {
+  "pairs_tested": 50000,
+  "exact_collisions": 0,
+  "min_distance": 3910,
+  "max_distance": 4285,
+  "mean_distance": 4095.90,
+  "std_dev": 44.85
+},
+  "associative_retrieval": {
+  "queries_tested": 4,
+  "recall_at_1_pct": 100.0,
+  "recall_at_3_pct": 100.0
+},
+  "datasets": [
+    {
+  "dataset": "D1_1k",
+  "count": 1000,
+  "file_size_bytes": 1040064,
+  "gen_ms": 0,
+  "ser_ms": 2,
+  "cold_search_ms": 0.494,
+  "warm_mean_ms": 0.196,
+  "qps": 5107.3,
+  "rss_mb": 6.79
+},
+    {
+  "dataset": "D2_10k",
+  "count": 10000,
+  "file_size_bytes": 10400064,
+  "gen_ms": 6,
+  "ser_ms": 23,
+  "cold_search_ms": 5.892,
+  "warm_mean_ms": 2.202,
+  "qps": 454.2,
+  "rss_mb": 16.83
+},
+    {
+  "dataset": "D3_100k",
+  "count": 100000,
+  "file_size_bytes": 104000064,
+  "gen_ms": 82,
+  "ser_ms": 271,
+  "cold_search_ms": 67.762,
+  "warm_mean_ms": 30.365,
+  "qps": 32.9,
+  "rss_mb": 116.04
+},
+    {
+  "dataset": "D4_1M",
+  "count": 1000000,
+  "file_size_bytes": 1040000064,
+  "gen_ms": 851,
+  "ser_ms": 1976,
+  "cold_search_ms": 671.467,
+  "warm_mean_ms": 321.103,
+  "qps": 3.1,
+  "rss_mb": 1107.91
+}
+  ]
+}
